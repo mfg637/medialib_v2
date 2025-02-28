@@ -1,0 +1,3 @@
+Django
+ImageHash
+psycopg2-binary
