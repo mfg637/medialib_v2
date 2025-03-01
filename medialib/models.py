@@ -119,21 +119,36 @@ class ImageHash(models.Model):
     alternate_version = models.BooleanField(default=False, db_index=True)
 
 
+class CategoryEnum(enum.StrEnum):
+    ARTIST = "artist"
+    PROMPTER = "prompter"
+    GENERATOR = "generator"
+    SET = "set"
+    COPYRIGHT = "copyright"
+    RATING = "rating"
+    SPECIES = "species"
+    CHARACTER = "character"
+    CONTENT = "content"
+
+
 class Tag(models.Model):
     id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=240)
     CATEGORY_CHOICES = [
-        ("artist", "Artist"),
-        ("prompter", "Prompter"),
-        ("generator", "AI Generation model"),
-        ("set", "Unordered set"),
-        ("copyright", "Copyright"),
-        ("rating", "Rating"),
-        ("species", "Species"),
-        ("character", "Character name"),
-        ("content", "Content description")
+        (CategoryEnum.ARTIST, "Artist"),
+        (CategoryEnum.PROMPTER, "Prompter"),
+        (CategoryEnum.GENERATOR, "AI Generation model"),
+        (CategoryEnum.SET, "Unordered set"),
+        (CategoryEnum.COPYRIGHT, "Copyright"),
+        (CategoryEnum.RATING, "Rating"),
+        (CategoryEnum.SPECIES, "Species"),
+        (CategoryEnum.CHARACTER, "Character name"),
+        (CategoryEnum.CONTENT, "Content description")
     ]
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
+
+    def __str__(self):
+        return f"{self.title} ({self.category})"
 
 
 class TagImplications(models.Model):
@@ -143,6 +158,11 @@ class TagImplications(models.Model):
     implicate = models.ForeignKey(
         Tag, on_delete=models.CASCADE, related_name="implicated_tag"
     )
+
+    def clean_fields(self, exclude = ...):
+        if self.target.id == self.implicate.id:
+            raise ValidationError("Tag can't implicate itself")
+        return super().clean_fields(exclude)
 
     class Meta:
         constraints = [
@@ -158,6 +178,9 @@ class TagAlias(models.Model):
     title = models.CharField(
         max_length=255, unique=True, null=False, blank=False, db_index=True
     )
+    class Meta:
+        verbose_name = "Alias of tag"
+        verbose_name_plural = "Aliases of tag"
 
 
 class ContentToTagsRelationship(models.Model):
