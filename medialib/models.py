@@ -2,13 +2,14 @@ from django.db import models
 import pathlib
 import enum
 from medialib_v2 import secrets
+from django.core.exceptions import ValidationError
 
 
 DEBUG = True
 
 
 class Content(models.Model):
-    id = models.BigAutoField()
+    id = models.BigAutoField(primary_key=True)
     filepath = models.FilePathField(
         str(secrets.MEDIALIB_HOME_DIR),
         recursive=True,
@@ -25,7 +26,7 @@ class Content(models.Model):
     ]
     content_type = models.CharField(choices=CONTENT_TYPE_MAPPING, max_length=10)
     description = models.TextField(null=True)
-    addition_date = models.DateTimeField(auto_now_add=True)
+    addition_date = models.DateTimeField(auto_now_add=True, db_index=True)
     is_hidden = models.BooleanField(default=False)
     last_edit = models.DateTimeField(auto_now=True)
 
@@ -38,13 +39,13 @@ class Content(models.Model):
 
 
 class ContentOrigin(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE)
+    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     name = models.CharField(max_length=32)
     origin_id = models.CharField("ID on origin", max_length=128)
 
 
 class Thumbnail(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE)
+    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(str(secrets.MEDIALIB_THUMBNAILS_DIR), unique=True, )
     width = models.PositiveSmallIntegerField()
     height = models.PositiveSmallIntegerField()
@@ -68,7 +69,7 @@ COMPATIBILITY_LEVEL_MAPPING = [
 
 
 class Representation(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE)
+    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
         str(secrets.MEDIALIB_HOME_DIR),
         recursive=True,
@@ -90,13 +91,14 @@ class Representation(models.Model):
 
 
 class Attachments(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE)
+    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
         str(secrets.MEDIALIB_HOME_DIR),
         recursive=True,
         allow_folders=True,
         unique=True,
-        null=False
+        null=False,
+        db_index=True
     )
     title = models.CharField(max_length=64)
     format = models.CharField(max_length=12)
@@ -109,16 +111,16 @@ class Attachments(models.Model):
 
 
 class ImageHash(models.Model):
-    content_id = models.OneToOneField(Content, on_delete=models.CASCADE)
+    content_id = models.OneToOneField(Content, on_delete=models.CASCADE, db_index=True)
     aspect_ratio = models.FloatField("Aspect Ratio")
-    value_hash = models.BinaryField("Value component hash", max_length=256)
-    hue_hash = models.BigIntegerField("Hue component hash")
-    saturation_hash = models.BigIntegerField("Saturation component hash")
-    alternate_version = models.BooleanField(default=False)
+    value_hash = models.BinaryField("Value component hash", max_length=256, db_index=True)
+    hue_hash = models.BigIntegerField("Hue component hash", db_index=True)
+    saturation_hash = models.BigIntegerField("Saturation component hash", db_index=True)
+    alternate_version = models.BooleanField(default=False, db_index=True)
 
 
 class Tag(models.Model):
-    id = models.BigAutoField()
+    id = models.BigAutoField(primary_key=True)
     title = models.CharField(max_length=240)
     CATEGORY_CHOICES = [
         ("artist", "Artist"),
@@ -135,27 +137,68 @@ class Tag(models.Model):
 
 
 class TagImplications(models.Model):
-    target = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    target = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
     implicate = models.ForeignKey(Tag, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["target", "implicate"],
+                name="unique_tag_to_implication"
+            )
+        ]
 
 
 class TagAlias(models.Model):
-    tag_id = models.ForeignKey(Tag, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255, unique=True, null=False, blank=False)
+    tag_id = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
+    title = models.CharField(
+        max_length=255, unique=True, null=False, blank=False, db_index=True
+    )
 
 
 class ContentToTagsRelationship(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE)
-    tag_id = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    content_id = models.ForeignKey(
+        Content, on_delete=models.CASCADE, db_index=True
+    )
+    tag_id = models.ForeignKey(
+        Tag, on_delete=models.CASCADE, db_index=True
+    )
+
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["content_id", "tag_id"],
+                name="unique_tag_to_content"
+            )
+        ]
 
 
 class Album(models.Model):
-    id = models.AutoField()
+    id = models.AutoField(primary_key=True)
     album_set_id = models.ForeignKey(Tag, on_delete=models.PROTECT)
     artist_set_id = models.ForeignKey(Tag, on_delete=models.PROTECT)
 
+    def clean(self):
+        if self.album_set_id.category != "set":
+            raise ValidationError("album_set_id must have the 'set' category.")
+        if self.artist_set_id.category != "artist":
+            raise ValidationError("artist_set_id must have the 'artist' category.")
+
 
 class AlbumOrder(models.Model):
-    album_id = models.ForeignKey(Album, on_delete=models.CASCADE)
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE)
+    album_id = models.ForeignKey(
+        Album, on_delete=models.CASCADE, db_index=True
+    )
+    content_id = models.ForeignKey(
+        Content, on_delete=models.CASCADE, db_index=True
+    )
     order = models.IntegerField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["album_id", "content_id",],
+                name="unique_content_to_album"
+            )
+        ]
