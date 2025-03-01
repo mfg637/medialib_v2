@@ -137,8 +137,12 @@ class Tag(models.Model):
 
 
 class TagImplications(models.Model):
-    target = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
-    implicate = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    target = models.ForeignKey(
+        Tag, on_delete=models.CASCADE, db_index=True, related_name="target_tag"
+    )
+    implicate = models.ForeignKey(
+        Tag, on_delete=models.CASCADE, related_name="implicated_tag"
+    )
 
     class Meta:
         constraints = [
@@ -176,8 +180,12 @@ class ContentToTagsRelationship(models.Model):
 
 class Album(models.Model):
     id = models.AutoField(primary_key=True)
-    album_set_id = models.ForeignKey(Tag, on_delete=models.PROTECT)
-    artist_set_id = models.ForeignKey(Tag, on_delete=models.PROTECT)
+    album_set_id = models.ForeignKey(
+        Tag, on_delete=models.PROTECT, related_name="album_set"
+    )
+    artist_set_id = models.ForeignKey(
+        Tag, on_delete=models.PROTECT, related_name="artist_tag"
+    )
 
     def clean(self):
         if self.album_set_id.category != "set":
