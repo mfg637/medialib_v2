@@ -39,13 +39,13 @@ class Content(models.Model):
 
 
 class ContentOrigin(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     name = models.CharField(max_length=32)
     origin_id = models.CharField("ID on origin", max_length=128)
 
 
 class Thumbnail(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(str(secrets.MEDIALIB_THUMBNAILS_DIR), unique=True, )
     width = models.PositiveSmallIntegerField()
     height = models.PositiveSmallIntegerField()
@@ -69,7 +69,7 @@ COMPATIBILITY_LEVEL_MAPPING = [
 
 
 class Representation(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
         str(secrets.MEDIALIB_HOME_DIR),
         recursive=True,
@@ -91,7 +91,7 @@ class Representation(models.Model):
 
 
 class Attachments(models.Model):
-    content_id = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
         str(secrets.MEDIALIB_HOME_DIR),
         recursive=True,
@@ -111,7 +111,7 @@ class Attachments(models.Model):
 
 
 class ImageHash(models.Model):
-    content_id = models.OneToOneField(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.OneToOneField(Content, on_delete=models.CASCADE, db_index=True)
     aspect_ratio = models.FloatField("Aspect Ratio")
     value_hash = models.BinaryField("Value component hash", max_length=256, db_index=True)
     hue_hash = models.BigIntegerField("Hue component hash", db_index=True)
@@ -154,17 +154,17 @@ class TagImplications(models.Model):
 
 
 class TagAlias(models.Model):
-    tag_id = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
     title = models.CharField(
         max_length=255, unique=True, null=False, blank=False, db_index=True
     )
 
 
 class ContentToTagsRelationship(models.Model):
-    content_id = models.ForeignKey(
+    content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
     )
-    tag_id = models.ForeignKey(
+    tag = models.ForeignKey(
         Tag, on_delete=models.CASCADE, db_index=True
     )
 
@@ -172,7 +172,7 @@ class ContentToTagsRelationship(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["content_id", "tag_id"],
+                fields=["content", "tag"],
                 name="unique_tag_to_content"
             )
         ]
@@ -180,25 +180,25 @@ class ContentToTagsRelationship(models.Model):
 
 class Album(models.Model):
     id = models.AutoField(primary_key=True)
-    album_set_id = models.ForeignKey(
+    album_set = models.ForeignKey(
         Tag, on_delete=models.PROTECT, related_name="album_set"
     )
-    artist_set_id = models.ForeignKey(
+    artist_set = models.ForeignKey(
         Tag, on_delete=models.PROTECT, related_name="artist_tag"
     )
 
     def clean(self):
-        if self.album_set_id.category != "set":
+        if self.album_set.category != "set":
             raise ValidationError("album_set_id must have the 'set' category.")
-        if self.artist_set_id.category != "artist":
+        if self.artist_set.category != "artist":
             raise ValidationError("artist_set_id must have the 'artist' category.")
 
 
 class AlbumOrder(models.Model):
-    album_id = models.ForeignKey(
+    album = models.ForeignKey(
         Album, on_delete=models.CASCADE, db_index=True
     )
-    content_id = models.ForeignKey(
+    content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
     )
     order = models.IntegerField()
@@ -206,7 +206,7 @@ class AlbumOrder(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["album_id", "content_id",],
+                fields=["album", "content",],
                 name="unique_content_to_album"
             )
         ]
