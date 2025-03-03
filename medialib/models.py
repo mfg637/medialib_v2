@@ -128,6 +128,7 @@ class CategoryEnum(enum.StrEnum):
     RATING = "rating"
     SPECIES = "species"
     CHARACTER = "character"
+    GENDER = "gender"
     CONTENT = "content"
 
 
@@ -143,6 +144,7 @@ class Tag(models.Model):
         (CategoryEnum.RATING, "Rating"),
         (CategoryEnum.SPECIES, "Species"),
         (CategoryEnum.CHARACTER, "Character name"),
+        (CategoryEnum.GENDER, "Gender"),
         (CategoryEnum.CONTENT, "Content description")
     ]
     category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
