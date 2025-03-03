@@ -167,6 +167,8 @@ class TagImplications(models.Model):
         return super().clean_fields(exclude)
 
     class Meta:
+        verbose_name = "implication of tag"
+        verbose_name_plural = "implications of tag"
         constraints = [
             models.UniqueConstraint(
                 fields=["target", "implicate"],
@@ -181,8 +183,8 @@ class TagAlias(models.Model):
         max_length=255, unique=True, null=False, blank=False, db_index=True
     )
     class Meta:
-        verbose_name = "Alias of tag"
-        verbose_name_plural = "Aliases of tag"
+        verbose_name = "alias of tag"
+        verbose_name_plural = "aliases of tag"
 
 
 class ContentToTagsRelationship(models.Model):
