@@ -14,6 +14,7 @@ class TagAliasAdmin(admin.StackedInline):
 class TagImplicationAdmin(admin.TabularInline):
     model = ml_models.TagImplications
     fk_name = "target"
+    autocomplete_fields = ["implicate"]
 
 
 @admin.register(ml_models.Tag)
