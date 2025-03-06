@@ -55,6 +55,7 @@ COMPATIBILITY_LEVEL_MAPPING = [
 
 
 class Representation(models.Model):
+    id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
         str(secrets.MEDIALIB_HOME_DIR),
@@ -77,6 +78,7 @@ class Representation(models.Model):
 
 
 class Thumbnail(models.Model):
+    id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(str(secrets.MEDIALIB_THUMBNAILS_DIR), unique=True, )
     width = models.PositiveSmallIntegerField()
@@ -92,6 +94,7 @@ class Thumbnail(models.Model):
 
 
 class Attachments(models.Model):
+    id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
         str(secrets.MEDIALIB_HOME_DIR),
@@ -112,6 +115,7 @@ class Attachments(models.Model):
 
 
 class ImageHash(models.Model):
+    id = models.BigAutoField(primary_key=True)
     content = models.OneToOneField(Content, on_delete=models.CASCADE, db_index=True)
     aspect_ratio = models.FloatField("Aspect Ratio")
     value_hash = models.BinaryField("Value component hash", max_length=256, db_index=True)
@@ -155,6 +159,7 @@ class Tag(models.Model):
 
 
 class TagImplications(models.Model):
+    id = models.BigAutoField(primary_key=True)
     target = models.ForeignKey(
         Tag, on_delete=models.CASCADE, db_index=True, related_name="target_tag"
     )
@@ -179,6 +184,7 @@ class TagImplications(models.Model):
 
 
 class TagAlias(models.Model):
+    id = models.BigAutoField(primary_key=True)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
     title = models.CharField(
         max_length=255, unique=True, null=False, blank=False, db_index=True
@@ -189,6 +195,7 @@ class TagAlias(models.Model):
 
 
 class ContentToTagsRelationship(models.Model):
+    id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
     )
@@ -223,6 +230,7 @@ class Album(models.Model):
 
 
 class AlbumOrder(models.Model):
+    id = models.BigAutoField(primary_key=True)
     album = models.ForeignKey(
         Album, on_delete=models.CASCADE, db_index=True
     )
