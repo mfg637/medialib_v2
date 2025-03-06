@@ -8,55 +8,41 @@ from django.core.exceptions import ValidationError
 DEBUG = True
 
 
+class ContentTypeEnum(enum.StrEnum):
+    IMAGE = "image"
+    AUDIO = "audio"
+    VIDEO = "video"
+    VIDEO_LOOP = "video-loop"
+    TEXT = "text"
+
+
 class Content(models.Model):
     id = models.BigAutoField(primary_key=True)
-    filepath = models.FilePathField(
-        str(secrets.MEDIALIB_HOME_DIR),
-        recursive=True,
-        allow_folders=True,
-        unique=True,
-        null=False
-    )
     title = models.CharField(max_length=64, null=True)
     CONTENT_TYPE_MAPPING = [
-        ("image", "Image"),
-        ("audio", "Audio"),
-        ("video", "Video"),
-        ("video-loop", "Video-loop")
+        (ContentTypeEnum.IMAGE, "Image"),
+        (ContentTypeEnum.AUDIO, "Audio"),
+        (ContentTypeEnum.VIDEO, "Video"),
+        (ContentTypeEnum.VIDEO_LOOP, "Video-loop"),
+        (ContentTypeEnum.TEXT, "Text content")
     ]
-    content_type = models.CharField(choices=CONTENT_TYPE_MAPPING, max_length=10)
+    # filepath field removed, because it's redundant
+    # media content must have representations
+    content_type = models.CharField(
+        choices=CONTENT_TYPE_MAPPING,
+        max_length=10,
+        default=ContentTypeEnum.TEXT
+    )
     description = models.TextField(null=True)
     addition_date = models.DateTimeField(auto_now_add=True, db_index=True)
     is_hidden = models.BooleanField(default=False)
     last_edit = models.DateTimeField(auto_now=True)
-
-    def delete(self, *args, **kwargs):
-        if not DEBUG:
-            # TODO: implement manifest files handling (.srs and .mpd)
-            _filepath = pathlib.Path(self.filepath)
-            _filepath.unlink(missing_ok=True)
-        super().delete(*args, **kwargs)
 
 
 class ContentOrigin(models.Model):
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     name = models.CharField(max_length=32)
     origin_id = models.CharField("ID on origin", max_length=128)
-
-
-class Thumbnail(models.Model):
-    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
-    filepath = models.FilePathField(str(secrets.MEDIALIB_THUMBNAILS_DIR), unique=True, )
-    width = models.PositiveSmallIntegerField()
-    height = models.PositiveSmallIntegerField()
-    generation_date = models.DateTimeField("Date of generation", auto_now_add=True)
-    format = models.CharField(max_length=12)
-
-    def delete(self, *args, **kwargs):
-        if not DEBUG:
-            _filepath = pathlib.Path(self.filepath)
-            _filepath.unlink(missing_ok=True)
-        super().delete(*args, **kwargs)
 
 
 COMPATIBILITY_LEVEL_MAPPING = [
@@ -82,6 +68,21 @@ class Representation(models.Model):
         "Compatibility level",
         choices=COMPATIBILITY_LEVEL_MAPPING
     )
+
+    def delete(self, *args, **kwargs):
+        if not DEBUG:
+            _filepath = pathlib.Path(self.filepath)
+            _filepath.unlink(missing_ok=True)
+        super().delete(*args, **kwargs)
+
+
+class Thumbnail(models.Model):
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    filepath = models.FilePathField(str(secrets.MEDIALIB_THUMBNAILS_DIR), unique=True, )
+    width = models.PositiveSmallIntegerField()
+    height = models.PositiveSmallIntegerField()
+    generation_date = models.DateTimeField("Date of generation", auto_now_add=True)
+    format = models.CharField(max_length=12)
 
     def delete(self, *args, **kwargs):
         if not DEBUG:
