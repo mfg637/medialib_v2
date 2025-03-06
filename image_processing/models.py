@@ -11,7 +11,7 @@ class TaskStatusEnum(enum.IntEnum):
 
 class Task(models.Model):
     id = models.BigAutoField(primary_key=True)
-    content = models.ForeignKey(Content, on_delete=models.SET_NULL)
+    content = models.ForeignKey(Content, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_created=True)
     tmp_file = models.FileField(null=True)
     STATUS_LIST = [

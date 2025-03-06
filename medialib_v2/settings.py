@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "medialib.apps.MedialibConfig"
+    "medialib.apps.MedialibConfig",
+    "image_processing.apps.ImageProcessingConfig"
 ]
 
 MIDDLEWARE = [
