@@ -1,9 +1,48 @@
 from django.contrib import admin
 from django import forms
 from . import models as ml_models
+from django.core.files.uploadedfile import UploadedFile
+from django.core.exceptions import ValidationError
+import pathlib
 
-# Register your models here.
-admin.site.register(ml_models.Content)
+
+class ContentForm(forms.ModelForm):
+    # TODO: set temporary file path
+    # resolved: MEDIALIB_ROOT + "/queue"
+    # TODO: make image processing task
+    media_file = forms.FileField()
+    class Meta:
+        model = ml_models.Content
+        fields = [
+            "media_file",
+            "title",
+            "description",
+            "is_hidden",
+        ]
+        read_only = ["content_type", "addition_date", "last_edit"]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        mf: UploadedFile = self.cleaned_data["media_file"]
+        if cleaned_data["title"] is None:
+            cleaned_data["title"] = pathlib.Path(mf.name).stem
+        if cleaned_data["description"] == "":
+            cleaned_data["description"] = None
+        # TODO: content type detection
+        return cleaned_data
+
+    def save(self, commit=True):
+        print(self.cleaned_data, type(self.cleaned_data))
+        # TODO: implement task processing
+        # content = super().save(commit=commit)
+
+
+#admin.site.register(ContentForm)
+class ContentAdmin(admin.ModelAdmin):
+    form = ContentForm
+
+
+admin.site.register(ml_models.Content, ContentAdmin)
 
 
 class TagAliasAdmin(admin.StackedInline):

@@ -13,30 +13,32 @@ class ContentTypeEnum(enum.StrEnum):
     AUDIO = "audio"
     VIDEO = "video"
     VIDEO_LOOP = "video-loop"
-    TEXT = "text"
 
 
 class Content(models.Model):
     id = models.BigAutoField(primary_key=True)
-    title = models.CharField(max_length=64, null=True)
+    title = models.CharField(max_length=64, null=True, blank=True)
     CONTENT_TYPE_MAPPING = [
         (ContentTypeEnum.IMAGE, "Image"),
         (ContentTypeEnum.AUDIO, "Audio"),
         (ContentTypeEnum.VIDEO, "Video"),
-        (ContentTypeEnum.VIDEO_LOOP, "Video-loop"),
-        (ContentTypeEnum.TEXT, "Text content")
+        (ContentTypeEnum.VIDEO_LOOP, "Video-loop")
     ]
     # filepath field removed, because it's redundant
     # media content must have representations
     content_type = models.CharField(
         choices=CONTENT_TYPE_MAPPING,
         max_length=10,
-        default=ContentTypeEnum.TEXT
+        default=ContentTypeEnum.IMAGE
     )
-    description = models.TextField(null=True)
+    description = models.TextField(null=True, blank=True)
     addition_date = models.DateTimeField(auto_now_add=True, db_index=True)
     is_hidden = models.BooleanField(default=False)
     last_edit = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "content"
+        verbose_name_plural = "content"
 
 
 class ContentOrigin(models.Model):
@@ -58,7 +60,6 @@ class Representation(models.Model):
     id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
-        str(secrets.MEDIALIB_HOME_DIR),
         recursive=True,
         allow_folders=True,
         unique=True,
@@ -80,7 +81,7 @@ class Representation(models.Model):
 class Thumbnail(models.Model):
     id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
-    filepath = models.FilePathField(str(secrets.MEDIALIB_THUMBNAILS_DIR), unique=True, )
+    filepath = models.FilePathField(unique=True, )
     width = models.PositiveSmallIntegerField()
     height = models.PositiveSmallIntegerField()
     generation_date = models.DateTimeField("Date of generation", auto_now_add=True)
@@ -97,7 +98,6 @@ class Attachments(models.Model):
     id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
-        str(secrets.MEDIALIB_HOME_DIR),
         recursive=True,
         allow_folders=True,
         unique=True,
