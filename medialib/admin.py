@@ -36,9 +36,7 @@ def detect_file_type(chunk: bytes, request_header_mimetype):
     elif is_image:
         pass
     else:
-        # TODO: how to log in Django?
-        # logger.error(f"undetected content type, mime: {mime}")
-        raise Exception("undetected content type")
+        raise ValidationError("undetected content type, mime: %(mime)s", params={"mime": mime})
     return mime, content_type, is_image
 
 
