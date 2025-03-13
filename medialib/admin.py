@@ -1,9 +1,45 @@
+import io
 from django.contrib import admin
 from django import forms
+import magic
 from . import models as ml_models
 from django.core.files.uploadedfile import UploadedFile
 from django.core.exceptions import ValidationError
 import pathlib
+
+
+MOV_MIMETYPE = "video/quicktime"
+MPEG4V_MIMETYPE = "video/mp4"
+UNDEFINED_MIMETYPE = "application/octet-stream"
+PNG_HEADER_SEQUENCE = b"\x89PNG\x0d\x0a\x1a\x0a"
+PNG_MIMETYPE = "image/png"
+
+
+def detect_file_type(chunk: bytes, request_header_mimetype):
+    mime = magic.from_buffer(chunk, mime=True)
+    if mime == MOV_MIMETYPE and request_header_mimetype == MPEG4V_MIMETYPE:
+        mime = MPEG4V_MIMETYPE
+    if mime == UNDEFINED_MIMETYPE:
+        # check PNG header
+        header = chunk[:8]
+        if header == PNG_HEADER_SEQUENCE:
+            mime = PNG_MIMETYPE
+    content_type = None
+    is_image = False
+    if mime.startswith("image/"):
+        is_image = True
+        content_type = ml_models.ContentTypeEnum.IMAGE
+    if mime.startswith("video/"):
+        content_type = ml_models.ContentTypeEnum.VIDEO
+    elif mime.startswith("audio/"):
+        content_type = ml_models.ContentTypeEnum.AUDIO
+    elif is_image:
+        pass
+    else:
+        # TODO: how to log in Django?
+        # logger.error(f"undetected content type, mime: {mime}")
+        raise Exception("undetected content type")
+    return mime, content_type, is_image
 
 
 class ContentForm(forms.ModelForm):
@@ -28,7 +64,10 @@ class ContentForm(forms.ModelForm):
             cleaned_data["title"] = pathlib.Path(mf.name).stem
         if cleaned_data["description"] == "":
             cleaned_data["description"] = None
-        # TODO: content type detection
+        mf.seek(0)
+        mime, content_type, is_image = detect_file_type(next(mf.chunks()), mf.content_type)
+        mf.seek(0)
+        cleaned_data["content_type"] = content_type
         return cleaned_data
 
     def save(self, commit=True):
