@@ -3,6 +3,7 @@ import pathlib
 import enum
 from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
+from image_processing.models import Task
 
 
 DEBUG = True
@@ -60,8 +61,6 @@ class Representation(models.Model):
     id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
-        recursive=True,
-        allow_folders=True,
         unique=True,
         null=False
     )
@@ -98,8 +97,6 @@ class Attachments(models.Model):
     id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     filepath = models.FilePathField(
-        recursive=True,
-        allow_folders=True,
         unique=True,
         null=False,
         db_index=True
@@ -112,6 +109,11 @@ class Attachments(models.Model):
             _filepath = pathlib.Path(self.filepath)
             _filepath.unlink(missing_ok=True)
         super().delete(*args, **kwargs)
+
+
+class ContentToTaskRelationship(models.Model):
+    content = models.ForeignKey(Content, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, db_index=True)
 
 
 class ImageHash(models.Model):
@@ -152,7 +154,7 @@ class Tag(models.Model):
         (CategoryEnum.GENDER, "Gender"),
         (CategoryEnum.CONTENT, "Content description")
     ]
-    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES)
+    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, db_index=True)
 
     def __str__(self):
         return f"{self.title} ({self.category})"

@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                     models.IntegerField(
                         choices=[
                             (
-                                image_processing.models.TaskStatusEnum["PROCESSING"],
+                                0,
                                 "Processing…",
                             ),
                             (image_processing.models.TaskStatusEnum["DONE"], "Done!"),
