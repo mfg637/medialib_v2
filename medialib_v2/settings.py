@@ -85,6 +85,9 @@ DATABASES = {
         "PASSWORD": secrets.DB_PASSWORD,
         "HOST": secrets.DB_HOST,
         "PORT": secrets.DB_PORT,
+        "TEST": {
+            "NAME": secrets.TEST_DB_NAME,
+        },
     }
 }
 
