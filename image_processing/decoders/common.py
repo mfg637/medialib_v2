@@ -1,4 +1,6 @@
 import PIL.Image
+import pathlib
+import tempfile
 from . import jpeg,\
     svg,\
     avif,\
@@ -59,3 +61,12 @@ def get_image_format(file_path) -> str:
                 return "svg"
             else:
                 raise ValueError()
+
+
+def open_image_and_save_tmp_png(path: pathlib.Path) -> tempfile.NamedTemporaryFile:
+    img = open_image(path)
+    tmp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=True)
+    img.save(tmp_file, "PNG", compress_level=0)
+    tmp_file.seek(0)
+    img.close()
+    return tmp_file

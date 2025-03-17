@@ -3,3 +3,4 @@ ImageHash
 psycopg2-binary
 python-magic
 pillow_heif
+image-similarity-measures

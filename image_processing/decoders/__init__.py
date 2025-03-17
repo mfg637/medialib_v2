@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import PIL.Image
 from . import jpeg,\
     webp,\
     svg,\
@@ -14,4 +13,4 @@ from . import jpeg,\
     YUV4MPEG2,\
     ffmpeg
 
-from .common import open_image, get_image_format
+from .common import open_image, get_image_format, open_image_and_save_tmp_png
