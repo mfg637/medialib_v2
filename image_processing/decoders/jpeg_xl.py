@@ -14,6 +14,7 @@ def decode(file):
     tmp_file = tempfile.NamedTemporaryFile(mode='rb', delete=True, suffix='.png')
     subprocess.run([
         "djxl",
+        "--quiet",
         str(file),
         tmp_file.name
     ])
