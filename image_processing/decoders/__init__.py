@@ -4,7 +4,6 @@
 from . import jpeg,\
     webp,\
     svg,\
-    apng,\
     avif,\
     YUV4MPEG2,\
     jpeg_xl,\
