@@ -24,7 +24,7 @@ class AVIFEncoder(BytesEncoder):
         self._source = source
         self._img = img
 
-        self._bit_depth = 10
+        self.bit_depth = 10
         self._av1_enable_advanced_options = True
         self.encoding_speed = config.avifenc_encoding_speed
 
@@ -47,7 +47,7 @@ class AVIFEncoder(BytesEncoder):
             self._av1_enable_advanced_options = False
         else:
             commandline += [
-                '-d', str(self._bit_depth),
+                '-d', str(self.bit_depth),
                 '-s', str(self.encoding_speed),
                 '-a', 'end-usage=q',
                 '-a', 'cq-level={}'.format(crf)
