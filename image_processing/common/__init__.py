@@ -3,7 +3,7 @@ import subprocess
 
 logger = logging.getLogger(__name__)
 
-from . import videoprocessing
+from . import videoprocessing, compatibility_level, file_format
 
 
 def bit_round(number, precision: int = 0):

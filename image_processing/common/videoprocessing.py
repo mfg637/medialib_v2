@@ -1,12 +1,5 @@
-from .. import config
 import tempfile
-
-
-CL3_FFMPEG_SCALE_COMMANDLINE = [
-    '-vf', 'scale=\'min({},iw)\':\'min({},ih)\':force_original_aspect_ratio=decrease'.format(
-        config.cl3_video_width, config.cl3_video_height
-    )
-]
+from .compatibility_level import CL3_FFMPEG_SCALE_COMMANDLINE, cl3_size_valid
 
 
 def ffmpeg_set_fps_commandline(fps):
@@ -20,10 +13,6 @@ def limit_fps(fps, limit_value=30):
         while fps > limit_value:
             fps /= 2
     return fps, src_fps_valid
-
-
-def cl3_size_valid(video):
-    return video["width"] <= config.cl3_video_width and video["height"] <= config.cl3_video_height
 
 
 def ffmpeg_get_passfile_prefix():
