@@ -3,27 +3,8 @@ import subprocess
 
 logger = logging.getLogger(__name__)
 
-from . import videoprocessing, compatibility_level, file_format
-
-
-def bit_round(number, precision: int = 0):
-    scale = 1
-
-    if precision > 0:
-        scale = 2 ** precision
-        number *= scale
-    elif precision < 0:
-        scale = 2 ** (precision * -1)
-        number /= scale
-
-    number = round(number)
-
-    if precision > 0:
-        number /= scale
-    elif precision < 0:
-        number *= scale
-
-    return number
+from . import videoprocessing, compatibility_level, file_format, resize
+from .resize import bit_round
 
 
 def run_subprocess(commandline: list[str], log_stdout=False):
