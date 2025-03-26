@@ -1,3 +1,4 @@
+import enum
 from .file_format import FormatEnum
 
 cl3_video_width = 1280
@@ -86,3 +87,34 @@ def calc_representations_format(size: tuple[int, int], file_format: FormatEnum)\
             ENCODING_FORMAT_BY_LEVEL[current_level], current_size[0], current_size[1]
         )
     return result
+
+
+class VideoCodecs(enum.StrEnum):
+    H264 = "H264"
+    AVC = H264
+    VP8 = "VP8"
+    VP9 = "VP9"
+    AV1 = "AV1"
+
+
+class AudioCodecs(enum.StrEnum):
+    MPEG_L3 = "MP3"
+    AAC = "AAC"
+    Vorbis = "Vorbis"
+    Opus = "Opus"
+    FLAC = "FLAC"
+
+
+# CL: (Codec, width, height, bits per channel)
+VIDEO_60FPS_LEVELS: dict[int, tuple[VideoCodecs, int, int, int]] = {
+    1: (VideoCodecs.AV1, 3840, 2160, 10),
+    2: (VideoCodecs.VP9, 2560, 1440, 8),
+    3: (VideoCodecs.H264, 1920, 1080, 8),
+}
+
+VIDEO_30FPS_LEVELS: dict[int, tuple[VideoCodecs, int, int, int]] = {
+    1: (VideoCodecs.AV1, 7680, 4320, 10),
+    2: (VideoCodecs.VP9, 3840, 2160, 8),
+    3: (VideoCodecs.VP9, 1920, 1080, 8),
+    4: (VideoCodecs.H264, 1920, 1080, 8),
+}
