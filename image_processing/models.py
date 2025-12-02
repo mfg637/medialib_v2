@@ -55,5 +55,5 @@ class ContentRepresentation(models.Model):
 class ExecutionError(models.Model):
     id = models.BigAutoField(primary_key=True)
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
-    title = models.CharField(max_length=128)
+    title = models.TextField()
     details = models.TextField(null=True)

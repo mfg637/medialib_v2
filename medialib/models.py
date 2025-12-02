@@ -18,7 +18,7 @@ class ContentTypeEnum(enum.StrEnum):
 
 class Content(models.Model):
     id = models.BigAutoField(primary_key=True)
-    title = models.CharField(max_length=64, null=True, blank=True)
+    title = models.TextField(null=True, blank=True)
     CONTENT_TYPE_MAPPING = [
         (ContentTypeEnum.IMAGE, "Image"),
         (ContentTypeEnum.AUDIO, "Audio"),
@@ -45,7 +45,7 @@ class Content(models.Model):
 class ContentOrigin(models.Model):
     content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
     name = models.CharField(max_length=32)
-    origin_id = models.CharField("ID on origin", max_length=128)
+    origin_id = models.TextField("ID on origin")
 
 
 COMPATIBILITY_LEVEL_MAPPING = [
@@ -141,7 +141,7 @@ class CategoryEnum(enum.StrEnum):
 
 class Tag(models.Model):
     id = models.BigAutoField(primary_key=True)
-    title = models.CharField(max_length=240)
+    title = models.TextField()
     CATEGORY_CHOICES = [
         (CategoryEnum.ARTIST, "Artist"),
         (CategoryEnum.PROMPTER, "Prompter"),
@@ -154,7 +154,7 @@ class Tag(models.Model):
         (CategoryEnum.GENDER, "Gender"),
         (CategoryEnum.CONTENT, "Content description")
     ]
-    category = models.CharField(max_length=10, choices=CATEGORY_CHOICES, db_index=True)
+    category = models.CharField(choices=CATEGORY_CHOICES, db_index=True)
 
     def __str__(self):
         return f"{self.title} ({self.category})"
@@ -188,8 +188,8 @@ class TagImplications(models.Model):
 class TagAlias(models.Model):
     id = models.BigAutoField(primary_key=True)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
-    title = models.CharField(
-        max_length=255, unique=True, null=False, blank=False, db_index=True
+    title = models.TextField(
+        unique=True, null=False, blank=False, db_index=True
     )
     class Meta:
         verbose_name = "alias of tag"
