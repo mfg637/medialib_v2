@@ -1,7 +1,7 @@
 from django.db import models
 import pathlib
 import enum
-from medialib_v2 import secrets
+# from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
 from image_processing.models import Task
 
@@ -43,7 +43,9 @@ class Content(models.Model):
 
 
 class ContentOrigin(models.Model):
-    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.ForeignKey(
+        Content, on_delete=models.CASCADE, db_index=True
+    )
     name = models.CharField(max_length=32)
     origin_id = models.TextField("ID on origin")
 
@@ -51,15 +53,29 @@ class ContentOrigin(models.Model):
 COMPATIBILITY_LEVEL_MAPPING = [
     (0, "Supercomputer"),
     (1, "Personal Computer"),
-    (2, "Powerfull mobile device"),
-    (3, "Dated mobile device"),
-    (4, "Old hardware")
+    (2, "Mobile device"),
+    (3, "Old hardware"),
+    (4, "Very old hardware")
 ]
+
+
+class RepresentationTypeEnum(models.IntegerChoices):
+    # NOTE: values in range 1-9 reserved for subtypes
+    # Audio range: 0-9
+    # Image range: 10-19
+    # Video range: 20-29
+    # For example: SOUNDTRACK = 1
+    # or: THUMBNAIL = 12
+    AUDIO = 0
+    IMAGE = 10
+    VIDEO = 20
 
 
 class Representation(models.Model):
     id = models.BigAutoField(primary_key=True)
-    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.ForeignKey(
+        Content, on_delete=models.CASCADE, db_index=True
+    )
     filepath = models.FilePathField(
         unique=True,
         null=False
@@ -69,22 +85,23 @@ class Representation(models.Model):
         "Compatibility level",
         choices=COMPATIBILITY_LEVEL_MAPPING
     )
+    generation_date = models.DateTimeField(
+        "Date of creation", auto_now_add=True
+    )
+    width = models.PositiveSmallIntegerField(null=True)
+    height = models.PositiveSmallIntegerField(null=True)
+    repr_type = models.IntegerField(choices=RepresentationTypeEnum)
 
-    def delete(self, *args, **kwargs):
-        if not DEBUG:
-            _filepath = pathlib.Path(self.filepath)
-            _filepath.unlink(missing_ok=True)
-        super().delete(*args, **kwargs)
-
-
-class Thumbnail(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
-    filepath = models.FilePathField(unique=True, )
-    width = models.PositiveSmallIntegerField()
-    height = models.PositiveSmallIntegerField()
-    generation_date = models.DateTimeField("Date of generation", auto_now_add=True)
-    format = models.CharField(max_length=12)
+    def clean(self):
+        if self.repr_type >= RepresentationTypeEnum.IMAGE:
+            errors = {}
+            if self.width is None or self.width <= 0:
+                errors['width'] = 'Required for image/video and must be > 0'
+            if self.height is None or self.height <= 0:
+                errors['height'] = 'Required for image/video and must be > 0'
+            if errors:
+                raise ValidationError(errors)
+        super().clean()
 
     def delete(self, *args, **kwargs):
         if not DEBUG:
@@ -95,7 +112,9 @@ class Thumbnail(models.Model):
 
 class Attachments(models.Model):
     id = models.BigAutoField(primary_key=True)
-    content = models.ForeignKey(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.ForeignKey(
+        Content, on_delete=models.CASCADE, db_index=True
+    )
     filepath = models.FilePathField(
         unique=True,
         null=False,
@@ -118,11 +137,19 @@ class ContentToTaskRelationship(models.Model):
 
 class ImageHash(models.Model):
     id = models.BigAutoField(primary_key=True)
-    content = models.OneToOneField(Content, on_delete=models.CASCADE, db_index=True)
+    content = models.OneToOneField(
+        Content, on_delete=models.CASCADE, db_index=True
+    )
     aspect_ratio = models.FloatField("Aspect Ratio")
-    value_hash = models.BinaryField("Value component hash", max_length=256, db_index=True)
-    hue_hash = models.BigIntegerField("Hue component hash", db_index=True)
-    saturation_hash = models.BigIntegerField("Saturation component hash", db_index=True)
+    value_hash = models.BinaryField(
+        "Value component hash", max_length=256, db_index=True
+    )
+    hue_hash = models.BigIntegerField(
+        "Hue component hash", db_index=True
+    )
+    saturation_hash = models.BigIntegerField(
+        "Saturation component hash", db_index=True
+    )
     alternate_version = models.BooleanField(default=False, db_index=True)
 
 
@@ -169,7 +196,7 @@ class TagImplications(models.Model):
         Tag, on_delete=models.CASCADE, related_name="implicated_tag"
     )
 
-    def clean_fields(self, exclude = ...):
+    def clean_fields(self, exclude=...):
         if self.target.id == self.implicate.id:
             raise ValidationError("Tag can't implicate itself")
         return super().clean_fields(exclude)
@@ -191,6 +218,7 @@ class TagAlias(models.Model):
     title = models.TextField(
         unique=True, null=False, blank=False, db_index=True
     )
+
     class Meta:
         verbose_name = "alias of tag"
         verbose_name_plural = "aliases of tag"
@@ -204,7 +232,6 @@ class ContentToTagsRelationship(models.Model):
     tag = models.ForeignKey(
         Tag, on_delete=models.CASCADE, db_index=True
     )
-
 
     class Meta:
         constraints = [
@@ -226,9 +253,14 @@ class Album(models.Model):
 
     def clean(self):
         if self.album_set.category != "set":
-            raise ValidationError("album_set_id must have the 'set' category.")
+            raise ValidationError(
+                "album_set_id must have the 'set' category."
+            )
         if self.artist_set.category != "artist":
-            raise ValidationError("artist_set_id must have the 'artist' category.")
+            raise ValidationError(
+                "artist_set_id must have the 'artist' category."
+            )
+        super().clean()
 
 
 class AlbumOrder(models.Model):
