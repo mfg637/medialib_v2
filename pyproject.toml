@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medialib_v2"
+version = "0.1.0"
+description = "MediaLib v2 project"
+# readme = "README.md" # does not exists
+authors = [
+    {name = "mfg637", email = "mfg636@gmail.com"},
+]
+license = {file = "LICENSE"}
+requires-python = ">=3.14.2"
+keywords = ["media", "image-processing", "django"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    # "License :: OSI Approved :: MIT License", # currently, undefined
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "Django",
+    "ImageHash",
+    "psycopg2-binary",
+    "python-magic",
+    "pillow_heif",
+    "image-similarity-measures",
+]
+
+#[project.urls] # project is not published yet
+#Homepage = "https://github.com/your-username/medialib_v2" # Замените на реальный URL
+#"Bug Tracker" = "https://github.com/your-username/medialib_v2/issues"
+
+[tool.black]
+line-length = 79
+target-version = ['py314']
+
+[tool.isort]
+profile = "black"
+
+[tool.pyenv]
+version = "3.14.2"
+environment = "/home/mfg637/.pyenv/versions/3.14.2/envs/medialib_v2"
