@@ -4,7 +4,6 @@ import enum
 
 # from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
-from image_processing.models import Task
 
 
 DEBUG = True
@@ -18,7 +17,6 @@ class ContentTypeEnum(enum.StrEnum):
 
 
 class Content(models.Model):
-    id = models.BigAutoField(primary_key=True)
     title = models.TextField(null=True, blank=True)
     CONTENT_TYPE_MAPPING = [
         (ContentTypeEnum.IMAGE, "Image"),
@@ -73,7 +71,6 @@ class RepresentationTypeEnum(models.IntegerChoices):
 
 
 class Representation(models.Model):
-    id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
     )
@@ -108,7 +105,6 @@ class Representation(models.Model):
 
 
 class Attachments(models.Model):
-    id = models.BigAutoField(primary_key=True)
     content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
     )
@@ -123,13 +119,7 @@ class Attachments(models.Model):
         super().delete(*args, **kwargs)
 
 
-class ContentToTaskRelationship(models.Model):
-    content = models.ForeignKey(Content, on_delete=models.CASCADE)
-    task = models.ForeignKey(Task, on_delete=models.CASCADE, db_index=True)
-
-
 class ImageHash(models.Model):
-    id = models.BigAutoField(primary_key=True)
     content = models.OneToOneField(
         Content, on_delete=models.CASCADE, db_index=True
     )
@@ -165,52 +155,70 @@ class CategoryEnum(enum.StrEnum):
 
 
 class Tag(models.Model):
-    id = models.BigAutoField(primary_key=True)
     title = models.TextField()
     CATEGORY_CHOICES = [
+        (CategoryEnum.CREATOR, "Content creator"),
         (CategoryEnum.ARTIST, "Artist"),
         (CategoryEnum.PROMPTER, "Prompter"),
-        (CategoryEnum.GENERATOR, "AI Generation model"),
+        (CategoryEnum.AI, "AI related metadata"),
         (CategoryEnum.SET, "Unordered set"),
+        (CategoryEnum.COMIC, "Comic pages set"),
         (CategoryEnum.COPYRIGHT, "Copyright"),
         (CategoryEnum.RATING, "Rating"),
         (CategoryEnum.SPECIES, "Species"),
         (CategoryEnum.CHARACTER, "Character name"),
+        (CategoryEnum.CHARACTER_GROUP, "Group of characters"),
         (CategoryEnum.GENDER, "Gender"),
+        (CategoryEnum.LORE, "Lore metadata"),
+        (CategoryEnum.META, "Metadata"),
+        (CategoryEnum.ERROR, "Error"),
+        (CategoryEnum.STYLE, "Style description"),
         (CategoryEnum.CONTENT, "Content description"),
     ]
     category = models.CharField(choices=CATEGORY_CHOICES, db_index=True)
+    content = models.ManyToManyField(Content)
+    implications = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        through="TagImplications",
+        through_fields=("target", "implicate"),
+        related_name="is_implied_by",
+    )
 
     def __str__(self):
         return f"{self.title} ({self.category})"
 
 
 class TagImplications(models.Model):
-    id = models.BigAutoField(primary_key=True)
+    target_id: int
+    implicate_id: int
     target = models.ForeignKey(
-        Tag, on_delete=models.CASCADE, db_index=True, related_name="target_tag"
+        Tag,
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name="implications_target",
     )
     implicate = models.ForeignKey(
-        Tag, on_delete=models.CASCADE, related_name="implicated_tag"
+        Tag, on_delete=models.CASCADE, related_name="implications_implicated"
     )
 
-    def clean_fields(self, exclude=...):
-        if self.target.id == self.implicate.id:
+    def clean(self):
+        if self.target_id == self.implicate_id:
             raise ValidationError("Tag can't implicate itself")
-        return super().clean_fields(exclude)
+        return super().clean()
 
     class Meta:
         verbose_name = "implication of tag"
         verbose_name_plural = "implications of tag"
         constraints = [
             models.UniqueConstraint(
-                fields=["target", "implicate"], name="unique_tag_to_implication"
+                fields=["target", "implicate"],
+                name="unique_tag_to_implication",
             )
         ]
 
 
 class TagAlias(models.Model):
-    id = models.BigAutoField(primary_key=True)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
     title = models.TextField(
         unique=True, null=False, blank=False, db_index=True
@@ -221,42 +229,69 @@ class TagAlias(models.Model):
         verbose_name_plural = "aliases of tag"
 
 
-class ContentToTagsRelationship(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    content = models.ForeignKey(
-        Content, on_delete=models.CASCADE, db_index=True
-    )
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["content", "tag"], name="unique_tag_to_content"
-            )
-        ]
-
-
 class Album(models.Model):
-    id = models.AutoField(primary_key=True)
     album_set = models.ForeignKey(
-        Tag, on_delete=models.PROTECT, related_name="album_set"
+        Tag, on_delete=models.PROTECT, related_name="album_set", null=True
     )
-    artist_set = models.ForeignKey(
-        Tag, on_delete=models.PROTECT, related_name="artist_tag"
+    creator_tags = models.ManyToManyField(Tag, related_name="creator_albums")
+    album_name = models.TextField(null=True)
+    contents = models.ManyToManyField(
+        Content,
+        through="AlbumOrder",
+        through_fields=("album", "content"),
+        related_name="albums",
     )
 
     def clean(self):
-        if self.album_set.category != "set":
-            raise ValidationError("album_set_id must have the 'set' category.")
-        if self.artist_set.category != "artist":
-            raise ValidationError(
-                "artist_set_id must have the 'artist' category."
+        if self.album_set is not None and self.album_set.category not in {
+            CategoryEnum.SET,
+            CategoryEnum.COMIC,
+        }:
+            raise ValidationError("album_set must have the 'set' category.")
+        if self.pk:
+            valid_categories = {
+                CategoryEnum.CREATOR,
+                CategoryEnum.ARTIST,
+                CategoryEnum.PROMPTER,
+            }
+
+            invalid_creators = self.creator_tags.exclude(
+                category__in=valid_categories
             )
+
+            if invalid_creators.exists():
+                raise ValidationError(
+                    (
+                        "All creator_tags must belong "
+                        "to one on this categories: "
+                        "creator/artist/prompter."
+                    )
+                )
         super().clean()
+
+    def get_album_name(self) -> str:
+        if self.album_name is not None:
+            return self.album_name
+        elif self.album_set is not None:
+            return self.album_set.title
+        else:
+            return "untitled"
+
+    def get_creator_string(self) -> str:
+        creator_titles = list(
+            self.creator_tags.values_list("title", flat=True)
+        )
+
+        if not creator_titles:
+            return "Unknown Creators"
+
+        return " and ".join(creator_titles)
+
+    def __str__(self):
+        return f"{self.get_album_name()} by {self.get_creator_string()}"
 
 
 class AlbumOrder(models.Model):
-    id = models.BigAutoField(primary_key=True)
     album = models.ForeignKey(Album, on_delete=models.CASCADE, db_index=True)
     content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
@@ -273,3 +308,4 @@ class AlbumOrder(models.Model):
                 name="unique_content_to_album",
             )
         ]
+        unique_together = (("album", "order"),)
