@@ -35,6 +35,13 @@ class Content(models.Model):
     addition_date = models.DateTimeField(auto_now_add=True, db_index=True)
     is_hidden = models.BooleanField(default=False)
     last_edit = models.DateTimeField(auto_now=True)
+    source_hash = models.BinaryField(
+        max_length=32,
+        unique=True,
+        db_index=True,
+        null=True,
+        help_text="SHA-256 hash of the original file content (stored as BYTEA).",
+    )
 
     class Meta:
         verbose_name = "content"
