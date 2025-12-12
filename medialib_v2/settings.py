@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "medialib.apps.MedialibConfig",
-    "image_processing.apps.ImageProcessingConfig"
+    "image_processing.apps.ImageProcessingConfig",
 ]
 
 MIDDLEWARE = [
@@ -116,7 +116,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "Europe/Kiev"
+TIME_ZONE = secrets.TIME_ZONE
 
 USE_I18N = True
 
