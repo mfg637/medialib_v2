@@ -1,9 +1,6 @@
-import pathlib
 from django.db import models
 import enum
-
-
-DEBUG = False
+import medialib.models
 
 
 class TaskStatusEnum(enum.IntEnum):
@@ -13,47 +10,36 @@ class TaskStatusEnum(enum.IntEnum):
 
 
 class Task(models.Model):
-    id = models.BigAutoField(primary_key=True)
     created_at = models.DateTimeField(auto_created=True)
     tmp_file = models.FilePathField(null=True)
     STATUS_LIST = [
         (TaskStatusEnum.AWAITING, "Wait for processing…"),
         (TaskStatusEnum.DONE, "Done!"),
-        (TaskStatusEnum.ERROR, "ERROR!!!")
+        (TaskStatusEnum.ERROR, "ERROR!!!"),
     ]
     status = models.IntegerField(choices=STATUS_LIST)
 
 
 class TaskResult(models.Model):
-    id = models.BigAutoField(primary_key=True)
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
+    # should be reference to content, if content exists
+    content = models.ForeignKey(
+        medialib.models.Content, null=True, on_delete=models.SET_NULL
+    )
+    # file size fields can be only used for statistic purposes
+    # file size savings were deprioritized in favor to shorten response delay
     source_file_size = models.PositiveBigIntegerField()
     result_file_size = models.PositiveBigIntegerField()
-    quality = models.SmallIntegerField()
-    lossless = models.BooleanField()
-
-
-class ContentRepresentation(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    content = models.ForeignKey(TaskResult, on_delete=models.CASCADE, db_index=True)
-    filepath = models.FilePathField(
-        unique=True,
-        null=False
-    )
-    format = models.CharField(max_length=12)
-    compatibility_level = models.PositiveSmallIntegerField(
-        "Compatibility level",
-    )
-
-    def delete(self, *args, **kwargs):
-        if not DEBUG:
-            _filepath = pathlib.Path(self.filepath)
-            _filepath.unlink(missing_ok=True)
-        super().delete(*args, **kwargs)
+    # quality became constant number, depending on representation size and type
 
 
 class ExecutionError(models.Model):
-    id = models.BigAutoField(primary_key=True)
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
-    title = models.TextField()
-    details = models.TextField(null=True)
+    title = models.TextField(help_text="The name of the error")
+    details = models.TextField(
+        null=True,
+        help_text=(
+            "Detailed description of error. "
+            "Likely to be exception stack trace"
+        ),
+    )
