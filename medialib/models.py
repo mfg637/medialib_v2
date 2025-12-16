@@ -91,7 +91,7 @@ class Representation(models.Model):
     )
     width = models.PositiveSmallIntegerField(null=True)
     height = models.PositiveSmallIntegerField(null=True)
-    repr_type = models.IntegerField(choices=RepresentationTypeEnum)
+    repr_type = models.IntegerField(choices=RepresentationTypeEnum, null=False)
 
     def clean(self):
         if self.repr_type >= RepresentationTypeEnum.IMAGE:

@@ -25,14 +25,20 @@ class Migration(migrations.Migration):
                 choices=[
                     (medialib.models.CategoryEnum["ARTIST"], "Artist"),
                     (medialib.models.CategoryEnum["PROMPTER"], "Prompter"),
-                    (medialib.models.CategoryEnum["GENERATOR"], "AI Generation model"),
+                    ("generator", "AI Generation model"),
                     (medialib.models.CategoryEnum["SET"], "Unordered set"),
                     (medialib.models.CategoryEnum["COPYRIGHT"], "Copyright"),
                     (medialib.models.CategoryEnum["RATING"], "Rating"),
                     (medialib.models.CategoryEnum["SPECIES"], "Species"),
-                    (medialib.models.CategoryEnum["CHARACTER"], "Character name"),
+                    (
+                        medialib.models.CategoryEnum["CHARACTER"],
+                        "Character name",
+                    ),
                     (medialib.models.CategoryEnum["GENDER"], "Gender"),
-                    (medialib.models.CategoryEnum["CONTENT"], "Content description"),
+                    (
+                        medialib.models.CategoryEnum["CONTENT"],
+                        "Content description",
+                    ),
                 ],
                 max_length=10,
             ),

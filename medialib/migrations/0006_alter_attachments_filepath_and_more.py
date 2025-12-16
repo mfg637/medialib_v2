@@ -12,7 +12,10 @@ class Migration(migrations.Migration):
             "image_processing",
             "0002_remove_task_content_alter_executionerror_task_and_more",
         ),
-        ("medialib", "0005_alter_content_options_alter_attachments_filepath_and_more"),
+        (
+            "medialib",
+            "0005_alter_content_options_alter_attachments_filepath_and_more",
+        ),
     ]
 
     operations = [
@@ -33,14 +36,20 @@ class Migration(migrations.Migration):
                 choices=[
                     (medialib.models.CategoryEnum["ARTIST"], "Artist"),
                     (medialib.models.CategoryEnum["PROMPTER"], "Prompter"),
-                    (medialib.models.CategoryEnum["GENERATOR"], "AI Generation model"),
+                    ("generator", "AI Generation model"),
                     (medialib.models.CategoryEnum["SET"], "Unordered set"),
                     (medialib.models.CategoryEnum["COPYRIGHT"], "Copyright"),
                     (medialib.models.CategoryEnum["RATING"], "Rating"),
                     (medialib.models.CategoryEnum["SPECIES"], "Species"),
-                    (medialib.models.CategoryEnum["CHARACTER"], "Character name"),
+                    (
+                        medialib.models.CategoryEnum["CHARACTER"],
+                        "Character name",
+                    ),
                     (medialib.models.CategoryEnum["GENDER"], "Gender"),
-                    (medialib.models.CategoryEnum["CONTENT"], "Content description"),
+                    (
+                        medialib.models.CategoryEnum["CONTENT"],
+                        "Content description",
+                    ),
                 ],
                 db_index=True,
                 max_length=10,
