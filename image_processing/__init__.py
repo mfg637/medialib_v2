@@ -1,2 +1,2 @@
-from . import decoders, encoders
+from . import decoders, encoders, metrics, transforms, libvips
 from .decoders import open_image

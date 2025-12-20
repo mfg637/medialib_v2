@@ -2,7 +2,9 @@ Django
 ImageHash
 psycopg2-binary
 python-magic
-pillow_heif
-image-similarity-measures
+Pillow
 mypy
 django-stubs
+scikit-image
+pyvips
+image-similarity-measures
