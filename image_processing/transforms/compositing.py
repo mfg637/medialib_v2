@@ -1,17 +1,13 @@
 import PIL.Image
 import PIL.ImageColor
-from image_processing.libvips.definitions import (
-    Image,
-    Interpretation,
-    BandFormat,
-)
+from image_processing.libvips.definitions import Image
 from image_processing.transforms.color import INTERPRETATION_TO_COLOR_VALUE
 import pyvips
-from typing import Union, Sequence, Callable
+from collections.abc import Sequence
 
 
 def alpha_compose_pillow(
-    image: PIL.Image.Image, background_color: str
+    image: PIL.Image.Image, background_color: str = "white"
 ) -> PIL.Image.Image:
     """
     Combines image with alpha-channel (RGBA) on background color.
@@ -32,35 +28,30 @@ def alpha_compose_pillow(
 
 VipsInterpretation = pyvips.enums.Interpretation
 VipsBlendMode = pyvips.enums.BlendMode
-VipsBackgroundColor = Union[float, Sequence[float]]
 
 
-def alpha_compose_vips(
-    image: Image, background_color: VipsBackgroundColor
-) -> Image:
+def alpha_compose_vips(image: Image, background_color: str = "white") -> Image:
     """
     Composite image with alpha channel over solid background color.
     Works for RGBA, YA, LABA, CMYKA, etc.
     """
-
     if not image.hasalpha():
         return image
 
-    alpha = image.extract_band(image.bands - 1)
-    color = image.extract_band(0, n=image.bands - 1)
+    get_color = INTERPRETATION_TO_COLOR_VALUE.get(image.interpretation, None)
+    if get_color is None:
+        raise NotImplementedError(
+            f"Not supported interpretation {image.interpretation}"
+        )
+    color = get_color(background_color, image.format)
+    if isinstance(color, (int, float)):
+        color = [float(color)]
+    elif isinstance(color, Sequence):
+        color = [float(value) for value in color]
+    else:
+        raise TypeError(f"Unexpected type {type(color)}")
 
-    background = color.new_from_image(background_color)
-
-    composed = background.composite2(
-        color.bandjoin(alpha),
-        VipsBlendMode.OVER,
-        x=0,
-        y=0,
-        compositing_space=color.interpretation,
-        premultiplied=False,
-    )
-
-    return composed
+    return image.flatten(background=color)
 
 
 def alpha_compose(
@@ -79,12 +70,6 @@ def alpha_compose(
     if isinstance(img, PIL.Image.Image):
         return alpha_compose_pillow(img, background_color)
     elif isinstance(img, Image):
-        get_color = INTERPRETATION_TO_COLOR_VALUE.get(img.interpretation, None)
-        if get_color is None:
-            raise NotImplementedError(
-                f"Not supported interpretation {img.interpretation}"
-            )
-        color = get_color(background_color, img.format)
-        return alpha_compose_vips(img, color)
+        return alpha_compose_vips(img, background_color)
     else:
         raise TypeError(f"Unexpected image type: {type(img)}")

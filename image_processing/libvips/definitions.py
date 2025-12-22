@@ -1,6 +1,8 @@
 import typing
 from typing import Optional
 import pyvips
+import warnings
+import numpy
 
 
 Interpretation = typing.Union[str, pyvips.enums.Interpretation]
@@ -8,41 +10,65 @@ BandFormat = typing.Union[str, pyvips.enums.BandFormat]
 Kernel = typing.Union[str, pyvips.enums.Kernel]
 HeifCodec = typing.Union[str, pyvips.enums.ForeignHeifCompression]
 HeifEncoder = typing.Union[str, pyvips.enums.ForeignHeifEncoder]
+BackgroundColor = typing.Union[float, typing.Sequence[float]]
+pyvips.BlendMode = typing.Union[str, pyvips.enums.BlendMode]
 
 
-class Image(pyvips.Image):
+class Image:
+    __slots__ = ("_img",)
+
+    def __init__(self, img: pyvips.Image):
+        self._img: pyvips.Image = img
+
     @staticmethod
     def new_from_file(vips_filename: str, **kwargs) -> "Image":
-        return pyvips.Image.new_from_file(
-            vips_filename, **kwargs
-        )  # pyright: ignore[reportReturnType]
+        return Image(
+            pyvips.Image.new_from_file(  # pyright: ignore[reportArgumentType]
+                vips_filename, **kwargs
+            )
+        )
+
+    @staticmethod
+    def new_from_array(
+        obj,
+        scale: float = 1.0,
+        offset: float = 0.0,
+        interpretation: Optional[Interpretation] = None,
+    ) -> Image:
+        kwargs = dict()
+        kwargs["offset"] = offset
+        kwargs["scale"] = scale
+        if interpretation is not None:
+            kwargs["interpretation"] = interpretation
+        return Image(pyvips.Image.new_from_array(obj, **kwargs))
+
+    def new_from_image(self, value: BackgroundColor):
+        return Image(self._img.new_from_image(value))
 
     @property
     def width(self) -> int:
         """Image width in pixels."""
-        return super().width  # pyright: ignore[reportAttributeAccessIssue]
+        return self._img.width  # pyright: ignore[reportReturnType]
 
     @property
     def height(self) -> int:
         """Image height in pixels."""
-        return super().height  # pyright: ignore[reportAttributeAccessIssue]
+        return self._img.height  # pyright: ignore[reportReturnType]
 
     @property
     def bands(self) -> int:
         """Number of bands in image."""
-        return super().bands  # pyright: ignore[reportAttributeAccessIssue]
+        return self._img.bands  # pyright: ignore[reportReturnType]
 
     @property
     def interpretation(self) -> Interpretation:
         """Suggested interpretation of image pixel values."""
-        return (
-            super().interpretation  # pyright: ignore[reportAttributeAccessIssue]
-        )
+        return self._img.interpretation  # pyright: ignore[reportReturnType]
 
     @property
     def format(self) -> BandFormat:
         """The format used for each band element."""
-        return super().format()  # pyright: ignore[reportAttributeAccessIssue]
+        return self._img.format  # pyright: ignore[reportReturnType]
 
     def colourspace(
         self,
@@ -51,22 +77,27 @@ class Image(pyvips.Image):
         source_space: Optional[Interpretation] = None,
     ) -> "Image":
         if source_space is not None:
-            return super().colourspace(  # pyright: ignore[reportAttributeAccessIssue]
-                space, source_space=source_space
+            return Image(
+                self._img.colourspace(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+                    space,
+                    source_space=source_space,  # # pyright: ignore[reportCallIssue]
+                )
             )
-        return (
-            super().colourspace(  # pyright: ignore[reportAttributeAccessIssue]
+        return Image(
+            self._img.colourspace(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
                 space
             )
         )
 
     def cast(self, fmt: BandFormat) -> "Image":
-        return super().cast(fmt)  # pyright: ignore[reportAttributeAccessIssue]
+        return Image(
+            self._img.cast(
+                fmt
+            )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+        )
 
     def write_to_file(self, path: str, **kwargs) -> None:
-        super().write_to_file(
-            path, **kwargs
-        )  # pyright: ignore[reportAttributeAccessIssue]
+        self._img.write_to_file(path, **kwargs)
 
     def pngsave(
         self,
@@ -79,7 +110,7 @@ class Image(pyvips.Image):
         kwargs["compression"] = compression
         if bitdepth is not None:
             kwargs["bitdepth"] = bitdepth
-        super().pngsave(  # pyright: ignore[reportAttributeAccessIssue]
+        self._img.pngsave(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
             filename, **kwargs
         )
 
@@ -96,19 +127,23 @@ class Image(pyvips.Image):
         kwargs["gap"] = gap
         if vscale is not None:
             kwargs["vscale"] = vscale
-        return super().resize(  # pyright: ignore[reportAttributeAccessIssue]
-            scale, **kwargs
+        return Image(
+            self._img.resize(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+                scale, **kwargs
+            )
         )
 
     def linear(self, a: float, b: float, uchar: bool = False) -> "Image":
-        return super().linear(  # pyright: ignore[reportAttributeAccessIssue]
-            a, b, uchar
+        return Image(
+            self._img.linear(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+                a, b, uchar=uchar  # pyright: ignore[reportCallIssue]
+            )
         )
 
     def scRGB2sRGB(self, depth: int = 8) -> "Image":
-        return (
-            super().scRGB2sRGB(  # pyright: ignore[reportAttributeAccessIssue]
-                depth
+        return Image(
+            self._img.scRGB2sRGB(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+                depth=depth  # pyright: ignore[reportCallIssue]
             )
         )
 
@@ -133,7 +168,7 @@ class Image(pyvips.Image):
             kwargs["bitdepth"] = bitdepth
         if effort is not None:
             kwargs["effort"] = effort
-        super().heifsave(  # pyright: ignore[reportAttributeAccessIssue]
+        self._img.heifsave(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
             filename, **kwargs
         )
 
@@ -142,11 +177,79 @@ class Image(pyvips.Image):
     ) -> "Image":
         kwargs["Q"] = Q
         kwargs["effort"] = effort
-        return super().webpsave(  # pyright: ignore[reportAttributeAccessIssue]
-            filename, **kwargs
+        return Image(
+            self._img.webpsave(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+                filename, **kwargs
+            )
         )
 
     def extract_band(self, band: int, n: int = 1) -> Image:
-        return super().extract_band(  # pyright: ignore[reportAttributeAccessIssue]
-            band, n
+        return Image(
+            self._img.extract_band(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+                band, n=n  # pyright: ignore[reportCallIssue]
+            )
+        )
+
+    def numpy(self, dtype: Optional[numpy.dtype] = None) -> numpy.ndarray:
+        return self._img.numpy(dtype)
+
+    def hasalpha(self) -> bool:
+        value = self._img.hasalpha()
+        if value not in {0, 1}:
+            raise Exception(
+                f"pyvips.Image.hasalpha() return unexpected value {value}"
+            )
+        return bool(value)
+
+    def bandjoin(self, other) -> Image:
+        return Image(
+            self._img.bandjoin(
+                other._img
+            )  # pyright: ignore[reportArgumentType]
+        )
+
+    def composite2(
+        self,
+        overlay: Image,
+        mode: pyvips.BlendMode,
+        x: Optional[int] = None,
+        y: Optional[int] = None,
+        compositing_space: Optional[Interpretation] = None,
+        premultiplied: Optional[bool] = None,
+    ) -> Image:
+        kwargs = dict()
+        if x is not None:
+            kwargs["x"] = x
+        if y is not None:
+            kwargs["y"] = y
+        if compositing_space is not None:
+            kwargs["compositing_space"] = compositing_space
+        if premultiplied is not None:
+            kwargs["premultiplied"] = premultiplied
+        return Image(
+            self._img.composite2(
+                overlay._img, mode, **kwargs
+            )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+        )
+
+    def flatten(
+        self,
+        background: Optional[list[float]] = None,
+        max_alpha: Optional[float] = None,
+    ) -> Image:
+        kwargs = dict()
+        if background is not None:
+            kwargs["background"] = background
+        if max_alpha is not None:
+            kwargs["max_alpha"] = max_alpha
+        return Image(
+            self._img.flatten(**kwargs)
+        )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+
+    def close(self):
+        warnings.warn(
+            "Image.close() is a temporary no-op for pyvips.Image. "
+            "Remove this call when Pillow dependency is eliminated.",
+            category=DeprecationWarning,
+            stacklevel=2,
         )
