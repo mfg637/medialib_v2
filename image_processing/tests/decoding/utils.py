@@ -9,10 +9,10 @@ def decoding_testing(
     image_test_path: pathlib.Path,
     debug: bool = False,
 ):
-    image_true = metrics.normalize_for_metrics_srgb(
+    image_true = metrics.normalize_for_metrics(
         open_image_as_vips_image(image_true_path)
     )
-    image_test = metrics.normalize_for_metrics_srgb(
+    image_test = metrics.normalize_for_metrics(
         open_image_as_vips_image(image_test_path)
     )
     if debug:

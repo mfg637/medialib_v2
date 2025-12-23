@@ -18,15 +18,15 @@ class TestWEBP(SimpleTestCase):
             common.RGB_REFERENCE_IMAGE, samples_root_dir.joinpath("lossy.webp")
         )
 
-        self.assertAlmostEqual(result["psnr"], 35.5, delta=1.5)
+        self.assertAlmostEqual(result["psnr"], 32.0, delta=1)
 
     def test_lossy_rgba(self):
         result = decoding_testing(
             common.RGB_REFERENCE_TRANSPARENT_IMAGE,
             samples_root_dir.joinpath("lossy_transparent.webp"),
         )
-        self.assertAlmostEqual(result["psnr"], 39.5, delta=1.5)
-        self.assertAlmostEqual(result["rmse"], 3, delta=0.5)
+        self.assertAlmostEqual(result["psnr"], 35.0, delta=1)
+        self.assertAlmostEqual(result["rmse"], 0.01, delta=0.05)
 
     def test_lossy_gray(self):
         result = decoding_testing(
