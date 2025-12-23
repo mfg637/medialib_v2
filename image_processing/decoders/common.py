@@ -4,6 +4,8 @@ import pathlib
 import tempfile
 import numpy
 from . import (
+    jpeg,
+    avif,
     svg,
     jpeg_xl,
     video,
@@ -38,10 +40,6 @@ def open_image_vips(
             )
 
     except pyvips.Error:
-        # SVG fallback
-        # if svg.is_svg(file_path):
-        # return svg.decode(file_path, required_size)
-
         raise ValueError(f"Unsupported image format: {file_path}")
 
 

@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from . import (
-    webp,
-    svg,
     jpeg_xl,
     frames_stream,
     video,
