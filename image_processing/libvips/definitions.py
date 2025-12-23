@@ -13,6 +13,7 @@ HeifCodec = typing.Union[str, pyvips.enums.ForeignHeifCompression]
 HeifEncoder = typing.Union[str, pyvips.enums.ForeignHeifEncoder]
 BackgroundColor = typing.Union[float, Sequence[float]]
 pyvips.BlendMode = typing.Union[str, pyvips.enums.BlendMode]
+Coding = typing.Union[str, pyvips.enums.Coding]
 
 
 class Image:
@@ -252,8 +253,61 @@ class Image:
         if max_alpha is not None:
             kwargs["max_alpha"] = max_alpha
         return Image(
-            self._img.flatten(**kwargs)
-        )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+            self._img.flatten(
+                **kwargs
+            )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+        )
+
+    def copy(
+        self,
+        *,
+        width: Optional[int] = None,
+        height: Optional[int] = None,
+        bands: Optional[int] = None,
+        _format: Optional[BandFormat] = None,
+        coding: Optional[Coding] = None,
+        interpretation: Optional[Interpretation] = None,
+        xres: Optional[float] = None,
+        yres: Optional[float] = None,
+        xoffset: Optional[int] = None,
+        yoffset: Optional[int] = None,
+    ) -> Image:
+        """Copy an image, optionally modifying the header.
+        VIPS copies images by copying pointers, so this operation is instant,
+        even for very large images.
+
+        You can optionally change any or all header fields during the copy.
+        You can make any change which does not change the size of a pel,
+        so for example you can turn a 4-band uchar image into
+        a 2-band ushort image, but you cannot change a 100 x 100 RGB image
+        into a 300 x 100 mono image.
+        """
+        kwargs = dict()
+        if width is not None:
+            kwargs["width"] = width
+        if height is not None:
+            kwargs["height"] = height
+        if bands is not None:
+            kwargs["bands"] = bands
+        if _format is not None:
+            kwargs["format"] = _format
+        if coding is not None:
+            kwargs["coding"] = coding
+        if interpretation is not None:
+            kwargs["interpretation"] = interpretation
+        if xres is not None:
+            kwargs["xres"] = xres
+        if yres is not None:
+            kwargs["y_res"] = yres
+        if xoffset is not None:
+            kwargs["xoffset"] = xoffset
+        if yoffset is not None:
+            kwargs["yoffset"] = yoffset
+        return Image(
+            self._img.copy(
+                **kwargs
+            )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+        )
 
     def close(self):
         warnings.warn(

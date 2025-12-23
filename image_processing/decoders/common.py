@@ -1,5 +1,4 @@
 import PIL.Image
-import PIL.ImageFile
 import pathlib
 import tempfile
 import numpy
@@ -45,7 +44,7 @@ def open_image_vips(
 
 def open_image(
     file_path, required_size=None
-) -> PIL.ImageFile.ImageFile | Image | ffmpeg_frames_stream.FFmpegFramesStream:
+) -> Image | ffmpeg_frames_stream.FFmpegFramesStream:
     if jpeg_xl.is_JPEG_XL(file_path):
         return jpeg_xl.decode(file_path)
     elif video.is_video(file_path):
@@ -87,7 +86,7 @@ def open_image_as_pil_image(path: pathlib.Path) -> PIL.Image.Image:
     if isinstance(img, frames_stream.FramesStream):
         first_frame = img.next_frame()
         img.close()
-        return first_frame
+        return PIL.Image.fromarray(first_frame.numpy())
     elif isinstance(img, Image):
         return PIL.Image.fromarray(img.numpy())
     else:
@@ -118,8 +117,8 @@ def open_image_as_vips_image(path: pathlib.Path) -> Image:
 
 
 def open_image_as_ndarray(path: pathlib.Path) -> numpy.ndarray:
-    img = open_image_as_pil_image(path)
-    return numpy.array(img)
+    img = open_image_as_vips_image(path)
+    return img.numpy()
 
 
 def open_image_and_save_tmp_png(
@@ -129,7 +128,7 @@ def open_image_and_save_tmp_png(
     tmp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=True)
     if isinstance(img, frames_stream.FramesStream):
         first_frame = img.next_frame()
-        first_frame.save(tmp_file, "PNG", compress_level=0)
+        first_frame.pngsave(tmp_file.name, compress_level=0)
         first_frame.close()
         img.close()
     elif isinstance(img, Image):

@@ -1,4 +1,6 @@
-import PIL.Image
+from image_processing.libvips.definitions import Image
+import pyvips
+
 import subprocess
 from . import frames_stream, ffmpeg
 
@@ -11,7 +13,9 @@ class FFmpegFramesStream(frames_stream.FramesStream):
         self._original_filename = original_filename
         data = ffmpeg.probe(file_name)
 
-        video = ffmpeg.parser.find_video_stream(data, ffmpeg.parser.SPECIFY_VIDEO_STREAM.LAST)
+        video = ffmpeg.parser.find_video_stream(
+            data, ffmpeg.parser.SPECIFY_VIDEO_STREAM.LAST
+        )
 
         fps = ffmpeg.parser.get_fps(video)
         self._frame_time_ms = int(round(1 / fps * 1000))
@@ -19,45 +23,52 @@ class FFmpegFramesStream(frames_stream.FramesStream):
         self._width = video["width"]
         self._height = video["height"]
 
-        self._color_profile = "RGBA"
+        self._mode = "RGBA"
 
-        self._duration = float(data['format']['duration'])
+        self._duration = float(data["format"]["duration"])
         self._is_animated = self._duration > (1 / fps)
 
-        commandline = ['ffmpeg',
-                       '-i', file_name,
-                       '-f', 'image2pipe',
-                       '-map', "0:{}".format(video['index']),
-                       '-pix_fmt', 'rgba',
-                       '-an',
-                       '-r', str(fps),
-                       '-vcodec', 'rawvideo', '-']
+        commandline = [
+            "ffmpeg",
+            "-i",
+            file_name,
+            "-f",
+            "image2pipe",
+            "-map",
+            "0:{}".format(video["index"]),
+            "-pix_fmt",
+            "rgba",
+            "-an",
+            "-r",
+            str(fps),
+            "-vcodec",
+            "rawvideo",
+            "-",
+        ]
         self.process = subprocess.Popen(commandline, stdout=subprocess.PIPE)
 
-    def next_frame(self) -> PIL.Image.Image:
-        frame_size = 0
-        if self._color_profile == "RGBA":
-            frame_size = self._width * self._height * 4
-        else:
-            raise NotImplementedError("color profile not supported", self._color_profile)
+    def next_frame(self) -> Image:
+        if self._mode != "RGBA":
+            raise NotImplementedError("mode is not supported", self._mode)
 
-        if frame_size == 0:
-            raise ValueError()
+        frame_size = self._width * self._height * 4
 
         buffer = self.process.stdout.read(frame_size)
-
-        if len(buffer) > 0:
-            return PIL.Image.frombytes(
-                self._color_profile,
-                (self._width, self._height),
-                buffer,
-                "raw",
-                self._color_profile,
-                0,
-                1
-            )
-        else:
+        if not buffer or len(buffer) < frame_size:
             raise EOFError()
+
+        img = Image.new_from_buffer(
+            buffer,
+            "",
+            width=self._width,
+            height=self._height,
+            bands=4,
+            format="uchar",
+        )
+
+        img = img.copy(interpretation=pyvips.enums.Interpretation.SRGB)
+
+        return img
 
     def close(self):
         self.process.stdout.close()

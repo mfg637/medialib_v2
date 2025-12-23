@@ -1,5 +1,5 @@
 import abc
-import PIL.Image
+from image_processing.libvips.definitions import Image
 
 
 class FramesStream(abc.ABC):
@@ -31,7 +31,7 @@ class FramesStream(abc.ABC):
         return "VIDEO"
 
     @abc.abstractmethod
-    def next_frame(self) -> PIL.Image.Image:
+    def next_frame(self) -> Image:
         pass
 
     @abc.abstractmethod
