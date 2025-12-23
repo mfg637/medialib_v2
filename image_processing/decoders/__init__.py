@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from . import (
-    jpeg,
     webp,
     svg,
     jpeg_xl,

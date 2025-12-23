@@ -4,7 +4,6 @@ import pathlib
 import tempfile
 import numpy
 from . import (
-    jpeg,
     svg,
     jpeg_xl,
     video,
@@ -49,30 +48,12 @@ def open_image_vips(
 def open_image(
     file_path, required_size=None
 ) -> PIL.ImageFile.ImageFile | Image | ffmpeg_frames_stream.FFmpegFramesStream:
-    if jpeg.is_JPEG(file_path):
-        decoder = jpeg.JPEGDecoder(file_path)
-        decoded_jpg = decoder.decode(required_size).stdout
-        if decoded_jpg is not None:
-            img = PIL.Image.open(decoded_jpg)
-            return img
-        else:
-            raise DecodingError(f"Unable to decode jpeg file {file_path}")
-    elif jpeg_xl.is_JPEG_XL(file_path):
+    if jpeg_xl.is_JPEG_XL(file_path):
         return jpeg_xl.decode(file_path)
     elif video.is_video(file_path):
         return video.open_video(file_path)
     else:
         return open_image_vips(file_path, required_size)
-        pil_image = None
-        try:
-            pil_image = PIL.Image.open(file_path)
-        except PIL.Image.UnidentifiedImageError:
-            if svg.is_svg(file_path):
-                return svg.decode(file_path, required_size)
-            else:
-                raise ValueError()
-        else:
-            return pil_image
 
 
 def get_image_format(file_path) -> str:
