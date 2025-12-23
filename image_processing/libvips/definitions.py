@@ -1,4 +1,5 @@
 import typing
+from collections.abc import Sequence, Buffer
 from typing import Optional
 import pyvips
 import warnings
@@ -10,7 +11,7 @@ BandFormat = typing.Union[str, pyvips.enums.BandFormat]
 Kernel = typing.Union[str, pyvips.enums.Kernel]
 HeifCodec = typing.Union[str, pyvips.enums.ForeignHeifCompression]
 HeifEncoder = typing.Union[str, pyvips.enums.ForeignHeifEncoder]
-BackgroundColor = typing.Union[float, typing.Sequence[float]]
+BackgroundColor = typing.Union[float, Sequence[float]]
 pyvips.BlendMode = typing.Union[str, pyvips.enums.BlendMode]
 
 
@@ -41,6 +42,14 @@ class Image:
         if interpretation is not None:
             kwargs["interpretation"] = interpretation
         return Image(pyvips.Image.new_from_array(obj, **kwargs))
+
+    @staticmethod
+    def new_from_buffer(data: Buffer, options: str = "", **kwargs):
+        return Image(
+            pyvips.Image.new_from_buffer(
+                data, options, **kwargs
+            )  # pyright: ignore[reportArgumentType]
+        )
 
     def new_from_image(self, value: BackgroundColor):
         return Image(self._img.new_from_image(value))

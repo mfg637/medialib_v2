@@ -1,21 +1,27 @@
-import tempfile
 import subprocess
-from PIL import Image
+import pathlib
+from image_processing.libvips.definitions import Image
 
 
-def is_JPEG_XL(file_path):
-    file = open(file_path, 'rb')
-    header = file.read(7)
-    file.close()
-    return header == b'\x00\x00\x00\x0cJXL' or header[:2] == b'\xff\x0a'
+def is_JPEG_XL(file_path: pathlib.Path | str):
+    with open(file_path, "rb") as f:
+        header = f.read(7)
+    return header == b"\x00\x00\x00\x0cJXL" or header[:2] == b"\xff\x0a"
 
 
-def decode(file):
-    tmp_file = tempfile.NamedTemporaryFile(mode='rb', delete=True, suffix='.png')
-    subprocess.run([
-        "djxl",
-        "--quiet",
-        str(file),
-        tmp_file.name
-    ])
-    return Image.open(tmp_file)
+def decode(file: pathlib.Path | str) -> Image:
+    proc = subprocess.Popen(
+        ["djxl", file, "-", "--output_format", "pam"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    stdout, stderr = proc.communicate()
+
+    if proc.returncode == 0:
+        return Image.new_from_buffer(stdout, "")
+    else:
+        stderr_text_data = stderr.decode(errors="replace")
+        print("INFO: djxl stderr dump")
+        print(stderr_text_data)
+        raise RuntimeError("djxl failed")
