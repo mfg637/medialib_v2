@@ -6,7 +6,6 @@ import numpy
 from . import (
     jpeg,
     svg,
-    avif,
     jpeg_xl,
     video,
     YUV4MPEG2,
@@ -58,8 +57,6 @@ def open_image(
             return img
         else:
             raise DecodingError(f"Unable to decode jpeg file {file_path}")
-    # elif avif.is_avif(file_path):
-    #     return avif.decode(file_path)
     elif jpeg_xl.is_JPEG_XL(file_path):
         return jpeg_xl.decode(file_path)
     elif video.is_video(file_path):

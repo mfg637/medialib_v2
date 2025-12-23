@@ -5,8 +5,6 @@ from . import (
     jpeg,
     webp,
     svg,
-    avif,
-    YUV4MPEG2,
     jpeg_xl,
     frames_stream,
     video,
