@@ -52,6 +52,14 @@ class Image:
             )  # pyright: ignore[reportArgumentType]
         )
 
+    @staticmethod
+    def new_from_memory(
+        data: bytes, width: int, height: int, bands: int, _format: BandFormat
+    ) -> Image:
+        return Image(
+            pyvips.Image.new_from_memory(data, width, height, bands, _format)
+        )
+
     def new_from_image(self, value: BackgroundColor):
         return Image(self._img.new_from_image(value))
 

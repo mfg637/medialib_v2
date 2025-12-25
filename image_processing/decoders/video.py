@@ -1,4 +1,4 @@
-from . import ffmpeg_frames_stream
+from . import video_thumbnail
 
 
 def mp4_header_check(prefix):
@@ -13,7 +13,7 @@ def mkv_header_check(prefix):
 
 
 def mpd_check(file_path):
-    file = open(file_path, 'r')
+    file = open(file_path, "r")
     try:
         line = file.readline()
         if "<?xml" in line:
@@ -31,7 +31,7 @@ def mpd_check(file_path):
 
 
 def is_regular_video(file_path):
-    file = open(file_path, 'rb')
+    file = open(file_path, "rb")
     header = file.read(16)
     file.close()
     return mkv_header_check(header) or mp4_header_check(header)
@@ -43,17 +43,11 @@ def is_video(file_path):
 
 
 def is_webm(file_path):
-    file = open(file_path, 'rb')
+    file = open(file_path, "rb")
     header = file.read(16)
     file.close()
     return mkv_header_check(header)
 
 
 def open_video(file_path):
-    if is_regular_video(file_path):
-        return ffmpeg_frames_stream.FFmpegFramesStream(file_path)
-    elif mpd_check(file_path):
-        stream = ffmpeg_frames_stream.FFmpegFramesStream(file_path)
-        return stream
-    else:
-        raise NotImplementedError()
+    return video_thumbnail.decode(file_path)

@@ -8,9 +8,6 @@ from . import (
     svg,
     jpeg_xl,
     video,
-    YUV4MPEG2,
-    frames_stream,
-    ffmpeg_frames_stream,
 )
 from image_processing.libvips.definitions import Image
 import pyvips
@@ -42,9 +39,7 @@ def open_image_vips(
         raise ValueError(f"Unsupported image format: {file_path}")
 
 
-def open_image(
-    file_path, required_size=None
-) -> Image | ffmpeg_frames_stream.FFmpegFramesStream:
+def open_image(file_path, required_size=None) -> Image:
     if jpeg_xl.is_JPEG_XL(file_path):
         return jpeg_xl.decode(file_path)
     elif video.is_video(file_path):
@@ -58,8 +53,6 @@ def get_image_format(file_path) -> str:
         return "jpeg"
     elif avif.is_avif(file_path):
         return "avif"
-    elif YUV4MPEG2.is_Y4M(file_path):
-        return "y4m"
     elif jpeg_xl.is_JPEG_XL(file_path):
         return "jpeg xl"
     elif video.is_video(file_path):
@@ -83,11 +76,7 @@ def get_image_format(file_path) -> str:
 
 def open_image_as_pil_image(path: pathlib.Path) -> PIL.Image.Image:
     img = open_image(path)
-    if isinstance(img, frames_stream.FramesStream):
-        first_frame = img.next_frame()
-        img.close()
-        return PIL.Image.fromarray(first_frame.numpy())
-    elif isinstance(img, Image):
+    if isinstance(img, Image):
         return PIL.Image.fromarray(img.numpy())
     else:
         return img
@@ -95,17 +84,6 @@ def open_image_as_pil_image(path: pathlib.Path) -> PIL.Image.Image:
 
 def open_image_as_vips_image(path: pathlib.Path) -> Image:
     img = open_image(path)
-
-    if isinstance(img, frames_stream.FramesStream):
-        first_frame = img.next_frame()
-        img.close()
-
-        if isinstance(first_frame, Image):
-            return first_frame
-        elif isinstance(first_frame, PIL.Image.Image):
-            return Image.new_from_array(first_frame)
-        else:
-            raise TypeError(f"Unexpected frame type: {type(first_frame)}")
 
     if isinstance(img, PIL.Image.Image):
         return Image.new_from_array(img)
@@ -126,12 +104,7 @@ def open_image_and_save_tmp_png(
 ) -> tempfile._TemporaryFileWrapper:
     img = open_image(path)
     tmp_file = tempfile.NamedTemporaryFile(suffix=".png", delete=True)
-    if isinstance(img, frames_stream.FramesStream):
-        first_frame = img.next_frame()
-        first_frame.pngsave(tmp_file.name, compress_level=0)
-        first_frame.close()
-        img.close()
-    elif isinstance(img, Image):
+    if isinstance(img, Image):
         img.pngsave(str(path))
     else:
         img.save(tmp_file, "PNG", compress_level=0)

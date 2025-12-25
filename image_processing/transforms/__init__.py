@@ -1,1 +1,1 @@
-from . import compositing, color, resize
+from . import compositing, color, resize, calc_size
