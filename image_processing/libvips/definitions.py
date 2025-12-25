@@ -14,6 +14,8 @@ HeifEncoder = typing.Union[str, pyvips.enums.ForeignHeifEncoder]
 BackgroundColor = typing.Union[float, Sequence[float]]
 pyvips.BlendMode = typing.Union[str, pyvips.enums.BlendMode]
 Coding = typing.Union[str, pyvips.enums.Coding]
+PCS = typing.Union[str, pyvips.enums.PCS]
+Intent = typing.Union[str, pyvips.enums.Intent]
 
 
 class Image:
@@ -314,6 +316,39 @@ class Image:
         return Image(
             self._img.copy(
                 **kwargs
+            )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+        )
+
+    def get_typeof(self, name: str):
+        return self._img.get_typeof(name)
+
+    def icc_transform(
+        self,
+        output_profile: str,
+        *,
+        pcs: Optional[PCS] = None,
+        intent: Optional[Intent] = None,
+        black_point_compensation: Optional[bool] = None,
+        embedded: Optional[bool] = None,
+        input_profile: Optional[str] = None,
+        depth: Optional[int] = None,
+    ) -> Image:
+        kwargs = dict()
+        if pcs is not None:
+            kwargs["pcs"] = pcs
+        if intent is not None:
+            kwargs["intent"] = intent
+        if black_point_compensation is not None:
+            kwargs["black_point_compensation"] = black_point_compensation
+        if embedded is not None:
+            kwargs["intent"] = embedded
+        if input_profile is not None:
+            kwargs["input_profile"] = input_profile
+        if depth is not None:
+            kwargs["depth"] = depth
+        return Image(
+            self._img.icc_transform(
+                output_profile, **kwargs
             )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
         )
 

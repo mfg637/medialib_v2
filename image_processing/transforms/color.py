@@ -1,3 +1,4 @@
+import enum
 from image_processing.libvips.definitions import (
     Image,
     Interpretation,
@@ -10,7 +11,14 @@ from PIL import ImageColor
 import colorsys
 
 
+def has_embeded_icc(img: Image) -> bool:
+    return img.get_typeof("icc-profile-data") != 0
+
+
 def upcast_and_linearise(img: Image) -> Image:
+    if has_embeded_icc(img):
+        img = img.icc_transform("srgb", embedded=True, depth=16)
+
     return img.cast(pyvips.enums.BandFormat.FLOAT).colourspace(
         pyvips.enums.Interpretation.SCRGB,
     )
