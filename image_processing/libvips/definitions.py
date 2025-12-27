@@ -11,11 +11,13 @@ BandFormat = typing.Union[str, pyvips.enums.BandFormat]
 Kernel = typing.Union[str, pyvips.enums.Kernel]
 HeifCodec = typing.Union[str, pyvips.enums.ForeignHeifCompression]
 HeifEncoder = typing.Union[str, pyvips.enums.ForeignHeifEncoder]
+HeifSubsampleMode = typing.Union[str, pyvips.enums.ForeignSubsample]
 BackgroundColor = typing.Union[float, Sequence[float]]
 pyvips.BlendMode = typing.Union[str, pyvips.enums.BlendMode]
 Coding = typing.Union[str, pyvips.enums.Coding]
 PCS = typing.Union[str, pyvips.enums.PCS]
 Intent = typing.Union[str, pyvips.enums.Intent]
+WEBP_Preset = typing.Union[str, pyvips.enums.ForeignWebpPreset]
 
 
 class Image:
@@ -64,6 +66,9 @@ class Image:
 
     def new_from_image(self, value: BackgroundColor):
         return Image(self._img.new_from_image(value))
+
+    def copy_memory(self) -> Image:
+        return Image(self._img.copy_memory())
 
     @property
     def width(self) -> int:
@@ -193,10 +198,28 @@ class Image:
         )
 
     def webpsave(
-        self, filename: str, *, Q: int = 75, effort: int = 4, **kwargs
+        self,
+        filename: str,
+        *,
+        Q: int = 75,
+        effort: int = 4,
+        alpha_q: int = 100,
+        preset: WEBP_Preset = pyvips.enums.ForeignWebpPreset.DEFAULT,
+        smart_subsample: Optional[bool] = None,
+        smart_deblock: Optional[bool] = None,
+        subsample_mode: Optional[HeifSubsampleMode] = None,
+        **kwargs,
     ) -> "Image":
         kwargs["Q"] = Q
         kwargs["effort"] = effort
+        kwargs["preset"] = preset
+        kwargs["alpha_q"] = alpha_q
+        if smart_subsample is not None:
+            kwargs["smart_subsample"] = smart_subsample
+        if smart_deblock is not None:
+            kwargs["smart_deblock"] = smart_deblock
+        if subsample_mode is not None:
+            kwargs["subsample_mode"] = subsample_mode
         return Image(
             self._img.webpsave(  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
                 filename, **kwargs

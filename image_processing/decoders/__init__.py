@@ -11,6 +11,7 @@ from .common import (
     open_image_as_pil_image,
     open_image_as_ndarray,
     open_image_as_vips_image,
+    AccessMode,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "open_image_as_pil_image",
     "open_image_as_vips_image",
     "open_image_as_ndarray",
+    "AccessMode",
 ]

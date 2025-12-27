@@ -7,4 +7,3 @@ mypy
 django-stubs
 scikit-image
 pyvips
-image-similarity-measures

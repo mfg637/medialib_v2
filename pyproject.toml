@@ -25,8 +25,11 @@ dependencies = [
     "ImageHash",
     "psycopg2-binary",
     "python-magic",
-    "pillow_heif",
-    "image-similarity-measures",
+    "Pillow",
+    "mypy",
+    "django-stubs",
+    "scikit-image",
+    "pyvips"
 ]
 
 #[project.urls] # project is not published yet

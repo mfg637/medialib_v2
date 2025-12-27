@@ -2,6 +2,7 @@ import PIL.Image
 import pathlib
 import tempfile
 import numpy
+import enum
 from . import (
     jpeg,
     avif,
@@ -17,35 +18,46 @@ class DecodingError(Exception):
     pass
 
 
+class AccessMode(enum.StrEnum):
+    RANDOM = pyvips.enums.Access.RANDOM
+    SEQUENTAL = pyvips.enums.Access.SEQUENTIAL
+
+
 def open_image_vips(
-    file_path: pathlib.Path,
+    file_path: pathlib.Path | str,
     required_size: tuple[int, int] | None = None,
+    access_mode: AccessMode = AccessMode.SEQUENTAL,
 ) -> Image:
     try:
         if required_size is not None:
             return Image.new_from_file(
                 str(file_path),
-                access="sequential",
+                access=access_mode.value,
                 width=required_size[0],
                 height=required_size[1],
             )
         else:
             return Image.new_from_file(
                 str(file_path),
-                access="sequential",
+                access=access_mode.value,
             )
 
     except pyvips.Error:
         raise ValueError(f"Unsupported image format: {file_path}")
 
 
-def open_image(file_path, required_size=None) -> Image:
+def open_image(
+    file_path: pathlib.Path | str,
+    *,
+    required_size: tuple[int, int] | None = None,
+    access_mode: AccessMode = AccessMode.SEQUENTAL,
+) -> Image:
     if jpeg_xl.is_JPEG_XL(file_path):
         return jpeg_xl.decode(file_path)
     elif video.is_video(file_path):
         return video.open_video(file_path)
     else:
-        return open_image_vips(file_path, required_size)
+        return open_image_vips(file_path, required_size, access_mode)
 
 
 def get_image_format(file_path) -> str:

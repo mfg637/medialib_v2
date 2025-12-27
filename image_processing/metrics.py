@@ -10,7 +10,7 @@ from image_processing.transforms.color import upcast_and_linearise
 
 
 DATA_RANGES: dict[numpy.dtype, float] = {
-    numpy.dtype(numpy.uint8): float(2**8 - 1),
+    numpy.dtype(numpy.uint8): 255,
     numpy.dtype(numpy.uint16): float(2**16 - 1),
     numpy.dtype(numpy.float64): 1.0,
     numpy.dtype(numpy.float32): 1.0,
@@ -50,20 +50,14 @@ def rgb_to_luma(img: numpy.ndarray) -> numpy.ndarray:
 
 @check_dtypes_equal
 def calc_ssim(image_true: numpy.ndarray, image_test: numpy.ndarray) -> float:
-    luma_true = rgb_to_luma(image_true)
-    luma_test = rgb_to_luma(image_test)
-
-    max_val = max(luma_true.max(), luma_test.max())
-    min_val = min(luma_true.min(), luma_test.min())
-
-    luma_true = (luma_true - min_val) / (max_val - min_val)
-    luma_test = (luma_test - min_val) / (max_val - min_val)
-
     return structural_similarity(
-        luma_true,
-        luma_test,
-        data_range=1.0,
+        image_true,
+        image_test,
+        data_range=DATA_RANGES[image_true.dtype],
+        channel_axis=-1,
+        win_size=7,  # Явно задаем размер окна
         gaussian_weights=True,
+        sigma=1.5,
         use_sample_covariance=True,
     )  # pyright: ignore[reportReturnType]
 
