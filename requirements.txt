@@ -7,3 +7,4 @@ mypy
 django-stubs
 scikit-image
 pyvips
+python-dotenv

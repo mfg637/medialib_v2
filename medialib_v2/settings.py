@@ -10,9 +10,11 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from . import secrets
-
 from pathlib import Path
+from os import getenv
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = secrets.DJANGO_SECRET_KEY
+SECRET_KEY = getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -80,13 +82,13 @@ WSGI_APPLICATION = "medialib_v2.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": secrets.DB_NAME,
-        "USER": secrets.DB_USER,
-        "PASSWORD": secrets.DB_PASSWORD,
-        "HOST": secrets.DB_HOST,
-        "PORT": secrets.DB_PORT,
+        "NAME": getenv("DB_NAME"),
+        "USER": getenv("DB_USER"),
+        "PASSWORD": getenv("DB_PASSWORD"),
+        "HOST": getenv("DB_HOST"),
+        "PORT": getenv("DB_PORT"),
         "TEST": {
-            "NAME": secrets.TEST_DB_NAME,
+            "NAME": getenv("TEST_DB_NAME"),
         },
     }
 }
@@ -116,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = secrets.TIME_ZONE
+TIME_ZONE = getenv("TIME_ZONE")
 
 USE_I18N = True
 
@@ -133,4 +135,4 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MEDIA_ROOT = str(secrets.MEDIALIB_ROOT)
+MEDIA_ROOT = str(getenv("MEDIALIB_ROOT"))

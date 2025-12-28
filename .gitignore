@@ -1,4 +1,4 @@
-medialib_v2/secrets.py
+.env
 __pycache__
 .python-version
 medialib_v2.code-workspace
