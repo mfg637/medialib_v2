@@ -1,6 +1,6 @@
 from image_processing.libvips.definitions import Image
 from image_processing.video import ffmpeg
-from image_processing.utils import run_subprocess
+from image_processing.common.utils import run_subprocess
 import pathlib
 import random
 import pyvips

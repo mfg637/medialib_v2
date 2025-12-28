@@ -1,4 +1,4 @@
-from . import decoders, encoders, metrics, transforms, libvips, utils, video
+from . import decoders, encoders, metrics, transforms, libvips, common, video
 from .decoders import open_image
 
 
@@ -8,7 +8,7 @@ __all__ = [
     "metrics",
     "transforms",
     "libvips",
-    "utils",
+    "common",
     "video",
     "open_image",
 ]

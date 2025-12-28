@@ -50,7 +50,7 @@ def run_subprocess(commandline: list[str], log_stdout=False, capture_out=True):
     return result
 
 
-def bit_round(number, precision: int = 0):
+def bit_round(number: int | float, precision: int = 0) -> int | float:
     scale = 1
 
     if precision > 0:

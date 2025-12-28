@@ -6,8 +6,8 @@ import pathlib
 import subprocess
 import logging
 
-from . import exceptions, parser
-from image_processing.utils import InputSourceFacade
+from . import exceptions, parser, videoprocessing
+from image_processing.common.utils import InputSourceFacade
 
 
 def get_output(commandline):
@@ -78,4 +78,11 @@ def set_loglevel(loglevel):
     return commandline
 
 
-__all__ = ["exceptions", "parser", "get_output", "probe", "set_loglevel"]
+__all__ = [
+    "exceptions",
+    "parser",
+    "videoprocessing",
+    "get_output",
+    "probe",
+    "set_loglevel",
+]

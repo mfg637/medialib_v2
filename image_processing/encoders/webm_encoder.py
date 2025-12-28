@@ -2,14 +2,17 @@ import pathlib
 import tempfile
 
 from .. import config
-from ..common import run_subprocess
+from image_processing.common.utils import run_subprocess
 
 from .encoder import BytesEncoder
 
 
 class WEBMEncoder(BytesEncoder):
     SUFFIX = ".webm"
-    def __init__(self, encoder: str, pixel_format: str, source: bytearray | pathlib.Path):
+
+    def __init__(
+        self, encoder: str, pixel_format: str, source: bytearray | pathlib.Path
+    ):
         BytesEncoder.__init__(self, self.SUFFIX)
         self._encoder = encoder
         self._pixel_format = pixel_format
@@ -23,24 +26,33 @@ class WEBMEncoder(BytesEncoder):
             tmp_input = tempfile.NamedTemporaryFile()
             tmp_input.write(self.source)
             input_file = tmp_input.name
-        commandline = [
-                'ffmpeg'
-        ]
+        commandline = ["ffmpeg"]
         if rewrite:
-            commandline += ['-y']
+            commandline += ["-y"]
         commandline += [
-            '-loglevel', 'warning',
-            '-i', input_file,
-            '-pix_fmt', self._pixel_format,
-            '-c:v', self._encoder,
-            '-crf', str(quality),
-            '-b:v', '0',
-            '-profile:v', '0',
-            '-cpu-used', '4',
-            '-row-mt', '1',
-            '-threads', str(config.encoding_threads),
-            '-f', 'webm',
-            '-'
+            "-loglevel",
+            "warning",
+            "-i",
+            input_file,
+            "-pix_fmt",
+            self._pixel_format,
+            "-c:v",
+            self._encoder,
+            "-crf",
+            str(quality),
+            "-b:v",
+            "0",
+            "-profile:v",
+            "0",
+            "-cpu-used",
+            "4",
+            "-row-mt",
+            "1",
+            "-threads",
+            str(config.encoding_threads),
+            "-f",
+            "webm",
+            "-",
         ]
         encoding_results = run_subprocess(commandline)
         if tmp_input is not None:
@@ -61,5 +73,3 @@ class VP9Encoder(WEBMEncoder):
 class AV1Encoder(WEBMEncoder):
     def __init__(self, source):
         super().__init__("libaom-av1", "yuva420p10le", source)
-
-

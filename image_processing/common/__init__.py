@@ -1,19 +1,4 @@
-import logging
-import subprocess
-
-logger = logging.getLogger(__name__)
-
-from . import videoprocessing, compatibility_level, file_format, resize
-from .resize import bit_round
+from . import compatibility_level, file_format, utils
 
 
-def run_subprocess(commandline: list[str], log_stdout=False):
-    result = subprocess.run(commandline, capture_output=True)
-    stderr_message = result.stderr.decode("utf-8").splitlines()
-    for line in stderr_message:
-        logger.debug("stderr: {}".format(line))
-    if log_stdout:
-        stdout_message = result.stdout.decode("utf-8").splitlines()
-        for line in stdout_message:
-            logger.debug("stdout: {}".format(line))
-    return result
+__all__ = ["compatibility_level", "file_format", "utils"]

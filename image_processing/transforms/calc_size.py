@@ -1,6 +1,6 @@
 import enum
 import logging
-from image_processing.utils import bit_round
+from image_processing.common.utils import bit_round
 
 
 logger = logging.getLogger(__name__)
@@ -205,6 +205,31 @@ def scale_down(
         )
 
     if fills_in:
-        return filled_in_size
+        return filled_in_size[:2]
     else:
-        return scale_down_fit_in(source_size, max_size, size_precision)
+        return scale_down_fit_in(source_size, max_size, size_precision)[:2]
+
+
+def calc_fit_in_rect_downscale(
+    original_size: tuple[int, int],
+    fit_in_size: tuple[int, int],
+    precision: int = 0,
+) -> tuple[float, int, int]:
+    if original_size[0] > fit_in_size[0] or original_size[1] > fit_in_size[1]:
+        aspect_ratio = original_size[0] / original_size[1]
+        scale = 1
+        if aspect_ratio > 1:
+            scale = original_size[0] / fit_in_size[0]
+        else:
+            scale = original_size[1] / fit_in_size[1]
+        return (
+            scale,
+            int(bit_round(original_size[0] / scale, precision)),
+            int(bit_round(original_size[1] / scale, precision)),
+        )
+    else:
+        return (
+            1.0,
+            int(bit_round(original_size[0], precision)),
+            int(bit_round(original_size[1], precision)),
+        )

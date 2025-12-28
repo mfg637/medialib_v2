@@ -7,7 +7,7 @@ from image_processing.video.specification.video import (
     PIXEL_FORMAT_TO_BITS_PER_CHANNEL,
 )
 
-from image_processing.utils import (
+from image_processing.common.utils import (
     run_subprocess,
     InputSourceFacade,
     SourceType,

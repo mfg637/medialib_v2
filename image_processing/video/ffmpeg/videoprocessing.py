@@ -1,9 +1,12 @@
 import tempfile
-from .compatibility_level import CL3_FFMPEG_SCALE_COMMANDLINE, cl3_size_valid
+from image_processing.common.compatibility_level import (
+    cl3_video_width,
+    cl3_video_height,
+)
 
 
 def ffmpeg_set_fps_commandline(fps):
-    return ['-r', str(fps)]
+    return ["-r", str(fps)]
 
 
 def limit_fps(fps, limit_value=30):
@@ -20,3 +23,11 @@ def ffmpeg_get_passfile_prefix():
     with tempfile.NamedTemporaryFile() as f:
         passfilename = f.name
     return passfilename
+
+
+CL3_FFMPEG_SCALE_COMMANDLINE = [
+    "-vf",
+    "scale='min({},iw)':'min({},ih)':force_original_aspect_ratio=decrease".format(
+        cl3_video_width, cl3_video_height
+    ),
+]
