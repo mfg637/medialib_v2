@@ -136,3 +136,24 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_ROOT = str(getenv("MEDIALIB_ROOT"))
+MEDIALIB_ROOT = Path(
+    getenv("MEDIALIB_ROOT")  # pyright: ignore[reportArgumentType]
+)
+MEDIALIB_COLLECTION_ROOT = MEDIALIB_ROOT.joinpath("medialib")
+MEDIALIB_TEST_ROOT = MEDIALIB_ROOT.joinpath("ml_test")
+MEDIALIB_QUEUE_ROOT = MEDIALIB_ROOT.joinpath("queue")
+
+if not MEDIALIB_ROOT.is_dir():
+    ERROR_MESSAGE = f"Directory {MEDIALIB_ROOT} does not exists"
+    print(ERROR_MESSAGE)
+    create_dir_answer = input("Create this directory? (y/n): ")
+    if create_dir_answer == "y":
+        MEDIALIB_ROOT.mkdir(parents=True)
+    else:
+        raise ValueError(ERROR_MESSAGE)
+if not MEDIALIB_COLLECTION_ROOT.is_dir():
+    MEDIALIB_COLLECTION_ROOT.mkdir()
+if not MEDIALIB_TEST_ROOT.is_dir():
+    MEDIALIB_TEST_ROOT.mkdir()
+if not MEDIALIB_QUEUE_ROOT.is_dir():
+    MEDIALIB_QUEUE_ROOT.mkdir()
