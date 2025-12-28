@@ -1,4 +1,5 @@
 import enum
+from image_processing.common.file_format import FormatEnum
 
 
 class VideoContainers(enum.Enum):
@@ -35,4 +36,15 @@ AUDIO_CONTAINER_FILE_SUFFIX: dict[AudioContainers, str] = {
     AudioContainers.MPEG_4_AUDIO: ".m4a",
     AudioContainers.OGG_AUDIO: ".oga",
     AudioContainers.OGG_OPUS: ".opus",
+}
+
+
+FILE_FORMAT_TO_CONTAINER_FORMAT: dict[FormatEnum, VideoContainers] = {
+    FormatEnum.MPEG_4: VideoContainers.MPEG_4,
+    FormatEnum.WEBM: VideoContainers.WEBM,
+}
+
+VIDEO_CONTAINER_TO_FILE_FORMAT: dict[VideoContainers, FormatEnum] = {
+    VideoContainers.MPEG_4: FormatEnum.MPEG_4,
+    VideoContainers.WEBM: FormatEnum.WEBM,
 }
