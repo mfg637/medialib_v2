@@ -1,6 +1,8 @@
 from django.db import models
 import enum
+
 import medialib.models
+from django.core.exceptions import ValidationError
 
 
 class TaskStatusEnum(enum.IntEnum):
@@ -18,6 +20,26 @@ class Task(models.Model):
         (TaskStatusEnum.ERROR, "ERROR!!!"),
     ]
     status = models.IntegerField(choices=STATUS_LIST)
+
+    def clean(self) -> None:
+        if self.status is not TaskStatusEnum.DONE and self.tmp_file is None:
+            raise ValidationError(
+                "Temporary file can not be None until process is done"
+            )
+        return super().clean()
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+class AwaitingTaskMetadata(models.Model):
+    title = models.TextField(null=True)
+    description = models.TextField(null=True)
+    origin_name = models.CharField(max_length=32, null=True)
+    origin_id = models.TextField()
+    tags = models.JSONField()
+    task = models.OneToOneField(Task, on_delete=models.CASCADE)
 
 
 class TaskResult(models.Model):
