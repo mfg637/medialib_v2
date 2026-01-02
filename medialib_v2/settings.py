@@ -87,6 +87,7 @@ DATABASES = {
         "PASSWORD": getenv("DB_PASSWORD"),
         "HOST": getenv("DB_HOST"),
         "PORT": getenv("DB_PORT"),
+        "CONN_MAX_AGE": 60,
         "TEST": {
             "NAME": getenv("TEST_DB_NAME"),
         },
@@ -135,22 +136,21 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MEDIA_ROOT = str(getenv("MEDIALIB_ROOT"))
 MEDIALIB_ROOT = Path(
     getenv("MEDIALIB_ROOT")  # pyright: ignore[reportArgumentType]
+).absolute()
+MEDIA_ROOT = str(MEDIALIB_ROOT)
+MEDIALIB_COLLECTION_DIRECTORY = Path("medialib")
+MEDIALIB_COLLECTION_ROOT = MEDIALIB_ROOT.joinpath(
+    MEDIALIB_COLLECTION_DIRECTORY
 )
-MEDIALIB_COLLECTION_ROOT = MEDIALIB_ROOT.joinpath("medialib")
-MEDIALIB_TEST_ROOT = MEDIALIB_ROOT.joinpath("ml_test")
-MEDIALIB_QUEUE_ROOT = MEDIALIB_ROOT.joinpath("queue")
+MEDIALIB_TEST_DIRECTORY = Path("ml_test")
+MEDIALIB_TEST_ROOT = MEDIALIB_ROOT.joinpath(MEDIALIB_TEST_DIRECTORY)
+MEDIALIB_QUEUE_DIRECTORY = Path("queue")
+MEDIALIB_QUEUE_ROOT = MEDIALIB_ROOT.joinpath(MEDIALIB_QUEUE_DIRECTORY)
 
 if not MEDIALIB_ROOT.is_dir():
-    ERROR_MESSAGE = f"Directory {MEDIALIB_ROOT} does not exists"
-    print(ERROR_MESSAGE)
-    create_dir_answer = input("Create this directory? (y/n): ")
-    if create_dir_answer == "y":
-        MEDIALIB_ROOT.mkdir(parents=True)
-    else:
-        raise ValueError(ERROR_MESSAGE)
+    MEDIALIB_ROOT.mkdir(parents=True)
 if not MEDIALIB_COLLECTION_ROOT.is_dir():
     MEDIALIB_COLLECTION_ROOT.mkdir()
 if not MEDIALIB_TEST_ROOT.is_dir():

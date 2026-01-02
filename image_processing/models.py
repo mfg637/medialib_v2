@@ -3,6 +3,8 @@ import enum
 
 import medialib.models
 from django.core.exceptions import ValidationError
+from image_processing.common.file_utils import MediaType
+from medialib_v2 import settings
 
 
 class TaskStatusEnum(enum.IntEnum):
@@ -12,33 +14,45 @@ class TaskStatusEnum(enum.IntEnum):
 
 
 class Task(models.Model):
-    created_at = models.DateTimeField(auto_created=True)
-    tmp_file = models.FilePathField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    uploaded_file = models.FileField(
+        upload_to=settings.MEDIALIB_QUEUE_DIRECTORY,
+        null=True,
+    )
     STATUS_LIST = [
         (TaskStatusEnum.AWAITING, "Wait for processing…"),
         (TaskStatusEnum.DONE, "Done!"),
         (TaskStatusEnum.ERROR, "ERROR!!!"),
     ]
-    status = models.IntegerField(choices=STATUS_LIST)
+    media_type = models.CharField(
+        max_length=10, choices=MediaType, null=True, blank=True
+    )
+    mime_type = models.CharField(max_length=128, null=True, blank=True)
+    status = models.IntegerField(
+        choices=STATUS_LIST, default=TaskStatusEnum.AWAITING
+    )
 
     def clean(self) -> None:
-        if self.status is not TaskStatusEnum.DONE and self.tmp_file is None:
+        if (
+            self.status is not TaskStatusEnum.DONE
+            and self.uploaded_file is None
+        ):
             raise ValidationError(
                 "Temporary file can not be None until process is done"
             )
         return super().clean()
 
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     self.full_clean()
+    #     super().save(*args, **kwargs)
 
 
 class AwaitingTaskMetadata(models.Model):
-    title = models.TextField(null=True)
-    description = models.TextField(null=True)
-    origin_name = models.CharField(max_length=32, null=True)
-    origin_id = models.TextField()
-    tags = models.JSONField()
+    title = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    origin_name = models.CharField(max_length=32, null=True, blank=True)
+    origin_id = models.CharField(max_length=512, null=True, blank=True)
+    tags = models.JSONField(null=True, blank=True)
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
 
 

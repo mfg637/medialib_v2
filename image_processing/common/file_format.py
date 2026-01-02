@@ -1,4 +1,6 @@
 import enum
+from pathlib import Path
+from io import BytesIO
 
 
 class FormatEnum(enum.StrEnum):
@@ -10,6 +12,16 @@ class FormatEnum(enum.StrEnum):
     WEBM = "WEBM"
     AVIF = "AVIF"
     SVG = "SVG"
+    MOV = "MOV"
+
+
+ALLOWED_FILE_FORMATS: set[FormatEnum] = {
+    FormatEnum.PNG,
+    FormatEnum.JPEG,
+    FormatEnum.WEBP,
+    FormatEnum.AVIF,
+    FormatEnum.SVG,
+}
 
 
 FILE_SUFFIX_TO_FORMAT: dict[str, FormatEnum] = {
@@ -23,16 +35,58 @@ FILE_SUFFIX_TO_FORMAT: dict[str, FormatEnum] = {
     ".webp": FormatEnum.WEBP,
     ".webm": FormatEnum.WEBM,
     ".avif": FormatEnum.AVIF,
-    ".svg": FormatEnum.SVG
+    ".svg": FormatEnum.SVG,
+    ".mov": FormatEnum.MOV,
+}
+
+FILE_FORMAT_DEFAULT_SUFFIX: dict[FormatEnum, str] = {
+    FormatEnum.PNG: ".png",
+    FormatEnum.JPEG: ".jpeg",
+    FormatEnum.GIF: ".gif",
+    FormatEnum.MPEG_4: ".mp4",
+    FormatEnum.WEBP: ".webp",
+    FormatEnum.WEBM: ".webm",
+    FormatEnum.AVIF: ".avif",
+    FormatEnum.SVG: ".svg",
+    FormatEnum.MOV: ".mov",
+}
+
+MIME_TYPE_BY_FORMAT: dict[FormatEnum, str] = {
+    FormatEnum.PNG: "image/png",
+    FormatEnum.JPEG: "image/jpeg",
+    FormatEnum.GIF: "image/gif",
+    FormatEnum.MPEG_4: "video/mp4",
+    FormatEnum.WEBP: "image/webp",
+    FormatEnum.WEBM: "video/webm",
+    FormatEnum.AVIF: "image/avif",
+    FormatEnum.SVG: "image/svg+xml",
+    FormatEnum.MOV: "video/quicktime",
 }
 
 MIME_TYPE_TO_FORMAT: dict[str, FormatEnum] = {
-    "image/png": FormatEnum.PNG,
-    "image/jpeg": FormatEnum.JPEG,
-    "image/gif": FormatEnum.GIF,
-    "video/mp4": FormatEnum.MPEG_4,
-    "image/webp": FormatEnum.WEBP,
-    "video/webm": FormatEnum.WEBM,
-    "image/avif": FormatEnum.AVIF,
-    "image/svg+xml": FormatEnum.SVG,
+    value: key for key, value in MIME_TYPE_BY_FORMAT.items()
 }
+
+EXTENSIONS_BY_MIME: dict[str, str] = {
+    mime: FILE_FORMAT_DEFAULT_SUFFIX[MIME_TYPE_TO_FORMAT[mime]]
+    for mime in MIME_TYPE_TO_FORMAT
+}
+
+GENERIC_BINARY_FILE_MIME = "application/octet-stream"
+
+
+def is_png(file: str | Path | BytesIO) -> bool:
+    """
+    Checks if a file is a valid PNG by inspecting its 8-byte magic header.
+    """
+    PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+    if isinstance(file, BytesIO):
+        header = file.read(8)
+        return header == PNG_MAGIC
+    try:
+        with open(file, "rb") as f:
+            header = f.read(8)
+            return header == PNG_MAGIC
+    except (IOError, FileNotFoundError):
+        return False
