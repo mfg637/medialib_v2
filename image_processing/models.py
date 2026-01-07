@@ -3,7 +3,7 @@ import enum
 
 import medialib.models
 from django.core.exceptions import ValidationError
-from image_processing.common.file_utils import MediaType
+from image_processing.core.file_utils import MediaType
 from medialib_v2 import settings
 
 

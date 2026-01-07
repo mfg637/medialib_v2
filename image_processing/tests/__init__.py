@@ -1,6 +1,4 @@
-from django.test import TestCase
-from . import decoding, encoding, utils
-from .compatibility_level import CompatiblityLevelTest
-from .common import TestBitRound, TestFitDownscale
+from image_processing.core import tests as core_tests
 
-# Create your tests here.
+
+__all__ = [core_tests]
