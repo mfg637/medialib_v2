@@ -4,7 +4,7 @@ import enum
 import medialib.models
 from django.core.exceptions import ValidationError
 from image_processing.core.file_utils import MediaType
-from medialib_v2 import settings
+from image_processing.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
 
 
 class TaskStatusEnum(enum.IntEnum):
@@ -16,8 +16,9 @@ class TaskStatusEnum(enum.IntEnum):
 class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     uploaded_file = models.FileField(
-        upload_to=settings.MEDIALIB_QUEUE_DIRECTORY,
+        upload_to=TASK_SAVE_DIRECTORY,
         null=True,
+        max_length=MAX_FILE_LENGTH,
     )
     STATUS_LIST = [
         (TaskStatusEnum.AWAITING, "Wait for processing…"),

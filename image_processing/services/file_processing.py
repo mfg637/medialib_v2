@@ -5,8 +5,14 @@ from image_processing.core.file_utils import (
     generate_filename,
     MediaType,
 )
+from image_processing.config import MAX_FILE_LENGTH, TASK_SAVE_DIRECTORY
 from io import BytesIO
 from pathlib import Path
+
+
+# add 1 character for "/"
+DIRECTORY_NAME_LENGTH = len(str(TASK_SAVE_DIRECTORY)) + 1
+DJANGO_UNIQUENESS_RESERVE = 8
 
 
 def get_file_type(file: UploadedFile) -> tuple[str, MediaType]:
@@ -17,11 +23,19 @@ def get_file_type(file: UploadedFile) -> tuple[str, MediaType]:
 
 def normalize_or_create_filename(name: str | None, mime: str) -> str:
     valid_suffix = EXTENSIONS_BY_MIME.get(mime)
-    if name:
-        p = Path(name)
-        if valid_suffix and p.suffix != valid_suffix:
-            name = p.with_suffix(valid_suffix).name
+    if valid_suffix is not None:
+        if name:
+            p = Path(name)
+            stem_length_limit = (
+                MAX_FILE_LENGTH
+                - len(valid_suffix)
+                - DIRECTORY_NAME_LENGTH
+                - DJANGO_UNIQUENESS_RESERVE
+            )
+            name = f"{p.stem[:stem_length_limit]}{valid_suffix}"
+        else:
+            name = str(generate_filename(mime)[0])
     else:
-        name = str(generate_filename(mime)[0])
+        raise ValueError(f"Unexpected mime type: {mime}")
 
     return name
