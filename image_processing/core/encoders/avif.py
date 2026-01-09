@@ -36,7 +36,7 @@ def encode(
         INTERPRETATIONS_ENUM.B_W,
         INTERPRETATIONS_ENUM.GREY16,
     }
-    if img.interpretation is pyvips.enums.Interpretation.SCRGB:
+    if img.interpretation == pyvips.enums.Interpretation.SCRGB:
         saved_image = img.scRGB2sRGB(depth=16)
     elif img.interpretation in AVIF_COMPATIBLE_MODES:
         saved_image = img

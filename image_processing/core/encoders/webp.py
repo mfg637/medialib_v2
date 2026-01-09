@@ -27,16 +27,16 @@ def encode(
     lossless: bool = False,
 ) -> None:
     is_strip_safe = False
-    if img.interpretation is pyvips.enums.Interpretation.SCRGB:
+    if img.interpretation == pyvips.enums.Interpretation.SCRGB:
         saved_image = img.scRGB2sRGB(depth=8)
         is_strip_safe = True
     elif has_embeded_icc(img):
-        if img.interpretation is pyvips.enums.Interpretation.SRGB:
+        if img.interpretation == pyvips.enums.Interpretation.SRGB:
             saved_image = img
         else:
             saved_image = img.icc_transform("srgb", embedded=True)
             is_strip_safe = True
-    elif img.interpretation is pyvips.enums.Interpretation.SRGB:
+    elif img.interpretation == pyvips.enums.Interpretation.SRGB:
         saved_image = img
         is_strip_safe = True
     else:
