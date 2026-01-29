@@ -215,6 +215,25 @@ def calc_fit_in_rect_downscale(
     fit_in_size: tuple[int, int],
     precision: int = 0,
 ) -> tuple[float, int, int]:
+    """
+    Calculates a new size to fit within a specific rectangle.
+
+    This function calculates the scaling coefficient and the resulting dimensions
+    to fit an image into `fit_in_size` while respecting the source aspect ratio.
+    If the image is smaller than the container, the original size is returned.
+
+    Args:
+        original_size (tuple[int, int]): Original size (width, height).
+        fit_in_size (tuple[int, int]): Dimensions of the target rectangle (width, height).
+        precision (int, optional): Rounding precision (via bit_round).
+            Negative values round to powers of two (useful for video codecs).
+
+    Returns:
+        tuple[float, int, int]: A tuple containing:
+            - scale (float): Scaling coefficient (>= 1.0).
+            - width (int): New width (rounded).
+            - height (int): New height (rounded).
+    """
     if original_size[0] > fit_in_size[0] or original_size[1] > fit_in_size[1]:
         aspect_ratio = original_size[0] / original_size[1]
         scale = 1

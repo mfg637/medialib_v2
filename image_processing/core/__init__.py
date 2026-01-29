@@ -5,13 +5,12 @@ from . import (
     transforms,
     libvips,
     video,
-    compatibility_level,
+    specification,
     utils,
     file_format,
     file_utils,
 )
 from .decoders import open_image
-
 
 __all__ = [
     "decoders",
@@ -20,8 +19,8 @@ __all__ = [
     "transforms",
     "libvips",
     "video",
+    "specification",
     "open_image",
-    "compatibility_level",
     "utils",
     "file_format",
     "file_utils",

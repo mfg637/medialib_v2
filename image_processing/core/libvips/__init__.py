@@ -1,3 +1,5 @@
-from . import definitions
+from . import definitions, proxy_file
 
-__all__ = ["definitions"]
+from .debug import debug_vips_image
+
+__all__ = ["definitions", "proxy_file", "debug_vips_image"]

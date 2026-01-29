@@ -1,12 +1,13 @@
 from django.db import models
 import pathlib
 import enum
+from medialib_v2.settings import MEDIALIB_COLLECTION_DIRECTORY
 
 # from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
 
-
 DEBUG = True
+REPRESENATION_FILE_PATH_LIMIT = 512
 
 
 class ContentTypeEnum(enum.StrEnum):
@@ -57,11 +58,11 @@ class ContentOrigin(models.Model):
 
 
 COMPATIBILITY_LEVEL_MAPPING = [
-    (0, "Supercomputer"),
-    (1, "Personal Computer"),
+    (4, "Supercomputer"),
+    (3, "Personal Computer"),
     (2, "Mobile device"),
-    (3, "Old hardware"),
-    (4, "Very old hardware"),
+    (1, "Old hardware"),
+    (0, "Very old hardware"),
 ]
 
 
@@ -81,7 +82,12 @@ class Representation(models.Model):
     content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
     )
-    filepath = models.FilePathField(unique=True, null=False)
+    filepath = models.FileField(
+        upload_to=str(MEDIALIB_COLLECTION_DIRECTORY.joinpath("%Y/%m/%d/")),
+        unique=True,
+        null=False,
+        max_length=REPRESENATION_FILE_PATH_LIMIT,
+    )
     format = models.CharField(max_length=12)
     compatibility_level = models.PositiveSmallIntegerField(
         "Compatibility level", choices=COMPATIBILITY_LEVEL_MAPPING
@@ -92,6 +98,7 @@ class Representation(models.Model):
     width = models.PositiveSmallIntegerField(null=True)
     height = models.PositiveSmallIntegerField(null=True)
     repr_type = models.IntegerField(choices=RepresentationTypeEnum, null=False)
+    codec_string = models.CharField(max_length=255, null=True, blank=True)
 
     def clean(self):
         if self.repr_type >= RepresentationTypeEnum.IMAGE:
@@ -105,9 +112,8 @@ class Representation(models.Model):
         super().clean()
 
     def delete(self, *args, **kwargs):
-        if not DEBUG:
-            _filepath = pathlib.Path(str(self.filepath))
-            _filepath.unlink(missing_ok=True)
+        if hasattr(self, "filepath") and self.filepath:
+            self.filepath.delete(save=False)
         super().delete(*args, **kwargs)
 
 

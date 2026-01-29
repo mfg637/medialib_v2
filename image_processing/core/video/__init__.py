@@ -1,3 +1,3 @@
-from . import ffmpeg, specification
+from . import ffmpeg
 
-__all__ = ["ffmpeg", "specification"]
+__all__ = ["ffmpeg"]

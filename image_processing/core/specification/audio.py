@@ -6,12 +6,22 @@ class AudioCodecs(enum.IntEnum):
     AAC = 0
     Vorbis = 1
     Opus = 2
+    UNDEFINED = 999
+
+
+def codec_name_to_enum(codec_name: str) -> AudioCodecs:
+    codec_map = {
+        "aac": AudioCodecs.AAC,
+        "vorbis": AudioCodecs.Vorbis,
+        "opus": AudioCodecs.Opus,
+    }
+    return codec_map.get(codec_name.lower(), AudioCodecs.UNDEFINED)
 
 
 AUDIO_CODEC_LEVEL = {
-    AudioCodecs.AAC: 4,
-    AudioCodecs.Vorbis: 3,
-    AudioCodecs.Opus: 3,
+    AudioCodecs.AAC: 0,
+    AudioCodecs.Vorbis: 1,
+    AudioCodecs.Opus: 1,
 }
 
 
@@ -37,3 +47,21 @@ VIDEO_CONTAINER_COMPATIBLE_CODECS: dict[VideoContainers, set[AudioCodecs]] = {
         AudioCodecs.Opus,
     },
 }
+
+
+def get_aac_codec_str(profile_str: str) -> str:
+    profiles = {
+        "LC": "2",
+        "HE-AAC": "5",
+        "HE-AACv2": "29",
+    }
+    aot = profiles.get(profile_str, "2")
+    return f"mp4a.40.{aot}"
+
+
+def get_opus_codec_str() -> str:
+    return "opus"
+
+
+def get_vorbis_codec_str() -> str:
+    return "vorbis"

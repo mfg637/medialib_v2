@@ -1,2 +1,2 @@
 from .encoder import BytesEncoder, FilesEncoder
-from . import webp, webm_encoder, avif
+from . import webp, webm, avif, mpeg4_video

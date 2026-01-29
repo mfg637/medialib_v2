@@ -34,7 +34,9 @@ def debug_ndarray(**kwargs: numpy.ndarray) -> None:
     print(f"{name}: average: {numpy.average(value)}, deviation: {value.std()}")
 
 
-def run_subprocess(commandline: list[str], log_stdout=False, capture_out=True):
+def run_subprocess(
+    commandline: list[str], log_stdout=False, capture_out=True
+) -> subprocess.CompletedProcess:
     logger.debug("starting process")
     result = subprocess.run(commandline, capture_output=capture_out)
     logger.debug("process executed and done")
@@ -48,6 +50,12 @@ def run_subprocess(commandline: list[str], log_stdout=False, capture_out=True):
                 logger.debug("stdout: {}".format(line))
     logger.debug("all logging is done")
     return result
+
+
+def print_stderr(proc: subprocess.CompletedProcess) -> None:
+    stderr_message = proc.stderr.decode("utf-8").splitlines()
+    for line in stderr_message:
+        logger.debug("stderr: {}".format(line))
 
 
 def bit_round(number: int | float, precision: int = 0) -> int | float:
@@ -148,6 +156,7 @@ def check_is_fractions(value):
         and len(value) == 2
         and isinstance(value[0], numbers.Rational)
         and isinstance(value[1], numbers.Rational)
+        and value[1] != 0
     )
 
 

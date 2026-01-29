@@ -46,7 +46,8 @@ class MediaType(TextChoices):
 
 
 def detect_file_type(
-    file_related: io.BytesIO | pathlib.Path, request_header_mimetype
+    file_related: io.BytesIO | pathlib.Path,
+    request_header_mimetype: str | None = None,
 ) -> tuple[str, MediaType]:
     if isinstance(file_related, io.BytesIO):
         mime = magic.from_buffer(file_related.getvalue(), mime=True)

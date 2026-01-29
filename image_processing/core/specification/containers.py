@@ -1,5 +1,5 @@
 import enum
-from image_processing.core.file_format import FormatEnum
+from image_processing.core.file_format import FormatEnum, MIME_TYPE_BY_FORMAT
 
 
 class VideoContainers(enum.Enum):
@@ -47,4 +47,10 @@ FILE_FORMAT_TO_CONTAINER_FORMAT: dict[FormatEnum, VideoContainers] = {
 VIDEO_CONTAINER_TO_FILE_FORMAT: dict[VideoContainers, FormatEnum] = {
     VideoContainers.MPEG_4: FormatEnum.MPEG_4,
     VideoContainers.WEBM: FormatEnum.WEBM,
+}
+
+
+VIDEO_CONTAINER_TO_MIME_TYPE: dict[VideoContainers, str] = {
+    container: MIME_TYPE_BY_FORMAT[_format]
+    for container, _format in VIDEO_CONTAINER_TO_FILE_FORMAT.items()
 }

@@ -1,6 +1,6 @@
-from image_processing.libvips.definitions import Image
-from image_processing.transforms.color import upcast_and_linearise
-from image_processing.transforms.resize import downscale
+from image_processing.core.libvips.definitions import Image
+from image_processing.core.transforms.color import upcast_and_linearise
+from image_processing.core.transforms.resize import downscale
 
 from typing import Optional
 import pyvips

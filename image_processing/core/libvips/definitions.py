@@ -375,10 +375,16 @@ class Image:
             )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
         )
 
-    def close(self):
-        warnings.warn(
-            "Image.close() is a temporary no-op for pyvips.Image. "
-            "Remove this call when Pillow dependency is eliminated.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
+    def vipssave(self, filename: str, **kwargs):
+        self._img.vipssave(
+            filename, **kwargs
+        )  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+
+    def min(self) -> float:
+        return self._img.min()
+
+    def max(self) -> float:
+        return self._img.max()
+
+    def avg(self) -> float:
+        return self._img.avg()
