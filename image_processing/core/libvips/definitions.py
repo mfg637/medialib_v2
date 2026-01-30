@@ -5,7 +5,6 @@ import pyvips
 import warnings
 import numpy
 
-
 Interpretation = typing.Union[str, pyvips.enums.Interpretation]
 BandFormat = typing.Union[str, pyvips.enums.BandFormat]
 Kernel = typing.Union[str, pyvips.enums.Kernel]
@@ -94,6 +93,77 @@ class Image:
     def format(self) -> BandFormat:
         """The format used for each band element."""
         return self._img.format  # pyright: ignore[reportReturnType]
+
+    def __getitem__(self, arg) -> Image:
+        """
+        Overload [] to pull out band elements from an image.
+
+        The following arguments types are accepted:
+
+        * int::Will make a new one-band image.
+
+        * slice::
+
+            last_two = rgb_image[1:]
+            last_band = rgb_image[-1]
+            middle_few = multiband[1:-2]
+            reversed  = multiband[::-1]
+            every_other = multiband[::2]
+            other_every_other = multiband[1::2]
+
+        * list of int::
+
+            desired_bands = [1, 2, 2, -1]
+            four_band = multiband[desired_bands]
+
+        * list of bool::
+
+            wanted_bands = [True, False, True, True, False]
+            three_band = five_band[wanted_bands]
+        """
+        return Image(
+            self._img.__getitem__(arg)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __add__(self, other) -> Image:
+        return Image(
+            self._img.__add__(other)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __sub__(self, other) -> Image:
+        return Image(
+            self._img.__sub__(other)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __mul__(self, other) -> Image:
+        return Image(
+            self._img.__mul__(other)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __div__(self, other) -> Image:
+        return Image(
+            self._img.__div__(other)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __truediv__(self, other) -> Image:
+        return Image(
+            self._img.__truediv__(other)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __mod__(self, other) -> Image:
+        return Image(
+            self._img.__mod__(other)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __pow__(self, other) -> Image:
+        return Image(
+            self._img.__pow__(other)  # pyright: ignore[reportArgumentType]
+        )
+
+    def __abs__(self) -> Image:
+        return Image(
+            self._img.__abs__()  # pyright: ignore[reportArgumentType]
+        )
 
     def colourspace(
         self,

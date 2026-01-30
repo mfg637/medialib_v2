@@ -2,18 +2,29 @@ from image_processing.core.transforms.resize import downscale
 from image_processing.core.encoders import avif, webp
 from image_processing.core.libvips.definitions import Image
 from image_processing.core.libvips.proxy_file import ProxyFile
-from image_processing.core.transforms.color import upcast_and_linearise
+from image_processing.core.transforms.color import (
+    upcast_and_linearise,
+    to_LAB_as_pillow_bands,
+)
+from image_processing.core.transforms.compositing import alpha_compose_vips
 from image_processing.core.specification.image import (
     get_image_compatibility_level,
     FORMAT_LEVEL,
 )
 from image_processing.core.file_format import FormatEnum
+from image_processing.core.matrix_scan import zigzag_scan
+from image_processing.core.utils import bit_round
 from .common import RepresentationTypeEnum, Representation
+from image_processing.services.media_passport import StaticImagePassport
 from typing import Callable, Optional
+from PIL import Image as PIL_Image
 
 import abc
 import enum
 import pathlib
+import imagehash
+import dataclasses
+import numpy as np
 
 
 def save_img_4096(
@@ -333,3 +344,33 @@ class VideoThumbnailRepresentationStrategy(BaseRepresentationStrategy):
         self, size: int, _case: ProcessingCases
     ) -> saver_function_type:
         return IMAGE_REPRESENTATION_SAVERS[size]
+
+
+def calculate_visual_hash(p_img: PIL_Image.Image, hash_size: int) -> bytes:
+    hash_obj = imagehash.phash(p_img, hash_size=hash_size)
+    ordered_bits = zigzag_scan(hash_obj.hash)
+    packed_bytes = np.packbits(ordered_bits).tobytes()
+    return packed_bytes
+
+
+@dataclasses.dataclass
+class ImageHash:
+    aspect_ratio: float
+    l_hash: bytes
+    a_hash: bytes
+    b_hash: bytes
+
+
+def get_image_signatures(passport: StaticImagePassport) -> ImageHash:
+    aspect_ratio_approximate = bit_round(
+        passport.width / passport.height, precision=8
+    )
+    image = passport.image
+    if image.hasalpha():
+        image = alpha_compose_vips(image)
+    p_L, p_A, p_B = to_LAB_as_pillow_bands(image)
+
+    l_hash = calculate_visual_hash(p_L, hash_size=16)
+    a_hash = calculate_visual_hash(p_A, hash_size=8)
+    b_hash = calculate_visual_hash(p_B, hash_size=8)
+    return ImageHash(aspect_ratio_approximate, l_hash, a_hash, b_hash)

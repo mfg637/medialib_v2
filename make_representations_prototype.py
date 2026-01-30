@@ -3,6 +3,7 @@ import pathlib
 from image_processing.services import analysis, media_passport
 from image_processing.services.representations import (
     make_representations,
+    get_image_signatures,
 )
 
 argument_parser = argparse.ArgumentParser()
@@ -17,3 +18,5 @@ if __name__ == "__main__":
     passport, compatibility_level = analysis.analyze_file(input_file)
     representations = make_representations(passport, compatibility_level)
     print(representations)
+    if isinstance(passport, media_passport.StaticImagePassport):
+        print(get_image_signatures(passport))

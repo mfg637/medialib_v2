@@ -7,7 +7,9 @@ from image_processing.core.libvips.definitions import (
 import pyvips
 from typing import Callable
 from PIL import ImageColor
+from PIL import Image as PIL_Image
 import colorsys
+import numpy
 
 
 def has_embeded_icc(img: Image) -> bool:
@@ -168,3 +170,21 @@ INTERPRETATION_TO_COLOR_VALUE: dict[
     VipsInterpretation.HSV: get_hsv_color,
     VipsInterpretation.LABS: get_slab_color,
 }
+
+
+def to_LAB_as_pillow_bands(
+    vips_image: Image,
+) -> tuple[PIL_Image.Image, PIL_Image.Image, PIL_Image.Image]:
+    lab_img = vips_image.colourspace(pyvips.enums.Interpretation.LAB)
+
+    L = lab_img.extract_band(0)
+    A = lab_img.extract_band(1)
+    B = lab_img.extract_band(2)
+
+    p_L = PIL_Image.fromarray(
+        ((L / 100.0) * 255.0).numpy().astype(numpy.uint8)
+    )
+    p_A = PIL_Image.fromarray((A + 128.0).numpy().astype(numpy.uint8))
+    p_B = PIL_Image.fromarray((B + 128.0).numpy().astype(numpy.uint8))
+
+    return p_L, p_A, p_B

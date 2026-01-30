@@ -137,12 +137,14 @@ class ImageHash(models.Model):
         Content, on_delete=models.CASCADE, db_index=True
     )
     aspect_ratio = models.FloatField("Aspect Ratio")
-    value_hash = models.BinaryField(
-        "Value component hash", max_length=256, db_index=True
+    L_hash = models.BinaryField(
+        "Lightness component hash", max_length=32, db_index=True
     )
-    hue_hash = models.BigIntegerField("Hue component hash", db_index=True)
-    saturation_hash = models.BigIntegerField(
-        "Saturation component hash", db_index=True
+    a_hash = models.BinaryField(
+        "a* component hash", max_length=8, db_index=True
+    )
+    b_hash = models.BinaryField(
+        "b* component hash", max_length=8, db_index=True
     )
     alternate_version = models.BooleanField(default=False, db_index=True)
 

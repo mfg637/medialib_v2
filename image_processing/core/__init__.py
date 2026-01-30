@@ -9,6 +9,7 @@ from . import (
     utils,
     file_format,
     file_utils,
+    matrix_scan,
 )
 from .decoders import open_image
 
@@ -24,4 +25,5 @@ __all__ = [
     "utils",
     "file_format",
     "file_utils",
+    "matrix_scan",
 ]
