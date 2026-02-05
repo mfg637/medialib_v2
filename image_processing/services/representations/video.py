@@ -1,4 +1,5 @@
 from ..media_passport import VideoPassport
+from base.shared_enums.medialib_model import RepresentationTypeEnum
 from image_processing.core.video import ffmpeg
 from image_processing.core.encoders import webm, mpeg4_video
 from image_processing.core import specification
@@ -59,7 +60,7 @@ def make_cl1_webm_representation(
         output_file,
         tmp_passport.width,
         tmp_passport.height,
-        common.RepresentationTypeEnum.VIDEO,
+        RepresentationTypeEnum.VIDEO,
         tmp_passport.file_format,
         tmp_passport.codec_string,
     )
@@ -105,7 +106,7 @@ def make_webm_representation(
         output_file,
         tmp_passport.width,
         tmp_passport.height,
-        common.RepresentationTypeEnum.VIDEO,
+        RepresentationTypeEnum.VIDEO,
         tmp_passport.file_format,
         tmp_passport.codec_string,
     )
@@ -155,7 +156,7 @@ def copy_video_mp4(passport: VideoPassport, compatibility_level):
             output_file,
             tmp_passport.width,
             tmp_passport.height,
-            common.RepresentationTypeEnum.VIDEO,
+            RepresentationTypeEnum.VIDEO,
             tmp_passport.file_format,
             tmp_passport.codec_string,
         )
@@ -197,7 +198,7 @@ def transcode_animation_loop(
                 output_file,
                 tmp_passport.width,
                 tmp_passport.height,
-                common.RepresentationTypeEnum.VIDEO,
+                RepresentationTypeEnum.VIDEO,
                 tmp_passport.file_format,
                 tmp_passport.codec_string,
             )
@@ -231,7 +232,7 @@ def transcode_webm_source(
         passport.source_file,
         passport.width,
         passport.height,
-        common.RepresentationTypeEnum.VIDEO,
+        RepresentationTypeEnum.VIDEO,
         passport.file_format,
         passport.codec_string,
     )

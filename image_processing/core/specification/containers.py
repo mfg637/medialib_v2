@@ -1,5 +1,5 @@
 import enum
-from image_processing.core.file_format import FormatEnum, MIME_TYPE_BY_FORMAT
+from base.shared_knowledge.file_format import FormatEnum, MIME_TYPE_BY_FORMAT
 
 
 class VideoContainers(enum.Enum):

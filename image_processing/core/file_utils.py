@@ -4,15 +4,16 @@ import string
 import pathlib
 import magic
 import io
-from django.db.models import TextChoices
-from .file_format import (
+from django.core.files.uploadedfile import UploadedFile
+from base.shared_enums.image_processing_model import MediaType
+from base.shared_knowledge.file_format import (
     EXTENSIONS_BY_MIME,
     FormatEnum,
     MIME_TYPE_BY_FORMAT,
     GENERIC_BINARY_FILE_MIME,
     is_png,
 )
-
+from hashlib import sha256
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +38,6 @@ def generate_filename(
 def extract_filename(file_path: pathlib.Path | str):
     # return str(pathlib.Path(file_path).stem[: definitions.MAX_TITLE_LENGTH])
     return str(pathlib.Path(file_path).stem)
-
-
-class MediaType(TextChoices):
-    IMAGE = "image", "Image"
-    AUDIO = "audio", "Audio"
-    VIDEO = "video", "Video"
 
 
 def detect_file_type(
@@ -76,3 +71,18 @@ def detect_file_type(
         logger.error(f"undetected content type, mime: {mime}")
         raise Exception("undetected content type")
     return mime, file_type
+
+
+def calc_sha256(source: pathlib.Path | UploadedFile) -> bytes:
+    BLOCK_SIZE = 64 * 1024
+    hasher = sha256()
+
+    if isinstance(source, UploadedFile):
+        for chunk in source.chunks(BLOCK_SIZE):
+            hasher.update(chunk)
+    else:
+        with open(source, "rb") as f:
+            for byte_block in iter(lambda: f.read(BLOCK_SIZE), b""):
+                hasher.update(byte_block)
+
+    return hasher.digest()

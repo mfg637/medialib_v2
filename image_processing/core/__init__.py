@@ -7,7 +7,6 @@ from . import (
     video,
     specification,
     utils,
-    file_format,
     file_utils,
     matrix_scan,
 )
@@ -23,7 +22,6 @@ __all__ = [
     "specification",
     "open_image",
     "utils",
-    "file_format",
     "file_utils",
     "matrix_scan",
 ]

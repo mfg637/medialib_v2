@@ -1,4 +1,4 @@
-from image_processing.core.file_format import FormatEnum
+from base.shared_knowledge.file_format import FormatEnum
 
 IMAGE_SIZE_LIMIT = {4: None, 3: 2**13, 2: 2**12, 1: 2**11, 0: 2**10}
 

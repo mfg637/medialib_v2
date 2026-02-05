@@ -1,3 +1,4 @@
+from base.shared_enums.medialib_model import RepresentationTypeEnum
 from image_processing.core.transforms.resize import downscale
 from image_processing.core.encoders import avif, webp
 from image_processing.core.libvips.definitions import Image
@@ -11,10 +12,10 @@ from image_processing.core.specification.image import (
     get_image_compatibility_level,
     FORMAT_LEVEL,
 )
-from image_processing.core.file_format import FormatEnum
+from base.shared_knowledge.file_format import FormatEnum
 from image_processing.core.matrix_scan import zigzag_scan
 from image_processing.core.utils import bit_round
-from .common import RepresentationTypeEnum, Representation
+from .common import Representation
 from image_processing.services.media_passport import StaticImagePassport
 from typing import Callable, Optional
 from PIL import Image as PIL_Image
@@ -368,9 +369,17 @@ def get_image_signatures(passport: StaticImagePassport) -> ImageHash:
     image = passport.image
     if image.hasalpha():
         image = alpha_compose_vips(image)
-    p_L, p_A, p_B = to_LAB_as_pillow_bands(image)
+    with ProxyFile(
+        passport.image,
+        passport.source_file,
+        target_size=(1024, 1024),
+        as_scRGB=False,
+    ) as proxy:
+        if proxy.image is None:
+            raise ValueError("Proxy image is not exists")
+        p_L, p_A, p_B = to_LAB_as_pillow_bands(proxy.image)
 
-    l_hash = calculate_visual_hash(p_L, hash_size=16)
-    a_hash = calculate_visual_hash(p_A, hash_size=8)
-    b_hash = calculate_visual_hash(p_B, hash_size=8)
-    return ImageHash(aspect_ratio_approximate, l_hash, a_hash, b_hash)
+        l_hash = calculate_visual_hash(p_L, hash_size=16)
+        a_hash = calculate_visual_hash(p_A, hash_size=8)
+        b_hash = calculate_visual_hash(p_B, hash_size=8)
+        return ImageHash(aspect_ratio_approximate, l_hash, a_hash, b_hash)

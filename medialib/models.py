@@ -2,6 +2,10 @@ from django.db import models
 import pathlib
 import enum
 from medialib_v2.settings import MEDIALIB_COLLECTION_DIRECTORY
+from base.shared_enums.medialib_model import (
+    ContentTypeEnum,
+    RepresentationTypeEnum,
+)
 
 # from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
@@ -10,15 +14,8 @@ DEBUG = True
 REPRESENATION_FILE_PATH_LIMIT = 512
 
 
-class ContentTypeEnum(enum.StrEnum):
-    IMAGE = "image"
-    AUDIO = "audio"
-    VIDEO = "video"
-    VIDEO_LOOP = "video-loop"
-
-
 class Content(models.Model):
-    title = models.TextField(null=True, blank=True)
+    title = models.TextField(blank=True, default="")
     CONTENT_TYPE_MAPPING = [
         (ContentTypeEnum.IMAGE, "Image"),
         (ContentTypeEnum.AUDIO, "Audio"),
@@ -32,7 +29,7 @@ class Content(models.Model):
         max_length=10,
         default=ContentTypeEnum.IMAGE,
     )
-    description = models.TextField(null=True, blank=True)
+    description = models.TextField(blank=True, default="")
     addition_date = models.DateTimeField(auto_now_add=True, db_index=True)
     is_hidden = models.BooleanField(default=False)
     last_edit = models.DateTimeField(auto_now=True)
@@ -54,7 +51,7 @@ class ContentOrigin(models.Model):
         Content, on_delete=models.CASCADE, db_index=True
     )
     name = models.CharField(max_length=32)
-    origin_id = models.TextField("ID on origin")
+    origin_id = models.TextField("ID on origin", blank=True, default="")
 
 
 COMPATIBILITY_LEVEL_MAPPING = [
@@ -64,18 +61,6 @@ COMPATIBILITY_LEVEL_MAPPING = [
     (1, "Old hardware"),
     (0, "Very old hardware"),
 ]
-
-
-class RepresentationTypeEnum(models.IntegerChoices):
-    # NOTE: values in range 1-9 reserved for subtypes
-    # Audio range: 0-9
-    # Image range: 10-19
-    # Video range: 20-29
-    # For example: SOUNDTRACK = 1
-    # or: THUMBNAIL = 12
-    AUDIO = 0
-    IMAGE = 10
-    VIDEO = 20
 
 
 class Representation(models.Model):

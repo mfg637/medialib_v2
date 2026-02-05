@@ -1,4 +1,4 @@
-from image_processing.core.file_format import FormatEnum, MIME_TYPE_TO_FORMAT
+from base.shared_knowledge.file_format import FormatEnum, MIME_TYPE_TO_FORMAT
 from image_processing.core.decoders import video_thumbnail
 from .common import Representation
 from .image import (

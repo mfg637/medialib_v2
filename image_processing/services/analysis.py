@@ -1,6 +1,6 @@
 from django.db.models.fields.files import FieldFile
 from image_processing.core.file_utils import detect_file_type, MediaType
-from image_processing.core.file_format import FormatEnum, MIME_TYPE_TO_FORMAT
+from base.shared_knowledge.file_format import FormatEnum, MIME_TYPE_TO_FORMAT
 from image_processing.core.video.ffmpeg.parser import (
     check_variable_frame_rate_and_estimate_duration,
 )

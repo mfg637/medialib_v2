@@ -3,7 +3,7 @@ import enum
 
 import medialib.models
 from django.core.exceptions import ValidationError
-from image_processing.core.file_utils import MediaType
+from base.shared_enums.image_processing_model import MediaType
 from image_processing.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
 
 
@@ -49,10 +49,10 @@ class Task(models.Model):
 
 
 class AwaitingTaskMetadata(models.Model):
-    title = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    origin_name = models.CharField(max_length=32, null=True, blank=True)
-    origin_id = models.CharField(max_length=512, null=True, blank=True)
+    title = models.CharField(max_length=255, blank=True, default="")
+    description = models.TextField(blank=True, default="")
+    origin_name = models.CharField(max_length=32, blank=True, default="")
+    origin_id = models.CharField(max_length=512, blank=True, default="")
     tags = models.JSONField(null=True, blank=True)
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
 
@@ -74,9 +74,10 @@ class ExecutionError(models.Model):
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
     title = models.TextField(help_text="The name of the error")
     details = models.TextField(
-        null=True,
+        blank=True,
         help_text=(
             "Detailed description of error. "
             "Likely to be exception stack trace"
         ),
+        default="",
     )

@@ -88,5 +88,5 @@ def is_png(file: str | Path | BytesIO) -> bool:
         with open(file, "rb") as f:
             header = f.read(8)
             return header == PNG_MAGIC
-    except (IOError, FileNotFoundError):
+    except IOError, FileNotFoundError:
         return False

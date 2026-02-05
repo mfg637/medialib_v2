@@ -1,5 +1,5 @@
 from image_processing.core.specification import image as cl
-from image_processing.core import file_format as ff
+from base.shared_knowledge import file_format as ff
 from django.test import SimpleTestCase
 
 

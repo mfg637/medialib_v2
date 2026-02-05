@@ -10,11 +10,15 @@ class ProxyFile:
         source_image: Image,
         source_file: Path,
         target_size: tuple[int, int],
+        as_scRGB: bool = True,
     ):
         print("generating proxy file")
         self.proxy_file_path = source_file.with_suffix(".proxy.vips")
         img = source_image
-        if source_image.interpretation != pyvips.enums.Interpretation.SCRGB:
+        if (
+            source_image.interpretation != pyvips.enums.Interpretation.SCRGB
+            and as_scRGB
+        ):
             img = color.upcast_and_linearise(source_image)
         proxy_image = resize.downscale(img, target_size)
         proxy_image.vipssave(str(self.proxy_file_path))

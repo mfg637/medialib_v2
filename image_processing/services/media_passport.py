@@ -1,18 +1,12 @@
-import enum
 from typing import Optional
 from pathlib import Path
-from image_processing.core.file_format import MIME_TYPE_TO_FORMAT, FormatEnum
+from base.shared_enums.medialib_model import ContentTypeEnum
+from base.shared_knowledge.file_format import MIME_TYPE_TO_FORMAT, FormatEnum
+from image_processing.core.file_utils import calc_sha256
 from image_processing.core.decoders import open_image
 from image_processing.core.libvips.definitions import Image
 from image_processing.core.video.ffmpeg import probe, parser
 from image_processing.core import specification
-
-
-class ContentTypeEnum(enum.Enum):
-    AUDIO = enum.auto()
-    IMAGE = enum.auto()
-    VIDEO = enum.auto()
-    VIDEO_LOOP = enum.auto()
 
 
 class BaseMediaPassport:
@@ -23,6 +17,9 @@ class BaseMediaPassport:
         self.mime = mime_type
         self.file_format: FormatEnum = MIME_TYPE_TO_FORMAT[mime_type]
         self.content_type = content_type
+
+    def calc_sha256(self) -> bytes:
+        return calc_sha256(self.source_file)
 
 
 class StaticImagePassport(BaseMediaPassport):

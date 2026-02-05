@@ -1,5 +1,5 @@
 from django.core.files.uploadedfile import UploadedFile
-from image_processing.core.file_format import EXTENSIONS_BY_MIME
+from base.shared_knowledge.file_format import EXTENSIONS_BY_MIME
 from image_processing.core.file_utils import (
     detect_file_type,
     generate_filename,
@@ -8,7 +8,6 @@ from image_processing.core.file_utils import (
 from image_processing.config import MAX_FILE_LENGTH, TASK_SAVE_DIRECTORY
 from io import BytesIO
 from pathlib import Path
-
 
 # add 1 character for "/"
 DIRECTORY_NAME_LENGTH = len(str(TASK_SAVE_DIRECTORY)) + 1
