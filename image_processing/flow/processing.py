@@ -112,6 +112,9 @@ def process_task(task_id: int):
             task.uploaded_file = None
             task.save()
 
+            if t_meta is not None:
+                t_meta.delete()
+
     except Exception as e:
         Task.objects.filter(id=task_id).update(status=TaskStatusEnum.ERROR)
 
