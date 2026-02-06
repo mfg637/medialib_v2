@@ -37,7 +37,6 @@ class Content(models.Model):
         max_length=32,
         unique=True,
         db_index=True,
-        null=True,
         help_text="SHA-256 hash of the original file content (stored as BYTEA).",
     )
 
@@ -83,7 +82,7 @@ class Representation(models.Model):
     width = models.PositiveSmallIntegerField(null=True)
     height = models.PositiveSmallIntegerField(null=True)
     repr_type = models.IntegerField(choices=RepresentationTypeEnum, null=False)
-    codec_string = models.CharField(max_length=255, null=True, blank=True)
+    codec_string = models.CharField(max_length=255, blank=True, default="")
 
     def clean(self):
         if self.repr_type >= RepresentationTypeEnum.IMAGE:
@@ -187,6 +186,14 @@ class Tag(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.category})"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["title", "category"],
+                name="unique_tag_title_category",
+            )
+        ]
 
 
 class TagImplications(models.Model):

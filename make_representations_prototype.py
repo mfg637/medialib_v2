@@ -1,3 +1,10 @@
+import os
+import django
+
+# Укажи путь к твоим настройкам (проверь имя проекта)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medialib_v2.settings")
+django.setup()
+
 import argparse
 import pathlib
 from image_processing.services import analysis, media_passport

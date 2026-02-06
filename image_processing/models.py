@@ -29,6 +29,12 @@ class Task(models.Model):
         max_length=10, choices=MediaType, null=True, blank=True
     )
     mime_type = models.CharField(max_length=128, null=True, blank=True)
+    source_hash = models.BinaryField(
+        max_length=32,
+        unique=True,
+        db_index=True,
+        help_text="SHA-256 hash of the original file content (stored as BYTEA).",
+    )
     status = models.IntegerField(
         choices=STATUS_LIST, default=TaskStatusEnum.AWAITING
     )

@@ -8,7 +8,7 @@ def process_task_file(
 ) -> UploadedFile:
     mime, media_type = file_processing.get_file_type(uploaded_file)
     validation.validate_media_format(mime)
-    validation.prevent_file_duplication(uploaded_file)
+    instance.source_hash = validation.prevent_file_duplication(uploaded_file)
 
     instance.mime_type = mime
     instance.media_type = media_type

@@ -70,9 +70,10 @@ def detect_compatibility_level(
 
 
 def do_analysis(
-    source_file: FieldFile, mime_type: str, media_type: MediaType
+    source_file: FieldFile, mime_type: str, media_type_str: str
 ) -> tuple[media_passport.BaseMediaPassport, int]:
     file_path = Path(source_file.path)
+    media_type: MediaType = MediaType(media_type_str)
     passport = create_media_passport(file_path, mime_type, media_type)
     cl = detect_compatibility_level(passport)
     return passport, cl

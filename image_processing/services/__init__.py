@@ -1,3 +1,15 @@
-from . import file_processing, representations, validation
+from . import (
+    file_processing,
+    representations,
+    validation,
+    storage,
+    tags_processing,
+)
 
-__all__ = ["file_processing", "representations", "validation"]
+__all__ = [
+    "file_processing",
+    "representations",
+    "validation",
+    "storage",
+    "tags_processing",
+]
