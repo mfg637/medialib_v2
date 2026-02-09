@@ -44,6 +44,14 @@ class Content(models.Model):
         verbose_name = "content"
         verbose_name_plural = "content"
 
+    def __str__(self) -> str:
+        return (
+            f"Content id: {self.id}, "
+            f"type: {self.content_type}, "
+            f"title={self.title}, "
+            f"is_hidden = {self.is_hidden}"
+        )
+
 
 class ContentOrigin(models.Model):
     content = models.ForeignKey(
@@ -100,6 +108,24 @@ class Representation(models.Model):
             self.filepath.delete(save=False)
         super().delete(*args, **kwargs)
 
+    def __str__(self) -> str:
+        if self.width and self.height:
+            return (
+                f"Representation content id = {self.content.id}, "
+                f"file path: {self.filepath}, "
+                f"compatibility level: {self.compatibility_level}, "
+                f"format: {self.format}, "
+                f"type: {self.repr_type}, "
+                f"size: {self.width}x{self.height}"
+            )
+        return (
+            f"Representation content id = {self.content.id}, "
+            f"file path: {self.filepath}, "
+            f"compatibility level: {self.compatibility_level}, "
+            f"format: {self.format}, "
+            f"type: {self.repr_type}"
+        )
+
 
 class Attachments(models.Model):
     content = models.ForeignKey(
@@ -114,6 +140,14 @@ class Attachments(models.Model):
             _filepath = pathlib.Path(str(self.filepath))
             _filepath.unlink(missing_ok=True)
         super().delete(*args, **kwargs)
+
+    def __str__(self):
+        return (
+            f"Attachments content id: {self.content.id}, "
+            f"filepath: {self.filepath}, "
+            f"title={self.title}, "
+            f"format: {self.format}"
+        )
 
 
 class ImageHash(models.Model):
@@ -131,6 +165,16 @@ class ImageHash(models.Model):
         "b* component hash", max_length=8, db_index=True
     )
     alternate_version = models.BooleanField(default=False, db_index=True)
+
+    def __str__(self) -> str:
+        return (
+            f"ImageHash content id {self.content.id}, "
+            f"aspect ratio: {self.aspect_ratio}, "
+            f"L hash: {self.L_hash.tobytes().hex()}, "
+            f"a hash: {self.a_hash.tobytes().hex()}, "
+            f"b hash: {self.b_hash.tobytes().hex()}, "
+            f"alternate version: {self.alternate_version}"
+        )
 
 
 class CategoryEnum(enum.StrEnum):
@@ -185,7 +229,7 @@ class Tag(models.Model):
     )
 
     def __str__(self):
-        return f"{self.title} ({self.category})"
+        return f"Tag: {self.title} ({self.category})"
 
     class Meta:
         constraints = [
@@ -224,6 +268,12 @@ class TagImplications(models.Model):
             )
         ]
 
+    def __str__(self) -> str:
+        return (
+            "TagImplications target: "
+            f"{self.target}, implicates: {self.implicate}"
+        )
+
 
 class TagAlias(models.Model):
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
@@ -234,6 +284,9 @@ class TagAlias(models.Model):
     class Meta:
         verbose_name = "alias of tag"
         verbose_name_plural = "aliases of tag"
+
+    def __str__(self) -> str:
+        return f"TagAlias: {self.title}, tag id: {self.tag.id}"
 
 
 class Album(models.Model):
@@ -316,3 +369,10 @@ class AlbumOrder(models.Model):
             )
         ]
         unique_together = (("album", "order"),)
+
+    def __str__(self) -> str:
+        return (
+            f"AlbumOrder album id: {self.album.id}, "
+            f"content id: {self.content.id}, "
+            f"order: {self.order}"
+        )

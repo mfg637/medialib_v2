@@ -3,6 +3,7 @@ import enum
 
 import medialib.models
 from django.core.exceptions import ValidationError
+from base.view import format_file_size
 from base.shared_enums.image_processing_model import MediaType
 from image_processing.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
 
@@ -49,9 +50,18 @@ class Task(models.Model):
             )
         return super().clean()
 
-    # def save(self, *args, **kwargs):
-    #     self.full_clean()
-    #     super().save(*args, **kwargs)
+    def get_status_display(self) -> str:
+        return self.STATUS_LIST[self.status][1]
+
+    def __str__(self):
+        if self.uploaded_file:
+            return (
+                f"Task {self.id} "
+                f"[{self.get_status_display()}] - "
+                f"{self.uploaded_file.name}"
+            )
+        else:
+            return f"Task {self.id} " f"[{self.get_status_display()}] - "
 
 
 class AwaitingTaskMetadata(models.Model):
@@ -61,6 +71,15 @@ class AwaitingTaskMetadata(models.Model):
     origin_id = models.CharField(max_length=512, blank=True, default="")
     tags = models.JSONField(null=True, blank=True)
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return (
+            "AwaitingTaskMetadata "
+            f"task id: {self.task.id}, "
+            f"title={self.title}, "
+            f"origin: name={self.origin_name}, id={self.origin_id}, "
+            f"tags: {str(self.tags)}"
+        )
 
 
 class TaskResult(models.Model):
@@ -75,6 +94,23 @@ class TaskResult(models.Model):
     result_file_size = models.PositiveBigIntegerField()
     # quality became constant number, depending on representation size and type
 
+    def __str__(self):
+        if self.content is not None:
+            return (
+                "TaskResult "
+                f"task id: {self.task.id}, "
+                f"content id: {self.content.id} "
+                f"source_file_size = {format_file_size(self.source_file_size)}, "
+                f"result_file_size = {format_file_size(self.result_file_size)}, "
+            )
+        else:
+            return (
+                "TaskResult "
+                f"task id: {self.task.id}, "
+                f"source_file_size = {format_file_size(self.source_file_size)}, "
+                f"result_file_size = {format_file_size(self.result_file_size)}, "
+            )
+
 
 class ExecutionError(models.Model):
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
@@ -87,3 +123,6 @@ class ExecutionError(models.Model):
         ),
         default="",
     )
+
+    def __str__(self):
+        return f"ExecutionError task id: {self.task.id}, title: {self.title}"
