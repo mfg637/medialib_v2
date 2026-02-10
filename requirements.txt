@@ -8,3 +8,5 @@ django-stubs
 scikit-image
 pyvips
 python-dotenv
+celery
+redis

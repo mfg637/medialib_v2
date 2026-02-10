@@ -4,6 +4,7 @@ from django import forms
 from django.core.files.uploadedfile import UploadedFile
 from typing import Optional
 from image_processing.flow.uploading import process_task_file
+from image_processing.flow.processing import run_processing_selected_tasks
 from django.core.exceptions import ValidationError
 
 
@@ -36,3 +37,4 @@ class TaskAdmin(admin.ModelAdmin):
 
     list_display = ("id", "status", "created_at")
     list_filter = ("status",)
+    actions = [run_processing_selected_tasks]

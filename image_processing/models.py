@@ -12,6 +12,7 @@ class TaskStatusEnum(enum.IntEnum):
     AWAITING = 0
     DONE = 1
     ERROR = 2
+    PROCESSING = 3
 
 
 class Task(models.Model):
@@ -25,6 +26,7 @@ class Task(models.Model):
         (TaskStatusEnum.AWAITING, "Wait for processing…"),
         (TaskStatusEnum.DONE, "Done!"),
         (TaskStatusEnum.ERROR, "ERROR!!!"),
+        (TaskStatusEnum.PROCESSING, "Processing…"),
     ]
     media_type = models.CharField(
         max_length=10, choices=MediaType, null=True, blank=True

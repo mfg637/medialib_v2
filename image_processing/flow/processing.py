@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Optional, List
 from django.db import transaction
 from django.conf import settings
+from celery import shared_task
+from django.contrib.admin import action
 
 from base.shared_knowledge.file_format import FILE_FORMAT_DEFAULT_SUFFIX
 from image_processing.services import analysis, media_passport
@@ -15,6 +17,7 @@ from image_processing.services.representations import (
 )
 
 
+@shared_task
 def process_task(task_id: int):
     from image_processing.models import (
         Task,
@@ -34,6 +37,13 @@ def process_task(task_id: int):
     try:
         with transaction.atomic():
             task = Task.objects.select_for_update().get(id=task_id)
+            if task.status in (
+                TaskStatusEnum.DONE.value,
+                TaskStatusEnum.PROCESSING.value,
+            ):
+                return
+            task.status = TaskStatusEnum.PROCESSING
+            task.save()
             source_size = task.uploaded_file.size
 
             passport, comp_level = analysis.do_analysis(
@@ -124,3 +134,19 @@ def process_task(task_id: int):
             details=traceback.format_exc(),
         )
         raise e
+
+
+@action()
+def run_processing_selected_tasks(modeladmin, request, queryset):
+    from image_processing.models import (
+        TaskStatusEnum,
+    )
+
+    pending_tasks = queryset.filter(
+        status__in=[TaskStatusEnum.AWAITING, TaskStatusEnum.ERROR]
+    )
+    for task in pending_tasks:
+        process_task.delay(task.id)
+    modeladmin.message_user(
+        request, f"Launched tasks: {pending_tasks.count()}"
+    )
