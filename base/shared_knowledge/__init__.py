@@ -1,3 +1,3 @@
-from . import origin, file_format
+from . import origin, file_format, tags
 
-__all__ = ["origin", "file_format"]
+__all__ = ["origin", "file_format", "tags"]

@@ -19,3 +19,23 @@ class RepresentationTypeEnum(IntegerChoices):
     AUDIO = 0
     IMAGE = 10
     VIDEO = 20
+
+
+class CategoryEnum(enum.StrEnum):
+    CREATOR = "creator"
+    ARTIST = "artist"
+    PROMPTER = "prompter"
+    AI = "ai"
+    SET = "set"
+    COMIC = "comic"
+    COPYRIGHT = "copyright"
+    RATING = "rating"
+    SPECIES = "species"
+    CHARACTER = "character"
+    CHARACTER_GROUP = "character-group"
+    GENDER = "gender"
+    LORE = "lore"
+    META = "meta"
+    ERROR = "error"
+    STYLE = "style"
+    CONTENT = "content"

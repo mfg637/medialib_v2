@@ -1,12 +1,11 @@
-from medialib.models import Tag, TagAlias, CategoryEnum
+from base.shared_enums.medialib_model import CategoryEnum
+from base.shared_knowledge.tags import (
+    PREFIXED_CATEGORIES,
+    prepare_tag_name,
+    generate_aliases,
+)
+from medialib.models import Tag, TagAlias
 from typing import Optional
-
-PREFIXED_CATEGORIES = {
-    CategoryEnum.ARTIST,
-    CategoryEnum.CHARACTER,
-    CategoryEnum.CREATOR,
-    CategoryEnum.PROMPTER,
-}
 
 
 def get_all_implications(
@@ -31,19 +30,36 @@ def get_all_implications(
 
 def resolve_tag(name: str, category: CategoryEnum) -> Tag:
     """
-    Находит существующий тег через алиас или название, либо создает новый.
+    Finds new tag by (name + category), or alias name, or creates new if not found
     """
-    name = name.lower().strip()
+    prefixed_aliases: list[str] = []
+    name = prepare_tag_name(name)
 
-    alias = TagAlias.objects.filter(title=name).select_related("tag").first()
-    if alias:
-        return alias.tag
+    if category not in PREFIXED_CATEGORIES:
+        alias = (
+            TagAlias.objects.filter(title=name).select_related("tag").first()
+        )
+        if alias:
+            return alias.tag
+    else:
+        prefixed_aliases = generate_aliases(name, category)
+        for alias in prefixed_aliases:
+            search_result = (
+                TagAlias.objects.filter(title=alias)
+                .select_related("tag")
+                .first()
+            )
+            if search_result:
+                return search_result
 
     tag, created = Tag.objects.get_or_create(title=name, category=category)
 
-    if created and category in PREFIXED_CATEGORIES:
-        prefixed_name = f"{category}:{name}"
-        TagAlias.objects.get_or_create(tag=tag, title=prefixed_name)
+    if created:
+        aliases: list[str] = prefixed_aliases or generate_aliases(
+            name, category
+        )
+        for alias in aliases:
+            TagAlias.objects.get_or_create(tag=tag, title=alias)
 
     return tag
 
@@ -73,4 +89,4 @@ def process_content_tags(content, tags_data: dict[str, list[str]]):
                 processed_ids.add(i_tag.id)
 
     if final_tags_to_add:
-        content.tag_set.add(*final_tags_to_add)
+        content.tags.add(*final_tags_to_add)

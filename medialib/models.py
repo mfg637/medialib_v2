@@ -5,6 +5,7 @@ from medialib_v2.settings import MEDIALIB_COLLECTION_DIRECTORY
 from base.shared_enums.medialib_model import (
     ContentTypeEnum,
     RepresentationTypeEnum,
+    CategoryEnum,
 )
 
 # from medialib_v2 import secrets
@@ -12,6 +13,8 @@ from django.core.exceptions import ValidationError
 
 DEBUG = True
 REPRESENATION_FILE_PATH_LIMIT = 512
+TAG_NAME_LENGTH_LIMIT = 512
+TAG_ALIAS_LENGRG_LIMIT = TAG_NAME_LENGTH_LIMIT
 
 
 class Content(models.Model):
@@ -38,6 +41,9 @@ class Content(models.Model):
         unique=True,
         db_index=True,
         help_text="SHA-256 hash of the original file content (stored as BYTEA).",
+    )
+    tags = models.ManyToManyField(
+        "Tag", related_name="content_set", blank=True
     )
 
     class Meta:
@@ -177,28 +183,10 @@ class ImageHash(models.Model):
         )
 
 
-class CategoryEnum(enum.StrEnum):
-    CREATOR = "creator"
-    ARTIST = "artist"
-    PROMPTER = "prompter"
-    AI = "ai"
-    SET = "set"
-    COMIC = "comic"
-    COPYRIGHT = "copyright"
-    RATING = "rating"
-    SPECIES = "species"
-    CHARACTER = "character"
-    CHARACTER_GROUP = "character-group"
-    GENDER = "gender"
-    LORE = "lore"
-    META = "meta"
-    ERROR = "error"
-    STYLE = "style"
-    CONTENT = "content"
-
-
 class Tag(models.Model):
-    title = models.TextField()
+    title = models.CharField(
+        max_length=TAG_NAME_LENGTH_LIMIT, null=False, blank=False
+    )
     CATEGORY_CHOICES = [
         (CategoryEnum.CREATOR, "Content creator"),
         (CategoryEnum.ARTIST, "Artist"),
@@ -218,8 +206,11 @@ class Tag(models.Model):
         (CategoryEnum.STYLE, "Style description"),
         (CategoryEnum.CONTENT, "Content description"),
     ]
-    category = models.CharField(choices=CATEGORY_CHOICES, db_index=True)
-    content = models.ManyToManyField(Content)
+    category = models.CharField(
+        choices=CATEGORY_CHOICES,
+        db_index=True,
+        default=CategoryEnum.CONTENT.value,
+    )
     implications = models.ManyToManyField(
         "self",
         symmetrical=False,
@@ -227,6 +218,9 @@ class Tag(models.Model):
         through_fields=("target", "implicate"),
         related_name="is_implied_by",
     )
+
+    def get_category(self: Tag) -> CategoryEnum:
+        return CategoryEnum(self.category)
 
     def __str__(self):
         return f"Tag: {self.title} ({self.category})"
@@ -276,9 +270,15 @@ class TagImplications(models.Model):
 
 
 class TagAlias(models.Model):
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, db_index=True)
-    title = models.TextField(
-        unique=True, null=False, blank=False, db_index=True
+    tag = models.ForeignKey(
+        Tag, on_delete=models.CASCADE, db_index=True, related_name="alias_set"
+    )
+    title = models.CharField(
+        unique=True,
+        null=False,
+        blank=False,
+        db_index=True,
+        max_length=TAG_ALIAS_LENGRG_LIMIT,
     )
 
     class Meta:
