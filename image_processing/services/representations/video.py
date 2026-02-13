@@ -47,6 +47,7 @@ def make_cl1_webm_representation(
         video_bitrate=2000,
         max_video_bitrate=vp9_levels[1].bitrate_limit_kbps,
         copy_audio=False,
+        video_level=3.1,
         data=passport.ffprobe_raw_data,
     )
     tmp_passport = VideoPassport(

@@ -165,6 +165,7 @@ def build_vpx_vp9_commandline(
     video_bitrate: int | str | None = None,
     max_video_bitrate: int | str | None = None,
     cpu_used: int | str = 4,
+    level: str | float | None = None,
     rewrite: bool = False,
 ) -> list[str]:
     commandline = ["ffmpeg"]
@@ -183,6 +184,8 @@ def build_vpx_vp9_commandline(
             "-vf",
             vfilters,
         ]
+    if level is not None:
+        commandline += ["-level", str(level)]
     if isinstance(video_bitrate, int):
         video_bitrate_str: str = f"{video_bitrate}k"
     elif video_bitrate is None:

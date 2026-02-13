@@ -22,6 +22,7 @@ def encode(
     copy_audio: bool = False,
     video_bitrate: int | str | None = None,
     max_video_bitrate: int | None = None,
+    video_level: str | float | None = None,
     audio_bitrate: int = 96,
     rewrite: bool = False,
     data: dict | None = None,
@@ -66,6 +67,7 @@ def encode(
             video_bitrate=video_bitrate,
             audio_bitrate=audio_bitrate,
             max_video_bitrate=video_bitrate_limit,
+            level=video_level,
         )
         try:
             proc_1 = run_subprocess(pass_1_commandline)
@@ -90,6 +92,7 @@ def encode(
             video_bitrate=video_bitrate,
             audio_bitrate=audio_bitrate,
             max_video_bitrate=video_bitrate_limit,
+            level=video_level,
         )
         try:
             proc_2 = run_subprocess(pass_2_commandline)
