@@ -1,10 +1,8 @@
 from django.contrib import admin
-from django import forms
 from . import models as ml_models
-from django.core.files.uploadedfile import UploadedFile
-from django.core.exceptions import ValidationError
 from base.shared_knowledge.tags import generate_aliases
-from pathlib import Path
+from medialib_v2.settings import MEDIA_URL
+from django.utils.safestring import mark_safe
 
 
 class TagAliasAdmin(admin.StackedInline):
@@ -85,11 +83,18 @@ class ImageHashInline(admin.StackedInline):
 
 @admin.register(ml_models.Content)
 class ContentAdmin(admin.ModelAdmin):
-    list_display = ["title", "content_type", "is_hidden", "addition_date"]
-    list_filter = ["content_type", "is_hidden"]
-    search_fields = ["title", "description", "source_hash"]
+    list_display = [
+        "content_thumbnail",
+        "title",
+        "content_type",
+        "is_visible",
+        "addition_date",
+    ]
+    list_filter = ["content_type", "is_hidden", "addition_date"]
+    search_fields = ["title", "tags__title"]
 
     readonly_fields = [
+        "content_preview",
         "content_type",
         "formatted_hash",
         "addition_date",
@@ -107,8 +112,55 @@ class ContentAdmin(admin.ModelAdmin):
 
     formatted_hash.short_description = "Source Hash"
 
+    def abstract_representation(self, obj, size_limit, substitute_text):
+        repr_list = obj.representation_set.filter(
+            repr_type=ml_models.RepresentationTypeEnum.IMAGE.value
+        ).order_by("width")
+        rep = None
+        for current_repr in repr_list:
+            if current_repr.check_side_size_limit(size_limit):
+                rep = current_repr
+
+        if rep and rep.filepath:
+            url = f"/{MEDIA_URL}{rep.filepath}"
+            return mark_safe(
+                (
+                    f'<img src="{url}" '
+                    f'style="max-width: {size_limit}px; max-height: {size_limit}px;"'
+                    " />"
+                )
+            )
+        return substitute_text
+
+    def content_preview(self, obj):
+        return self.abstract_representation(obj, 512, "No preview available")
+
+    content_preview.short_description = "Preview"
+
+    def content_thumbnail(self, obj):
+        return self.abstract_representation(obj, 128, "No image")
+
+    content_thumbnail.short_description = "Pic"
+
+    def is_visible(self, obj) -> bool:
+        return not bool(obj.is_hidden)
+
+    is_visible.short_description = "Visible"
+    is_visible.boolean = True
+
     fieldsets = [
-        (None, {"fields": ["title", "description", "is_hidden", "tags"]}),
+        (
+            None,
+            {
+                "fields": [
+                    "content_preview",
+                    "title",
+                    "description",
+                    "is_hidden",
+                    "tags",
+                ]
+            },
+        ),
         (
             "Technical Metadata",
             {

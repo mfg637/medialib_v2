@@ -68,12 +68,20 @@ class ContentOrigin(models.Model):
 
 
 COMPATIBILITY_LEVEL_MAPPING = [
-    (4, "Supercomputer"),
-    (3, "Personal Computer"),
-    (2, "Mobile device"),
-    (1, "Old hardware"),
-    (0, "Very old hardware"),
+    (4, "CL4 Supercomputer"),
+    (3, "CL3 Personal Computer"),
+    (2, "CL2 Mobile device"),
+    (1, "CL1 Old hardware"),
+    (0, "CL0 Very old hardware"),
 ]
+REPRESENTATION_TYPE_MAPPING = [
+    (RepresentationTypeEnum.IMAGE.value, "Image"),
+    (RepresentationTypeEnum.VIDEO.value, "Video"),
+    (RepresentationTypeEnum.AUDIO.value, "Audio"),
+]
+REPRESENTATION_TYPE_DICT: dict[int, str] = {
+    repr_type[0]: repr_type[1] for repr_type in REPRESENTATION_TYPE_MAPPING
+}
 
 
 class Representation(models.Model):
@@ -95,8 +103,19 @@ class Representation(models.Model):
     )
     width = models.PositiveSmallIntegerField(null=True)
     height = models.PositiveSmallIntegerField(null=True)
-    repr_type = models.IntegerField(choices=RepresentationTypeEnum, null=False)
+    repr_type = models.IntegerField(
+        choices=REPRESENTATION_TYPE_MAPPING, null=False
+    )
     codec_string = models.CharField(max_length=255, blank=True, default="")
+
+    def get_type(self) -> RepresentationTypeEnum:
+        return RepresentationTypeEnum(self.repr_type)
+
+    def get_type_string(self) -> str:
+        return REPRESENTATION_TYPE_DICT[self.repr_type]
+
+    def check_side_size_limit(self, size_limit: int) -> bool:
+        return self.width <= size_limit and self.height <= size_limit
 
     def clean(self):
         if self.repr_type >= RepresentationTypeEnum.IMAGE:
@@ -121,7 +140,7 @@ class Representation(models.Model):
                 f"file path: {self.filepath}, "
                 f"compatibility level: {self.compatibility_level}, "
                 f"format: {self.format}, "
-                f"type: {self.repr_type}, "
+                f"type: {self.get_type_string()}, "
                 f"size: {self.width}x{self.height}"
             )
         return (
