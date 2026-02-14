@@ -1,0 +1,60 @@
+<title>{{ content.title|default:"Untitled"}} - MediaLib v2</title>
+
+<article class="content-page">
+    
+    <section class="viewer-section">
+        <div class="media-container">
+            {% if main_repr %}
+                <img src="/{{ MEDIA_URL }}{{ main_repr.filepath }}" 
+                     alt="{{ content.title }}"
+                     class="main-content-image">
+            {% else %}
+                <div class="no-content">No representation available</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="info-section">
+        <header class="content-header">
+            <h1>{{ content.title|default:"Untitled" }}</h1>
+
+        </header>
+
+        {% if content.description %}
+        <div class="description">
+            {{ content.description|linebreaks }}
+        </div>
+        {% endif %}
+
+        <aside class="tags-sidebar">
+            <h3>Metadata</h3>
+            
+            {% regroup content.tags.all by get_category_display as tag_categories %}
+
+            {% for category in tag_categories %}
+                <div class="tag-group">
+                    <h4 class="category-title">{{ category.grouper }}</h4>
+                    <ul class="tag-list">
+                        {% for tag in category.list %}
+                        <li>
+                            <a href="/medialib/tag/id{{ tag.id }}" class="tag-link">
+                                {{ tag.title }}
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% empty %}
+                <p class="no-tags">No tags assigned.</p>
+            {% endfor %}
+        </aside>
+
+        <footer class="technical-info">
+            <code>SHA-256: {{ content.source_hash.hex }}</code>
+            <time datetime="{{ content.addition_date|date:'Y-m-d' }}">
+                Added: {{ content.addition_date|date:"d E Y" }}
+            </time>
+        </footer>
+    </section>
+
+</article>

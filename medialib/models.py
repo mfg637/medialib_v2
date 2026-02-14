@@ -1,6 +1,5 @@
 from django.db import models
 import pathlib
-import enum
 from medialib_v2.settings import MEDIALIB_COLLECTION_DIRECTORY
 from base.shared_enums.medialib_model import (
     ContentTypeEnum,
@@ -36,8 +35,9 @@ class Content(models.Model):
     addition_date = models.DateTimeField(auto_now_add=True, db_index=True)
     is_hidden = models.BooleanField(default=False)
     last_edit = models.DateTimeField(auto_now=True)
+    SOURCE_HASH_BINARY_LENGTH = 32
     source_hash = models.BinaryField(
-        max_length=32,
+        max_length=SOURCE_HASH_BINARY_LENGTH,
         unique=True,
         db_index=True,
         help_text="SHA-256 hash of the original file content (stored as BYTEA).",
@@ -45,6 +45,30 @@ class Content(models.Model):
     tags = models.ManyToManyField(
         "Tag", related_name="content_set", blank=True
     )
+    YEAR_DIGITS = 4
+    MONTH_DAY_DIGITS = 2
+    SOURCE_HASH_HEX_LENGTH = SOURCE_HASH_BINARY_LENGTH * 2
+    HYPHEN_COUNT = 3
+    SLUG_LENGTH = (
+        YEAR_DIGITS
+        + MONTH_DAY_DIGITS * 2
+        + SOURCE_HASH_HEX_LENGTH
+        + HYPHEN_COUNT
+    )
+    slug = models.SlugField(
+        max_length=SLUG_LENGTH, unique=True, blank=True, db_index=True
+    )
+
+    def generate_slug(self):
+        date_part = self.addition_date.strftime("%Y-%m-%d")
+        hash_part = self.source_hash.tobytes().hex()
+        return f"{date_part}-{hash_part}"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.generate_slug()
+
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "content"
@@ -86,7 +110,10 @@ REPRESENTATION_TYPE_DICT: dict[int, str] = {
 
 class Representation(models.Model):
     content = models.ForeignKey(
-        Content, on_delete=models.CASCADE, db_index=True
+        Content,
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name="representation_set",
     )
     filepath = models.FileField(
         upload_to=str(MEDIALIB_COLLECTION_DIRECTORY.joinpath("%Y/%m/%d/")),

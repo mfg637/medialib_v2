@@ -3,6 +3,7 @@ from . import models as ml_models
 from base.shared_knowledge.tags import generate_aliases
 from medialib_v2.settings import MEDIA_URL
 from django.utils.safestring import mark_safe
+from django.urls import reverse
 
 
 class TagAliasAdmin(admin.StackedInline):
@@ -94,6 +95,7 @@ class ContentAdmin(admin.ModelAdmin):
     search_fields = ["title", "tags__title"]
 
     readonly_fields = [
+        "view_on_site_link",
         "content_preview",
         "content_type",
         "formatted_hash",
@@ -148,6 +150,21 @@ class ContentAdmin(admin.ModelAdmin):
     is_visible.short_description = "Visible"
     is_visible.boolean = True
 
+    def view_on_site_link(self, obj):
+        if obj.slug:
+            try:
+                url = reverse(
+                    "content-info", kwargs={"content_slug": obj.slug}
+                )
+                return mark_safe(
+                    f'<a href="{url}" target="_blank">Visit on site</a>'
+                )
+            except Exception:
+                return "routing error"
+        return "-"
+
+    view_on_site_link.short_description = "Link"
+
     fieldsets = [
         (
             None,
@@ -158,6 +175,7 @@ class ContentAdmin(admin.ModelAdmin):
                     "description",
                     "is_hidden",
                     "tags",
+                    "view_on_site_link",
                 ]
             },
         ),
