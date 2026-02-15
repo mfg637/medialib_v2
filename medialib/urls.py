@@ -7,4 +7,5 @@ urlpatterns = [
         views.content_info,
         name="content-info",
     ),
+    path("set-cl/<int:level>", views.set_cl_level, name="set-cl"),
 ]

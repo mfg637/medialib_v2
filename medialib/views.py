@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from base.shared_enums.medialib_model import RepresentationTypeEnum
 from medialib_v2.settings import MEDIA_URL
 from .models import Content
@@ -17,10 +17,16 @@ def content_info(request, content_slug: str):
             main_repr = current_repr
     return render(
         request,
-        "medialib/content_info.html",
+        "medialib/content_info.djhtml",
         {
             "content": content,
             "MEDIA_URL": MEDIA_URL,
             "main_repr": main_repr,
         },
     )
+
+
+def set_cl_level(request, level):
+    request.session["clevel"] = level
+    next_url = request.GET.get("next", "/")
+    return redirect(next_url)

@@ -98,6 +98,9 @@ COMPATIBILITY_LEVEL_MAPPING = [
     (1, "CL1 Old hardware"),
     (0, "CL0 Very old hardware"),
 ]
+COMPATIBILITY_LEVEL_DICT: dict[int, str] = {
+    CL[0]: CL[1] for CL in COMPATIBILITY_LEVEL_MAPPING
+}
 REPRESENTATION_TYPE_MAPPING = [
     (RepresentationTypeEnum.IMAGE.value, "Image"),
     (RepresentationTypeEnum.VIDEO.value, "Video"),
