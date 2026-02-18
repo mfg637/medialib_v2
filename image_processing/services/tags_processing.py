@@ -28,29 +28,41 @@ def get_all_implications(
     return implied_tags
 
 
-def resolve_tag(name: str, category: CategoryEnum) -> Tag:
+def resolve_tag(name: str, category: CategoryEnum) -> tuple[Tag, bool]:
     """
     Finds new tag by (name + category), or alias name, or creates new if not found
     """
     prefixed_aliases: list[str] = []
+    PROMPTER_EMBEDED_PREFIX = "prompter:"
+    ARTIST_EMBEDED_PREFIX = "artist:"
     name = prepare_tag_name(name)
 
+    if category == CategoryEnum.CONTENT:
+        initial_category = category
+        if name.startswith(PROMPTER_EMBEDED_PREFIX):
+            name = name.removeprefix(PROMPTER_EMBEDED_PREFIX)
+            category = CategoryEnum.PROMPTER
+        elif name.startswith(ARTIST_EMBEDED_PREFIX):
+            name = name.removeprefix(ARTIST_EMBEDED_PREFIX)
+            category = CategoryEnum.ARTIST
+        if category != initial_category:
+            print(
+                (
+                    "[INCIDENT] Reassigned category "
+                    f"'{category}' for tag '{name}' (was '{initial_category}')"
+                )
+            )
+
     if category not in PREFIXED_CATEGORIES:
-        alias = (
-            TagAlias.objects.filter(title=name).select_related("tag").first()
-        )
+        alias = TagAlias.objects.filter(title=name).first()
         if alias:
-            return alias.tag
+            return alias.tag, False
     else:
         prefixed_aliases = generate_aliases(name, category)
-        for alias in prefixed_aliases:
-            search_result = (
-                TagAlias.objects.filter(title=alias)
-                .select_related("tag")
-                .first()
-            )
-            if search_result:
-                return search_result
+        for alias_name in prefixed_aliases:
+            alias = TagAlias.objects.filter(title=alias_name).first()
+            if alias:
+                return alias.tag, False
 
     tag, created = Tag.objects.get_or_create(title=name, category=category)
 
@@ -58,10 +70,10 @@ def resolve_tag(name: str, category: CategoryEnum) -> Tag:
         aliases: list[str] = prefixed_aliases or generate_aliases(
             name, category
         )
-        for alias in aliases:
-            TagAlias.objects.get_or_create(tag=tag, title=alias)
+        for aliased_tag in aliases:
+            TagAlias.objects.get_or_create(tag=tag, title=aliased_tag)
 
-    return tag
+    return tag, created
 
 
 def process_content_tags(content, tags_data: dict[str, list[str]]):
@@ -75,7 +87,7 @@ def process_content_tags(content, tags_data: dict[str, list[str]]):
             category = CategoryEnum.CONTENT
 
         for name in names:
-            tag = resolve_tag(name, category)
+            tag, created = resolve_tag(name, category)
             if tag.id not in processed_ids:
                 final_tags_to_add.add(tag)
                 processed_ids.add(tag.id)
