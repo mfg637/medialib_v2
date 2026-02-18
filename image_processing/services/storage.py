@@ -5,6 +5,7 @@ from medialib.models import Content, ContentOrigin
 from base.shared_knowledge.origin import get_origin_type, AbstractOriginType
 from image_processing.services.representations import Representation
 from typing import Optional, Type
+import base64
 
 
 def generate_representation_path(
@@ -17,18 +18,18 @@ def generate_representation_path(
     height: int | None,
     suffix: str,
 ) -> Path:
-    """
-    Формирует относительный путь к файлу репрезентации.
-    """
-
     origin_class: Optional[Type[AbstractOriginType]] = get_origin_type(
         origin_name
     )
+
+    src_hash_b64 = base64.urlsafe_b64encode(content.source_hash).decode(
+        "utf-8"
+    )[:12]
+
+    base_name = f"mlid{content.id} {src_hash_b64}"
     if origin_class and origin_id:
         safe_id = origin_class.filesystem_safe_content_id(origin_id)
-        base_name = f"{origin_class().get_prefix()}{safe_id}"
-    else:
-        base_name = f"mlid{content.id}"
+        base_name += f" {origin_class().get_prefix()}{safe_id}"
 
     size_str = f"_{width}x{height}" if width and height else ""
     filename = f"{base_name}_cl{compatibility_level}{size_str}{suffix}"
