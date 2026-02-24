@@ -1,6 +1,7 @@
 from django.contrib import admin
 from . import models as ml_models
 from base.shared_knowledge.tags import generate_aliases
+from .tags import smart_tag_search
 from medialib_v2.settings import MEDIA_URL
 from django.utils.safestring import mark_safe
 from django.urls import reverse
@@ -31,6 +32,13 @@ class TagAdmin(admin.ModelAdmin):
         return obj.alias_set.count()
 
     aliases_count.short_description = "Aliases"
+
+    def get_search_results(self, request, queryset, search_term):
+        if not search_term:
+            return super().get_search_results(request, queryset, search_term)
+
+        queryset = smart_tag_search(search_term, queryset)
+        return queryset, False
 
     def save_model(self, request, current_tag: ml_models.Tag, form, change):
         super().save_model(request, current_tag, form, change)
