@@ -1,16 +1,16 @@
 import json
 import traceback
-import time
 from pathlib import Path
 from django.http import JsonResponse
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.core.files import File
 
-from medialib_v2 import settings
 from base.shared_knowledge.file_format import GENERIC_BINARY_FILE_MIME
 from image_processing.flow.uploading import process_task_file
+from medialib import models as ml_models
 from .models import Task, AwaitingTaskMetadata, TaskStatusEnum
 from .forms import TaskUploadForm
 
@@ -148,3 +148,39 @@ def create_task_from_local_file(request):
     except Exception as e:
         traceback.print_exc()
         return JsonResponse({"error": str(e)}, status=500)
+
+
+def origin_info(request):
+    origin_name = request.GET.get("name")
+    origin_content_id = request.GET.get("id")
+    if not origin_name or not origin_content_id:
+        return JsonResponse(
+            {
+                "status": "error",
+                "message": "Missing 'name' or 'id' parameters",
+            },
+            status=400,
+        )
+
+    origin_query = (
+        ml_models.ContentOrigin.objects.filter(
+            name=origin_name, origin_id=origin_content_id
+        )
+        .select_related("content")
+        .first()
+    )
+    if origin_query:
+        content: ml_models.Content = origin_query.content
+        content_url = reverse(
+            "content-info", kwargs={"content_slug": content.slug}
+        )
+        return JsonResponse(
+            {
+                "status": "found",
+                "mlid": content.id,
+                "url": content_url,
+                "slug": content.slug,
+            }
+        )
+    else:
+        return JsonResponse({"status": "not found"}, status=404)
