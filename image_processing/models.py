@@ -115,7 +115,7 @@ class TaskResult(models.Model):
 
 
 class ExecutionError(models.Model):
-    task = models.OneToOneField(Task, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
     title = models.TextField(help_text="The name of the error")
     details = models.TextField(
         blank=True,

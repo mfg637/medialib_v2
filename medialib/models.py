@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 import pathlib
 from medialib_v2.settings import MEDIALIB_COLLECTION_DIRECTORY
 from base.shared_enums.medialib_model import (
@@ -60,7 +61,8 @@ class Content(models.Model):
     )
 
     def generate_slug(self):
-        date_part = self.addition_date.strftime("%Y-%m-%d")
+        date = self.addition_date or timezone.now()
+        date_part = date.strftime("%Y-%m-%d")
         hash_part = self.source_hash.tobytes().hex()
         return f"{date_part}-{hash_part}"
 

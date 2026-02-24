@@ -20,9 +20,17 @@ class TagImplicationAdmin(admin.TabularInline):
 @admin.register(ml_models.Tag)
 class TagAdmin(admin.ModelAdmin):
     inlines = [TagAliasAdmin, TagImplicationAdmin]
-    list_display = ["title", "category"]
+    list_display = ["title", "category", "aliases_count"]
     list_filter = ["category"]
-    search_fields = ["tagalias__title"]
+    search_fields = ["title", "alias_set__title"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("alias_set")
+
+    def aliases_count(self, obj):
+        return obj.alias_set.count()
+
+    aliases_count.short_description = "Aliases"
 
     def save_model(self, request, current_tag: ml_models.Tag, form, change):
         super().save_model(request, current_tag, form, change)
@@ -86,7 +94,7 @@ class ImageHashInline(admin.StackedInline):
 class ContentAdmin(admin.ModelAdmin):
     list_display = [
         "content_thumbnail",
-        "title",
+        "title_short",
         "content_type",
         "is_visible",
         "addition_date",
@@ -150,6 +158,16 @@ class ContentAdmin(admin.ModelAdmin):
     is_visible.short_description = "Visible"
     is_visible.boolean = True
 
+    def title_short(self, obj: ml_models.Content) -> str:
+        LENGTH_LIMIT = 16
+        if len(obj.title) > LENGTH_LIMIT:
+            return f"{obj.title[:16]}…"
+        else:
+            return obj.title
+
+    title_short.short_description = "Title"
+    title_short.admin_order_field = "title"
+
     def view_on_site_link(self, obj):
         if obj.slug:
             try:
@@ -192,6 +210,13 @@ class ContentAdmin(admin.ModelAdmin):
             },
         ),
     ]
+
+    def get_queryset(self, request):
+        return (
+            super()
+            .get_queryset(request)
+            .prefetch_related("tags", "representation_set")
+        )
 
 
 # admin.site.register(ml_models.Content, ContentAdmin)

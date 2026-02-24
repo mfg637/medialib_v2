@@ -79,6 +79,15 @@ def process_task(task_id: int):
             repr_list: List[Representation] = make_representations(
                 passport, comp_level
             )
+            if isinstance(passport, media_passport.StaticImagePassport):
+                sig = get_image_signatures(passport)
+                ImageHash.objects.create(
+                    content=content,
+                    aspect_ratio=sig.aspect_ratio,
+                    L_hash=sig.l_hash,
+                    a_hash=sig.a_hash,
+                    b_hash=sig.b_hash,
+                )
             repr_list = move_representations(content, repr_list)
 
             total_result_size = 0
@@ -98,16 +107,6 @@ def process_task(task_id: int):
                     compatibility_level=r.compatibility_level,
                     codec_string=codec_string,
                     repr_type=r.repr_type,
-                )
-
-            if isinstance(passport, media_passport.StaticImagePassport):
-                sig = get_image_signatures(passport)
-                ImageHash.objects.create(
-                    content=content,
-                    aspect_ratio=sig.aspect_ratio,
-                    L_hash=sig.l_hash,
-                    a_hash=sig.a_hash,
-                    b_hash=sig.b_hash,
                 )
 
             TaskResult.objects.create(
