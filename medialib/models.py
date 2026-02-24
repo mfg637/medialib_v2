@@ -90,7 +90,19 @@ class ContentOrigin(models.Model):
         Content, on_delete=models.CASCADE, db_index=True
     )
     name = models.CharField(max_length=32)
-    origin_id = models.TextField("ID on origin", blank=True, default="")
+    origin_id = models.CharField(
+        "ID on origin", max_length=255, blank=True, default=""
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["name", "origin_id"],
+                name="unique_origin_source_id",
+                condition=~models.Q(origin_id=""),
+            )
+        ]
+        indexes = [models.Index(fields=["name", "origin_id"])]
 
 
 COMPATIBILITY_LEVEL_MAPPING = [
