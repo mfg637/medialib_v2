@@ -2,6 +2,7 @@ from django.db.models import Case, When, Value, IntegerField, Q, QuerySet
 from base.shared_knowledge.tags import prepare_tag_name
 from medialib.models import Tag
 from typing import Optional
+from . import dsl
 
 
 def smart_tag_search(
@@ -30,3 +31,6 @@ def smart_tag_search(
         .order_by("relevance", "title")
         .distinct()
     )
+
+
+__all__ = ["smart_tag_search", "dsl"]
