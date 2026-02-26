@@ -1,2 +1,47 @@
 {% extends "medialib/base.djhtml" %}
-{% block content %}<h1>Home Page</h1>{% endblock %}
+{% block content %}
+    <style>
+        .home-container {
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        .main-menu {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .main-menu li {
+            margin: 0 15px;
+        }
+
+        .main-menu a {
+            text-decoration: none;
+            font-size: 1.2em;
+            color: #007bff;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .main-menu a:hover {
+            background-color: #007bff;
+            color: #fff;
+        }
+    </style>
+    <div class="home-container">
+        <h1>Home Page</h1>
+        <nav>
+            <ul class="main-menu">
+                <li>
+                    <a href="{% url 'content-list' %}">Gallery</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+{% endblock %}

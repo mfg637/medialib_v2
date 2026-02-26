@@ -12,5 +12,6 @@ urlpatterns = [
         views.representation.get_representation,
         name="content-representation",
     ),
+    path("dynamic/content/list", views.content_list, name="content-list"),
     path("set-cl/<int:level>", views.set_cl_level, name="set-cl"),
 ]
