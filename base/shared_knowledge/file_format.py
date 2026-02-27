@@ -21,6 +21,9 @@ ALLOWED_FILE_FORMATS: set[FormatEnum] = {
     FormatEnum.WEBP,
     FormatEnum.AVIF,
     FormatEnum.SVG,
+    FormatEnum.MPEG_4,
+    FormatEnum.WEBM,
+    FormatEnum.GIF,
 }
 
 
