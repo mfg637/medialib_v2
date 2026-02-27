@@ -90,8 +90,9 @@ class TagDSLParser:
             .first()
         )
         if alias:
-            return Q(tags=alias.tag)
-        # note: there may be better exception class for this case
+            tag = alias.tag
+            subquery = ml_models.Content.objects.filter(tags=tag).values("pk")
+            return Q(pk__in=subquery)
         raise DSLError(f"Not found tag '{tag_name}'")
 
     def parse(self):
