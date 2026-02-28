@@ -38,10 +38,19 @@ class ContentListItem:
     srcset: str = ""
 
 
+SORTING_ORDER: dict[str, str] = {
+    "unsorted": "",
+    "date": "addition_date",
+    "date decreasing": "-addition_date",
+    "random": "?",
+}
+
+
 def content_list(request: HttpRequest) -> HttpResponse:
     query_string = request.GET.get("q", "")
     items_per_page = int(request.GET.get("per_page", 24))
     filter_name = request.GET.get("filter", "safe")
+    sort_mode_name = request.GET.get("sort", "date decreasing")
     if query_string:
         try:
             parser = TagDSLParser(query_string)
@@ -53,6 +62,13 @@ def content_list(request: HttpRequest) -> HttpResponse:
         queryset = Content.objects.all()
     filter_function = FILTERS.get(filter_name, bypass)
     queryset = filter_function(queryset).distinct()
+    try:
+        sorting_order = SORTING_ORDER[sort_mode_name]
+    except KeyError:
+        sort_mode_name = "date decreasing"
+        sorting_order = SORTING_ORDER[sort_mode_name]
+    if sorting_order:
+        queryset = queryset.order_by(sorting_order)
     paginator = Paginator(queryset, items_per_page)
     page_number = int(request.GET.get("page", 1))
     page_obj = paginator.get_page(page_number)
@@ -74,6 +90,8 @@ def content_list(request: HttpRequest) -> HttpResponse:
             "per_page": items_per_page,
             "filter_name": filter_name,
             "available_filters": FILTERS.keys(),
+            "sorting_mode": sort_mode_name,
+            "sorting_modes_available": SORTING_ORDER.keys(),
         },
     )
 
