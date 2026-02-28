@@ -36,15 +36,27 @@
 
     .search-container {
         padding: 20px;
-        text-align: center;
         background: #fafafa;
         border-bottom: 1px solid #eee;
+    }
+
+    .search-container .main-field{
+        text-align: center;
     }
 
     .search-input {
         width: 60%;
         padding: 10px;
         font-family: monospace;
+    }
+
+    .search-container button[type="submit"] {
+        width: 4em;
+        padding: 10px;
+    }
+    .search-container .additional-fields{
+        width: calc(60% + 4em + 20px);
+        margin: 0 auto;
     }
 
     .pagination {
@@ -61,12 +73,24 @@
     </style>
     <div class="search-container">
         <form method="GET" action="{% url 'content-list' %}">
-            <input type="text"
-                   name="q"
-                   class="search-input"
-                   placeholder="Type search query"
-                   value="{{ query_string|default:'' }}">
-            <button type="submit">Find</button>
+            <div class="main-field">
+                <input type="text"
+                       name="q"
+                       class="search-input"
+                       placeholder="Type search query"
+                       value="{{ query_string|default:'' }}">
+                <button type="submit">Find</button>
+            </div>
+            <div class="additional-fields">
+                <label>
+                    Filter:
+                    <select name="filter">
+                        {% for f in available_filters %}
+                            <option value="{{ f }}" {% if filter_name == f %}selected{% endif %}>{{ f }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
         </form>
     </div>
     <div class="items-grid">
@@ -86,11 +110,11 @@
     {% if page_obj.has_other_pages %}
         <div class="pagination">
             {% if page_obj.has_previous %}
-                <a href="?q={{ query_string|default:'' }}&page={{ page_obj.previous_page_number }}&per_page={{ per_page }}">Previous</a>
+                <a href="?q={{ query_string|urlencode }}&page={{ page_obj.next_page_number }}&per_page={{ per_page }}&filter={{ filter_name }}">Previous</a>
             {% endif %}
             <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
             {% if page_obj.has_next %}
-                <a href="?q={{ query_string|default:'' }}&page={{ page_obj.next_page_number }}&per_page={{ per_page }}">Next</a>
+                <a href="?q={{ query_string|urlencode }}&page={{ page_obj.next_page_number }}&per_page={{ per_page }}&filter={{ filter_name }}">Next</a>
             {% endif %}
         </div>
     {% endif %}

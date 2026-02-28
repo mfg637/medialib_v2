@@ -7,6 +7,7 @@ from base.shared_enums.medialib_model import RepresentationTypeEnum
 from medialib_v2.settings import MEDIA_URL
 from medialib.models import Content
 from medialib.tags.dsl import TagDSLParser, DSLError
+from medialib.tags.filter import FILTERS, bypass
 from . import representation
 
 # Create your views here.
@@ -40,15 +41,18 @@ class ContentListItem:
 def content_list(request: HttpRequest) -> HttpResponse:
     query_string = request.GET.get("q", "")
     items_per_page = int(request.GET.get("per_page", 24))
+    filter_name = request.GET.get("filter", "safe")
     if query_string:
         try:
             parser = TagDSLParser(query_string)
             q_object = parser.parse()
-            queryset = Content.objects.filter(q_object).distinct()
+            queryset = Content.objects.filter(q_object)
         except DSLError:
             queryset = Content.objects.none()
     else:
         queryset = Content.objects.all()
+    filter_function = FILTERS.get(filter_name, bypass)
+    queryset = filter_function(queryset).distinct()
     paginator = Paginator(queryset, items_per_page)
     page_number = int(request.GET.get("page", 1))
     page_obj = paginator.get_page(page_number)
@@ -68,6 +72,8 @@ def content_list(request: HttpRequest) -> HttpResponse:
             "content_list": content_list,
             "query_string": query_string,
             "per_page": items_per_page,
+            "filter_name": filter_name,
+            "available_filters": FILTERS.keys(),
         },
     )
 

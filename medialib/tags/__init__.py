@@ -3,6 +3,7 @@ from base.shared_knowledge.tags import prepare_tag_name
 from medialib.models import Tag
 from typing import Optional
 from . import dsl
+from . import filter as tag_filter
 
 
 def smart_tag_search(
@@ -33,4 +34,4 @@ def smart_tag_search(
     )
 
 
-__all__ = ["smart_tag_search", "dsl"]
+__all__ = ["smart_tag_search", "dsl", "tag_filter"]
