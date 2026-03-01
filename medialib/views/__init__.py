@@ -14,9 +14,9 @@ from . import representation
 
 
 def content_info(request, content_slug: str) -> HttpResponse:
-    content = Content.objects.prefetch_related("representation_set").get(
-        slug=content_slug
-    )
+    content = Content.objects.prefetch_related(
+        "representation_set", "origin_set"
+    ).get(slug=content_slug)
     all_reprs = content.representation_set.all()
     has_image = any(
         r.repr_type == RepresentationTypeEnum.IMAGE.value for r in all_reprs

@@ -19,6 +19,35 @@
                 <h1>{{ content.title|default:"Untitled" }}</h1>
             </header>
             {% if content.description %}<div class="description">{{ content.description|linebreaks }}</div>{% endif %}
+            <section class="origin-section">
+                <h3>Sources</h3>
+                <ul class="origin-list">
+                    {% for origin_item in content.origin_set.all %}
+                        <li class="origin-item {% if origin_item.alternate %}alternate{% endif %}">
+                            {% with origin_url=origin_item.get_url_if_possible %}
+                                {% if origin_url %}
+                                    <a href="{{ origin_url }}"
+                                       target="_blank"
+                                       rel="noopener noreferrer"
+                                       class="origin-link">
+                                        <strong>{{ origin_item.name }}</strong>: <code>{{ origin_item.origin_id }}</code>
+                                    </a>
+                                {% else %}
+                                    <strong>{{ origin_item.name }}</strong>:
+                                    {% if origin_item.origin_id %}
+                                        <code>{{ origin_item.origin_id }}</code>
+                                    {% else %}
+                                        <em>No ID</em>
+                                    {% endif %}
+                                {% endif %}
+                            {% endwith %}
+                            {% if origin_item.alternate %}<span class="badge">Alternate</span>{% endif %}
+                        </li>
+                    {% empty %}
+                        <li>No origin information available.</li>
+                    {% endfor %}
+                </ul>
+            </section>
             <aside class="tags-sidebar">
                 <h3>Metadata</h3>
                 {% regroup content.tags.all by get_category_display as tag_categories %}

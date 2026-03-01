@@ -7,6 +7,7 @@ from base.shared_enums.medialib_model import (
     RepresentationTypeEnum,
     CategoryEnum,
 )
+from base.shared_knowledge import origin
 
 # from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
@@ -87,12 +88,25 @@ class Content(models.Model):
 
 class ContentOrigin(models.Model):
     content = models.ForeignKey(
-        Content, on_delete=models.CASCADE, db_index=True
+        Content,
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name="origin_set",
     )
     name = models.CharField(max_length=32)
     origin_id = models.CharField(
         "ID on origin", max_length=255, blank=True, default=""
     )
+    alternate = models.BooleanField(default=False)
+
+    def get_url_if_possible(self) -> str:
+        if self.origin_id is None:
+            return ""
+        origin_type = origin.get_origin_type(self.name)
+        if origin_type is None:
+            return ""
+        origin_class: origin.AbstractOriginType = origin_type()
+        return origin_class.generate_url(self.origin_id)
 
     class Meta:
         constraints = [
