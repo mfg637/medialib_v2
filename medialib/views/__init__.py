@@ -14,11 +14,16 @@ from . import representation
 
 
 def content_info(request, content_slug: str) -> HttpResponse:
-    content = Content.objects.get(slug=content_slug)
-    has_image = content.representation_set.filter(
-        repr_type=RepresentationTypeEnum.IMAGE.value
-    ).exists()
-    srcset_str = representation.generate_image_srcset(content, 1024, 1024)
+    content = Content.objects.prefetch_related("representation_set").get(
+        slug=content_slug
+    )
+    all_reprs = content.representation_set.all()
+    has_image = any(
+        r.repr_type == RepresentationTypeEnum.IMAGE.value for r in all_reprs
+    )
+    srcset_str, base_src = representation.generate_image_srcset_optim_prefetch(
+        content, 1024, 1024
+    )
     return render(
         request,
         "medialib/content_info.djhtml",
@@ -27,6 +32,7 @@ def content_info(request, content_slug: str) -> HttpResponse:
             "MEDIA_URL": MEDIA_URL,
             "srcset": srcset_str,
             "has_image": has_image,
+            "base_src": base_src,
         },
     )
 
@@ -34,6 +40,7 @@ def content_info(request, content_slug: str) -> HttpResponse:
 @dataclass(frozen=True)
 class ContentListItem:
     slug: str
+    base_src: str
     name: str = ""
     srcset: str = ""
 
@@ -69,6 +76,7 @@ def content_list(request: HttpRequest) -> HttpResponse:
         sorting_order = SORTING_ORDER[sort_mode_name]
     if sorting_order:
         queryset = queryset.order_by(sorting_order)
+    queryset = queryset.prefetch_related("representation_set")
     paginator = Paginator(queryset, items_per_page)
     page_number = int(request.GET.get("page", 1))
     page_obj = paginator.get_page(page_number)
@@ -76,9 +84,12 @@ def content_list(request: HttpRequest) -> HttpResponse:
     _content_list_raw = page_obj.object_list
     content_list: list[ContentListItem] = []
     for content in _content_list_raw:
-        srcset = representation.generate_image_srcset(content, 256, 256)
+        print(representation.generate_image_srcset_optim_prefetch)
+        srcset, base_src = representation.generate_image_srcset_optim_prefetch(
+            content, 256, 256
+        )
         content_list.append(
-            ContentListItem(content.slug, content.title, srcset)
+            ContentListItem(content.slug, base_src, content.title, srcset)
         )
     return render(
         request,
@@ -92,6 +103,7 @@ def content_list(request: HttpRequest) -> HttpResponse:
             "available_filters": FILTERS.keys(),
             "sorting_mode": sort_mode_name,
             "sorting_modes_available": SORTING_ORDER.keys(),
+            "MEDIA_URL": MEDIA_URL,
         },
     )
 

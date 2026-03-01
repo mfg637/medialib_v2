@@ -105,42 +105,44 @@ def create_task_from_local_file(request):
 
     try:
         tags = json.loads(request.POST.get("tags"))
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "Invalid tags data (JSON expected)"}, status=400
-        )
 
-    try:
-        with transaction.atomic():
-            task = Task(status=TaskStatusEnum.AWAITING)
-
-            with open(full_path, "rb") as f:
-                django_file = File(
-                    f,
-                    name=full_path.name,
-                )
-                django_file.content_type = request.POST.get(
-                    "mime_type", GENERIC_BINARY_FILE_MIME
-                )
-                django_file.path = full_path
-
-                processed_file = process_task_file(django_file, task)
-
-                task.uploaded_file = processed_file
-                task.save()
-
-            AwaitingTaskMetadata.objects.create(
-                task=task,
-                title=request.POST.get("title", ""),
-                description=request.POST.get("description", ""),
-                origin_name=request.POST.get("origin_name", ""),
-                origin_id=request.POST.get("origin_id", ""),
-                tags=tags,
+        with open(full_path, "rb") as f:
+            django_file = File(
+                f,
+                name=full_path.name,
             )
+            temp_task = Task(status=TaskStatusEnum.AWAITING)
+            django_file.content_type = request.POST.get(
+                "mime_type", GENERIC_BINARY_FILE_MIME
+            )
+            django_file.path = full_path
+
+            processed_file = process_task_file(django_file, temp_task)
+
+            with transaction.atomic():
+                task = Task.objects.create(
+                    status=TaskStatusEnum.AWAITING,
+                    uploaded_file=processed_file,
+                    source_hash=temp_task.source_hash,
+                    mime_type=temp_task.mime_type,
+                    media_type=temp_task.media_type,
+                )
+                AwaitingTaskMetadata.objects.create(
+                    task=task,
+                    title=request.POST.get("title", ""),
+                    description=request.POST.get("description", ""),
+                    origin_name=request.POST.get("origin_name", ""),
+                    origin_id=request.POST.get("origin_id", ""),
+                    tags=tags,
+                )
 
             return JsonResponse(
                 {"task_id": task.id, "status": "success"}, status=201
             )
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid tags data (JSON expected)"}, status=400
+        )
     except ValidationError as e:
         return JsonResponse(
             {"error": f"Validation Error: {str(e)}"}, status=400

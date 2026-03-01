@@ -12,3 +12,5 @@ if encoding_threads is None:
     encoding_threads = 8
 else:
     encoding_threads = min(encoding_threads, 16)
+
+proxy_at_tmp = True

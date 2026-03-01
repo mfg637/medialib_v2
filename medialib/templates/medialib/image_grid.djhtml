@@ -106,7 +106,7 @@
         {% for content_item in content_list %}
             <div class="item-card">
                 <a href="{% url 'content-info' content_item.slug %}">
-                    <img src="{% url 'content-representation' content_item.slug %}?side_size=256"
+                    <img src="/{{ MEDIA_URL }}{{ content_item.base_src }}"
                          {% if content_item.srcset %}srcset="{{ content_item.srcset }}"{% endif %}
                          alt="{{ content_item.name|default:"Untitled" }}"
                          loading="lazy">

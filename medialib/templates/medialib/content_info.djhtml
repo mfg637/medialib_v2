@@ -5,7 +5,7 @@
         <section class="viewer-section">
             <div class="media-container">
                 {% if has_image %}
-                    <img src="{% url 'content-representation' content.slug %}?side_size=1024"
+                    <img src="/{{ MEDIA_URL }}{{ base_src }}"
                          {% if srcset %}srcset="{{ srcset }}"{% endif %}
                          alt="{{ content.title }}"
                          class="main-content-image">

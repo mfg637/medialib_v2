@@ -53,15 +53,16 @@ def get_representation(
     return redirect(f"/{MEDIA_URL}{target_representation.filepath}")
 
 
+def get_relation(repr_w, repr_h, target_w, target_h) -> float:
+    if repr_w * target_h >= target_w * repr_h:
+        return repr_w / target_w
+    else:
+        return repr_h / target_h
+
+
 def generate_image_srcset(
     content: Content, target_width: int, target_height: int
 ) -> str:
-    def get_relation(repr_w, repr_h, target_w, target_h) -> float:
-        if repr_w * target_h >= target_w * repr_h:
-            return repr_w / target_w
-        else:
-            return repr_h / target_h
-
     large_representations: QuerySet = content.representation_set.filter(
         Q(width__gte=target_width) | Q(height__gte=target_height)
     )
@@ -82,3 +83,32 @@ def generate_image_srcset(
         return ", ".join(src_list_str)
     else:
         return ""
+
+
+def generate_image_srcset_optim_prefetch(
+    content: Content, target_width: int, target_height: int
+) -> tuple[str, str]:
+    all_reprs = content.representation_set.all()
+
+    large_reprs = [
+        r
+        for r in all_reprs
+        if r.width >= target_width or r.height >= target_height
+    ]
+
+    largest_representation = max(all_reprs, key=lambda r: r.width * r.height)
+
+    if not large_reprs:
+        return "", str(largest_representation.filepath)
+
+    src_list_str: list[str] = []
+    for representation in large_reprs:
+        rel = get_relation(
+            representation.width,
+            representation.height,
+            target_width,
+            target_height,
+        )
+        src_list_str.append(f"/{MEDIA_URL}{representation.filepath} {rel}x")
+
+    return ", ".join(src_list_str), str(large_reprs[0].filepath)
