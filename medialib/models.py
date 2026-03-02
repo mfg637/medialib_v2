@@ -7,7 +7,7 @@ from base.shared_enums.medialib_model import (
     RepresentationTypeEnum,
     CategoryEnum,
 )
-from base.shared_knowledge import origin
+from base.shared_knowledge import origin, file_format
 
 # from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
@@ -73,9 +73,8 @@ class Content(models.Model):
 
         super().save(*args, **kwargs)
 
-    class Meta:
-        verbose_name = "content"
-        verbose_name_plural = "content"
+    def get_content_type(self) -> ContentTypeEnum:
+        return ContentTypeEnum(self.content_type)
 
     def __str__(self) -> str:
         return (
@@ -84,6 +83,10 @@ class Content(models.Model):
             f"title={self.title}, "
             f"is_hidden = {self.is_hidden}"
         )
+
+    class Meta:
+        verbose_name = "content"
+        verbose_name_plural = "content"
 
 
 class ContentOrigin(models.Model):
@@ -174,6 +177,9 @@ class Representation(models.Model):
 
     def check_side_size_limit(self, size_limit: int) -> bool:
         return self.width <= size_limit and self.height <= size_limit
+
+    def get_mime_type(self):
+        return file_format.MIME_BY_EXTENSION[f".{self.format}"]
 
     def clean(self):
         if self.repr_type >= RepresentationTypeEnum.IMAGE:

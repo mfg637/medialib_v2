@@ -75,6 +75,11 @@ EXTENSIONS_BY_MIME: dict[str, str] = {
     for mime in MIME_TYPE_TO_FORMAT
 }
 
+MIME_BY_EXTENSION: dict[str, str] = {
+    extension: MIME_TYPE_BY_FORMAT[_format]
+    for extension, _format in FILE_SUFFIX_TO_FORMAT.items()
+}
+
 GENERIC_BINARY_FILE_MIME = "application/octet-stream"
 
 

@@ -1,17 +1,40 @@
 {% extends "medialib/base.djhtml" %}
 {% block title %}{{ content.title|default:"Untitled" }} - MediaLib v2{% endblock %}
 {% block content %}
+    <style>
+        img.main-content-image, video.main-content-video {
+            max-height:95vh;
+        }
+    </style>
     <article class="content-page">
         <section class="viewer-section">
             <div class="media-container">
-                {% if has_image %}
-                    <img src="/{{ MEDIA_URL }}{{ base_src }}"
-                         {% if srcset %}srcset="{{ srcset }}"{% endif %}
-                         alt="{{ content.title }}"
-                         class="main-content-image">
-                {% else %}
-                    <div class="no-content">No representation available</div>
-                {% endif %}
+                {% with c_type=content.content_type %}
+                    {% if video_representations %}
+                        <video class="main-content-video"
+                               {% if c_type == "video-loop" %}autoplay loop muted playsinline{% else %}controls{% endif %}
+                               poster="/{{ MEDIA_URL }}{{ base_src }}">
+                            {% for repr in video_representations %}
+                                <source src="/{{ MEDIA_URL }}{{ repr.filepath }}"
+                                        type="{{ repr.get_mime_type }}; {{ repr.codec_string }}">
+                            {% endfor %}
+                            Your browser does not support the video tag.
+                        </video>
+                    {% elif c_type == "audio" %}
+                        <div class="audio-wrapper">
+                            <audio controls src="/{{ MEDIA_URL }}{{ base_src }}">
+                                Your browser does not support the audio element.
+                            </audio>
+                        </div>
+                    {% elif c_type == "image" or has_image %}
+                        <img src="/{{ MEDIA_URL }}{{ base_src }}"
+                             {% if srcset %}srcset="{{ srcset }}"{% endif %}
+                             alt="{{ content.title }}"
+                             class="main-content-image">
+                    {% else %}
+                        <div class="no-content">No representation available</div>
+                    {% endif %}
+                {% endwith %}
             </div>
         </section>
         <section class="info-section">

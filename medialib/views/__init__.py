@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
@@ -10,8 +9,6 @@ from medialib.tags.dsl import TagDSLParser, DSLError
 from medialib.tags.filter import FILTERS, bypass
 from . import representation
 
-# Create your views here.
-
 
 def content_info(request, content_slug: str) -> HttpResponse:
     content = Content.objects.prefetch_related(
@@ -20,6 +17,15 @@ def content_info(request, content_slug: str) -> HttpResponse:
     all_reprs = content.representation_set.all()
     has_image = any(
         r.repr_type == RepresentationTypeEnum.IMAGE.value for r in all_reprs
+    )
+    video_representations = sorted(
+        [
+            r
+            for r in all_reprs
+            if r.repr_type == RepresentationTypeEnum.VIDEO.value
+        ],
+        key=lambda r: r.compatibility_level,
+        reverse=True,
     )
     srcset_str, base_src = representation.generate_image_srcset_optim_prefetch(
         content, 1024, 1024
@@ -33,6 +39,7 @@ def content_info(request, content_slug: str) -> HttpResponse:
             "srcset": srcset_str,
             "has_image": has_image,
             "base_src": base_src,
+            "video_representations": video_representations,
         },
     )
 
@@ -84,7 +91,6 @@ def content_list(request: HttpRequest) -> HttpResponse:
     _content_list_raw = page_obj.object_list
     content_list: list[ContentListItem] = []
     for content in _content_list_raw:
-        print(representation.generate_image_srcset_optim_prefetch)
         srcset, base_src = representation.generate_image_srcset_optim_prefetch(
             content, 256, 256
         )
