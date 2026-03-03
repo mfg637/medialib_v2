@@ -3,12 +3,48 @@ from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
-from base.shared_enums.medialib_model import RepresentationTypeEnum
+from base.shared_enums.medialib_model import (
+    ContentTypeEnum,
+    RepresentationTypeEnum,
+)
 from medialib_v2.settings import MEDIA_URL
-from medialib.models import Content
+from medialib.models import Content, ImageHash
 from medialib.tags.dsl import TagDSLParser, DSLError
 from medialib.tags import tag_filter
 from . import representation
+
+
+@dataclass(frozen=True)
+class ContentListItem:
+    slug: str
+    base_src: str
+    name: str = ""
+    srcset: str = ""
+
+
+def get_similar_content(content, limit=50):
+    try:
+        current_hash = ImageHash.objects.get(content=content)
+    except ImageHash.DoesNotExist:
+        return None
+
+    similar_hash = current_hash.far_similarity
+
+    similar_hashes = (
+        ImageHash.objects.filter(far_similarity=similar_hash)
+        .exclude(content=content)
+        .select_related("content")[:limit]
+    )
+
+    similar_items = []
+    for h in similar_hashes:
+        srcset, base_src = representation.generate_image_srcset_optim_prefetch(
+            h.content, 128, 128
+        )
+        similar_items.append(
+            ContentListItem(h.content.slug, base_src, h.content.title, srcset)
+        )
+    return similar_items
 
 
 def content_info(request, content_slug: str) -> HttpResponse:
@@ -41,6 +77,13 @@ def content_info(request, content_slug: str) -> HttpResponse:
     srcset_str, base_src = representation.generate_image_srcset_optim_prefetch(
         content, 1024, 1024
     )
+    similar_content = None
+    if (
+        content.get_content_type() is ContentTypeEnum.IMAGE
+        and request.user.is_authenticated
+    ):
+        similar_content = get_similar_content(content)
+    print("similar_content", similar_content)
     return render(
         request,
         "medialib/content_info.djhtml",
@@ -52,16 +95,9 @@ def content_info(request, content_slug: str) -> HttpResponse:
             "base_src": base_src,
             "video_representations": video_representations,
             "grouped_tags": grouped_tags,
+            "similar_content": similar_content,
         },
     )
-
-
-@dataclass(frozen=True)
-class ContentListItem:
-    slug: str
-    base_src: str
-    name: str = ""
-    srcset: str = ""
 
 
 SORTING_ORDER: dict[str, str] = {

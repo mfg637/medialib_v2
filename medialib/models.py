@@ -241,7 +241,10 @@ class Attachments(models.Model):
 
 class ImageHash(models.Model):
     content = models.OneToOneField(
-        Content, on_delete=models.CASCADE, db_index=True
+        Content,
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name="imagehash",
     )
     aspect_ratio = models.FloatField("Aspect Ratio")
     L_hash = models.BinaryField(
@@ -253,15 +256,45 @@ class ImageHash(models.Model):
     b_hash = models.BinaryField(
         "b* component hash", max_length=8, db_index=True
     )
+    search_similar = models.BinaryField(
+        max_length=8, db_index=True, null=False
+    )
+    far_similarity = models.BinaryField(
+        max_length=4, db_index=True, null=False
+    )
     alternate_version = models.BooleanField(default=False, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["L_hash", "a_hash", "b_hash"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not (self.L_hash and self.a_hash and self.b_hash):
+            raise ValidationError(
+                f"ImageHash for content {self.content.id} cannot be saved with empty hash fields. "
+                f"L: {len(self.L_hash)}b, a: {len(self.a_hash)}b, b: {len(self.b_hash)}b"
+            )
+
+        self.search_similar = (
+            bytes(self.L_hash)[:4]
+            + bytes(self.a_hash)[:2]
+            + bytes(self.b_hash)[:2]
+        )
+        self.far_similarity = (
+            bytes(self.L_hash)[:2]
+            + bytes(self.a_hash)[:1]
+            + bytes(self.b_hash)[:1]
+        )
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return (
             f"ImageHash content id {self.content.id}, "
             f"aspect ratio: {self.aspect_ratio}, "
-            f"L hash: {self.L_hash.tobytes().hex()}, "
-            f"a hash: {self.a_hash.tobytes().hex()}, "
-            f"b hash: {self.b_hash.tobytes().hex()}, "
+            f"L hash: {self.L_hash.hex()}, "
+            f"a hash: {self.a_hash.hex()}, "
+            f"b hash: {self.b_hash.hex()}, "
             f"alternate version: {self.alternate_version}"
         )
 

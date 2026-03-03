@@ -96,4 +96,21 @@
             </footer>
         </section>
     </article>
+    {% if similar_content %}
+        <section class="similar-content-section">
+            <hr>
+            <h3>Similar Images</h3>
+            <div class="similar-grid">
+                {% for item in similar_content %}
+                    <a href="{% url 'content-info' item.slug %}" class="similar-item">
+                        <img src="/{{ MEDIA_URL }}{{ item.base_src }}"
+                             srcset="{{ item.srcset }}"
+                             alt="{{ item.name }}"
+                             loading="lazy"
+                             class="similar-thumb">
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 {% endblock %}
