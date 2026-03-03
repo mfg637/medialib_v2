@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
+from django.core.exceptions import PermissionDenied
 from base.shared_enums.medialib_model import RepresentationTypeEnum
 from medialib_v2.settings import MEDIA_URL
 from medialib.models import Content
@@ -12,8 +13,18 @@ from . import representation
 
 def content_info(request, content_slug: str) -> HttpResponse:
     content = Content.objects.prefetch_related(
-        "representation_set", "origin_set"
+        "representation_set", "origin_set", "tags"
     ).get(slug=content_slug)
+    all_tags = content.tags.all()
+    if not request.user.is_authenticated:
+        is_safe = any(t.title == "safe" for t in all_tags)
+        if not is_safe:
+            raise PermissionDenied("This content is unavailable.")
+    grouped_tags: dict[str, list[tuple[int, str]]] = {}
+    for tag in all_tags:
+        if tag.category not in grouped_tags:
+            grouped_tags[tag.category] = []
+        grouped_tags[tag.category].append((tag.id, tag.title))
     all_reprs = content.representation_set.all()
     has_image = any(
         r.repr_type == RepresentationTypeEnum.IMAGE.value for r in all_reprs
@@ -40,6 +51,7 @@ def content_info(request, content_slug: str) -> HttpResponse:
             "has_image": has_image,
             "base_src": base_src,
             "video_representations": video_representations,
+            "grouped_tags": grouped_tags,
         },
     )
 
