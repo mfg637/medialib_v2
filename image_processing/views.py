@@ -105,6 +105,8 @@ def create_task_from_local_file(request):
 
     try:
         tags = json.loads(request.POST.get("tags"))
+        origin_name = request.POST.get("origin_name", "")
+        origin_id = request.POST.get("origin_id", "")
 
         with open(full_path, "rb") as f:
             django_file = File(
@@ -117,7 +119,9 @@ def create_task_from_local_file(request):
             )
             django_file.path = full_path
 
-            processed_file = process_task_file(django_file, temp_task)
+            processed_file = process_task_file(
+                django_file, temp_task, origin_name, origin_id
+            )
 
             with transaction.atomic():
                 task = Task.objects.create(
@@ -131,8 +135,8 @@ def create_task_from_local_file(request):
                     task=task,
                     title=request.POST.get("title", ""),
                     description=request.POST.get("description", ""),
-                    origin_name=request.POST.get("origin_name", ""),
-                    origin_id=request.POST.get("origin_id", ""),
+                    origin_name=origin_name,
+                    origin_id=origin_id,
                     tags=tags,
                 )
 
@@ -152,6 +156,7 @@ def create_task_from_local_file(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@csrf_exempt
 def origin_info(request):
     origin_name = request.GET.get("name")
     origin_content_id = request.GET.get("id")

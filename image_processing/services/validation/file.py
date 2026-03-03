@@ -4,6 +4,8 @@ from base.shared_knowledge.file_format import (
 )
 from image_processing.core.file_utils import calc_sha256
 from django.core.exceptions import ValidationError
+from django.db.models import QuerySet
+from medialib import models as ml_models
 from pathlib import Path
 
 
@@ -12,18 +14,28 @@ def validate_media_format(mime: str) -> None:
         raise ValidationError(f"File type {mime} not allowed")
 
 
-def check_is_unique(source_file: Path | UploadedFile) -> tuple[bool, bytes]:
-    from medialib.models import Content
-
+def calc_hash_and_find(
+    source_file: Path | UploadedFile,
+) -> tuple[QuerySet, bytes]:
     if hasattr(source_file, "path"):
         source_file = source_file.path
     file_hash = calc_sha256(source_file)
-    is_exists = Content.objects.filter(source_hash=file_hash).exists()
-    return not is_exists, file_hash
+    found_set = ml_models.Content.objects.filter(source_hash=file_hash)
+    return found_set, file_hash
 
 
-def prevent_duplication(source_file: UploadedFile) -> bytes:
-    is_unique, file_hash = check_is_unique(source_file)
-    if not is_unique:
+def prevent_duplication(
+    source_file: UploadedFile, origin_name: str, origin_id: str
+) -> bytes:
+    found_set, file_hash = calc_hash_and_find(source_file)
+    if found_set.exists():
+        content = found_set.first()
+        if origin_name and origin_id:
+            ml_models.ContentOrigin.objects.get_or_create(
+                content=content,
+                name=origin_name,
+                origin_id=origin_id,
+                defaults={"alternate": True},
+            )
         raise ValidationError("Duplicate file found")
     return file_hash
