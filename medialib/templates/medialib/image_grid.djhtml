@@ -73,7 +73,7 @@
     }
     </style>
     <div class="search-container">
-        <form method="GET" action="{% url 'content-list' %}">
+        <form method="get" action="{% url 'content-list' %}">
             <div class="main-field">
                 <input type="text"
                        name="q"
@@ -99,6 +99,25 @@
                         {% endfor %}
                     </select>
                 </label>
+                <label>
+                    Items:
+                    <input id="per-page-input"
+                           type="number"
+                           name="per_page"
+                           value="{{ per_page }}"
+                           min="3"
+                           max="50" />
+                </label>
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        const perPageInput = document.getElementById('per-page-input');
+                        
+                        if ('loading' in HTMLImageElement.prototype) {
+                            perPageInput.max = 1000;
+                            perPageInput.title = "Lazy loading supported: you can load up to 1000 items";
+                        }
+                    });
+                </script>
             </div>
         </form>
     </div>

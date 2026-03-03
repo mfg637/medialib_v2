@@ -74,7 +74,14 @@ SORTING_ORDER: dict[str, str] = {
 
 def content_list(request: HttpRequest) -> HttpResponse:
     query_string = request.GET.get("q", "")
-    items_per_page = int(request.GET.get("per_page", 24))
+    session_per_page = int(request.session.get("per_page", 24))
+    try:
+        items_per_page = int(request.GET.get("per_page", session_per_page))
+    except ValueError:
+        items_per_page = 24
+    items_per_page = max(min(items_per_page, 1000), 3)
+    if items_per_page != session_per_page:
+        request.session["per_page"] = items_per_page
     filter_name = tag_filter.validate_filter(
         request.GET.get("filter", "safe"), request
     )
