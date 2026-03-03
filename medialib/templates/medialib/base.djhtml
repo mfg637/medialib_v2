@@ -9,10 +9,25 @@
     </head>
     <body>
         <header>
-            <a class="home-page-link" href="/" title="Home page">
-                <span class="nostyle-fallback">Home</span>
-            </a>
-            {% include "medialib/components/cl_selector.djhtml" %}
+            <section class="home-link-and-parameters">
+                <a class="home-page-link" href="/" title="Home page">
+                    <span class="nostyle-fallback">Home</span>
+                </a>
+                {% include "medialib/components/cl_selector.djhtml" %}
+            </section>
+            <section class="login-indication">
+                {% if user.is_authenticated %}
+                    <span class="user-info">
+                        <strong>{{ user.username }}</strong>
+                    </span>
+                    <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-button">Logout</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}" class="login-link">Login</a>
+                {% endif %}
+            </section>
         </header>
         <main>
             {% block content %}{% endblock %}

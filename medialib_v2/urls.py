@@ -30,6 +30,7 @@ urlpatterns = [
         TemplateView.as_view(template_name="medialib/home.djhtml"),
         name="home",
     ),
+    path("accounts/", include("django.contrib.auth.urls")),
 ]
 
 

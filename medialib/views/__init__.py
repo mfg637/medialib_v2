@@ -6,7 +6,7 @@ from base.shared_enums.medialib_model import RepresentationTypeEnum
 from medialib_v2.settings import MEDIA_URL
 from medialib.models import Content
 from medialib.tags.dsl import TagDSLParser, DSLError
-from medialib.tags.filter import FILTERS, bypass
+from medialib.tags import tag_filter
 from . import representation
 
 
@@ -63,7 +63,9 @@ SORTING_ORDER: dict[str, str] = {
 def content_list(request: HttpRequest) -> HttpResponse:
     query_string = request.GET.get("q", "")
     items_per_page = int(request.GET.get("per_page", 24))
-    filter_name = request.GET.get("filter", "safe")
+    filter_name = tag_filter.validate_filter(
+        request.GET.get("filter", "safe"), request
+    )
     sort_mode_name = request.GET.get("sort", "date decreasing")
     if query_string:
         try:
@@ -74,7 +76,9 @@ def content_list(request: HttpRequest) -> HttpResponse:
             queryset = Content.objects.none()
     else:
         queryset = Content.objects.all()
-    filter_function = FILTERS.get(filter_name, bypass)
+    filter_function = tag_filter.FILTERS.get(
+        filter_name, tag_filter.safety_filter
+    )
     queryset = filter_function(queryset).distinct()
     try:
         sorting_order = SORTING_ORDER[sort_mode_name]
@@ -106,7 +110,7 @@ def content_list(request: HttpRequest) -> HttpResponse:
             "query_string": query_string,
             "per_page": items_per_page,
             "filter_name": filter_name,
-            "available_filters": FILTERS.keys(),
+            "available_filters": tag_filter.get_filters_list(request),
             "sorting_mode": sort_mode_name,
             "sorting_modes_available": SORTING_ORDER.keys(),
             "MEDIA_URL": MEDIA_URL,

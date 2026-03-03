@@ -1,6 +1,7 @@
 from typing import Callable
 from medialib import models as ml_models
 from django.db.models import QuerySet
+from django.http import HttpRequest
 from .dsl import TagDSLParser
 
 
@@ -49,3 +50,22 @@ FILTERS: dict[
     "safe": safety_filter,
     "aesthetic": aesthetic_filter,
 }
+
+UNAUTHENTICATED_FILTERS = {"safe", "aesthetic"}
+
+
+def get_filters_list(request: HttpRequest):
+    if request.user.is_authenticated:
+        return FILTERS.keys()
+    else:
+        return list(UNAUTHENTICATED_FILTERS)
+
+
+def validate_filter(filter_name: str, request: HttpRequest):
+    if request.user.is_authenticated:
+        if filter_name in FILTERS:
+            return filter_name
+    else:
+        if filter_name in UNAUTHENTICATED_FILTERS:
+            return filter_name
+    return "safe"
