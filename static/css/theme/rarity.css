@@ -1,0 +1,34 @@
+html.rarity {
+  --bg-main: #eaeef0;
+  --bg-accent: #dfe4e3;
+  --bg-input: #dfe4e3;
+  --bg-wrapper: #ffffff;
+
+  --text-main: #20476b;
+  --text-muted: #5a7d9a;
+  --text-input: #000000;
+  --text-on-accent: #ffffff;
+  --text-li: #000000;
+  --text-wrapper: #4a1767;
+
+  --border-color: #bdc1c2;
+  --border-header-item: #bdc1c2;
+
+  --accent-color: #3977b8;
+  --accent-hover: #4a1767;
+
+  --bg-header-item: #7dd1f5;
+  --home-icon: url("../resources/rarity_theme_icon.min.svg");
+
+  --similar-item-shadow: rgba(32, 71, 107, 0.15);
+
+  --bg-viewer: #4a1767;
+}
+
+html.rarity .home-page-link {
+  background-color: var(--bg-header-item);
+}
+
+html.rarity .home-page-link:hover {
+  background-color: #2696cb;
+}

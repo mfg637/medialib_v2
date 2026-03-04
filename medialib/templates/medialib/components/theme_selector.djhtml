@@ -4,8 +4,8 @@
         <option value="NONE">Browser default</option>
         <option value="dark">Dark</option>
         <option value="dark-purple">Dark Purple</option>
-        <!--<option value="twilight-sparkle">Twilight Sparkle</option>
         <option value="rarity">Rarity</option>
+        <!--<option value="twilight-sparkle">Twilight Sparkle</option>
         <option value="aqua-rarity">Aqua Rarity</option>-->
     </select>
 </section>
