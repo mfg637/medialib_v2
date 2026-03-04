@@ -1,0 +1,26 @@
+html.dark-purple {
+  --bg-main: #2a1d39;
+  --bg-accent: #221431;
+  --bg-input: #221431;
+  --bg-wrapper: #3a294d;
+
+  --text-main: #a8a2ae;
+  --text-muted: #8a7a99;
+  --text-input: #ffffff;
+  --text-on-accent: #ffffff;
+  --text-li: #cccccc;
+  --text-wrapper: #dbdbdb;
+
+  --border-color: #4b3a5a;
+  --border-header-item: purple;
+  --accent-color: #e900e9;
+  --accent-hover: #ff66ff;
+
+  --bg-header-item: #191122;
+  --home-icon: url("../resources/dark_pupple_theme_icon.min.svg");
+  --similar-item-shadow: rgba(0, 0, 0, 0.6);
+}
+
+body.dark-purple .home-page-link:hover {
+  border-color: #e900e9;
+}
