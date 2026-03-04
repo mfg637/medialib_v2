@@ -1,38 +1,44 @@
 {% extends "medialib/base.djhtml" %}
 {% block content %}
     <style>
-        .home-container {
-            text-align: center;
-            padding-top: 50px;
-        }
+    .home-container {
+        text-align: center;
+        padding-top: 50px;
+    }
 
-        .main-menu {
-            display: flex;
-            justify-content: center;
-            list-style: none;
-            padding: 0;
-            margin: 20px 0;
-        }
+    .main-menu {
+        display: flex;
+        justify-content: center;
+        list-style: none;
+        padding: 0;
+        margin: 40px 0;
+    }
 
-        .main-menu li {
-            margin: 0 15px;
-        }
+    .main-menu li {
+        margin: 0 15px;
+    }
 
-        .main-menu a {
-            text-decoration: none;
-            font-size: 1.2em;
-            color: #007bff;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: 1px solid #007bff;
-            border-radius: 5px;
-            transition: background-color 0.2s, color 0.2s;
-        }
+    .main-menu a {
+        text-decoration: none;
+        font-size: 1.2rem;
+        color: var(--accent-color); 
+        font-weight: bold;
+        padding: 12px 24px;
+        border: 2px solid var(--accent-color);
+        border-radius: 8px;
+        background-color: transparent;
+        transition: background-color 0.2s, color 0.2s, transform 0.1s;
+    }
 
-        .main-menu a:hover {
-            background-color: #007bff;
-            color: #fff;
-        }
+    .main-menu a:hover {
+        background-color: var(--accent-color);
+        color: var(--text-on-accent);
+        transform: translateY(-2px);
+    }
+
+    .main-menu a:active {
+        transform: translateY(0);
+    }
     </style>
     <div class="home-container">
         <h1>Home Page</h1>

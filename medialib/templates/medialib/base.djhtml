@@ -6,6 +6,17 @@
         <title>
             {% block title %}MediaLib v2{% endblock %}
         </title>
+        <link rel="stylesheet" href="/static/css/main.css">
+        <!-- fix Flash of Unstyled Content -->
+        <script>
+            (function() {
+                const savedTheme = localStorage.getItem("ml-theme");
+                console.debug("saved theme", savedTheme);
+                if (savedTheme && savedTheme !== "NONE") {
+                    document.documentElement.classList.add(savedTheme);
+                }
+            })();
+        </script>
     </head>
     <body>
         <header>
@@ -13,6 +24,7 @@
                 <a class="home-page-link" href="/" title="Home page">
                     <span class="nostyle-fallback">Home</span>
                 </a>
+                {% include "medialib/components/theme_selector.djhtml" %}
                 {% include "medialib/components/cl_selector.djhtml" %}
             </section>
             <section class="login-indication">
@@ -20,7 +32,7 @@
                     <span class="user-info">
                         <strong>{{ user.username }}</strong>
                     </span>
-                    <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    <form action="{% url 'logout' %}" method="post">
                         {% csrf_token %}
                         <button type="submit" class="logout-button">Logout</button>
                     </form>

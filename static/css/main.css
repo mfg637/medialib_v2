@@ -1,0 +1,120 @@
+@import "theme.css";
+
+html {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+body {
+  margin: 0;
+  font-family: "Noto Sans", "Roboto", "Liberation Sans", sans-serif;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: var(--bg-accent);
+  border-bottom: 1px solid var(--border-color);
+}
+
+a {
+  color: var(--accent-color);
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
+.wrapper-accent {
+  background-color: var(--bg-wrapper);
+  color: var(--text-wrapper);
+  border-style: none;
+}
+
+li {
+  color: var(--text-li);
+}
+
+.home-link-and-parameters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-page-link {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+  border: 1px solid var(--border-header-item, var(--border-color));
+  border-radius: 6px;
+  background-color: var(--bg-header-item, var(--bg-main));
+  background-image: var(--home-icon);
+  background-repeat: no-repeat;
+  background-position: center;
+  transition:
+    transform 0.1s,
+    border-color 0.2s;
+}
+
+.home-page-link:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-1px);
+}
+
+.home-page-link .nostyle-fallback {
+  display: none;
+}
+
+input,
+select,
+textarea,
+button {
+  background-color: var(--bg-input);
+  color: var(--text-input, var(--text-main));
+  border: 1px solid var(--border-color);
+  padding: 0.5em;
+  border-radius: 5px;
+}
+
+header input,
+header select,
+header textarea,
+header button {
+  background-color: var(--bg-header-item, var(--bg-input));
+  border-color: var(--border-header-item, var(--border-color));
+}
+
+button {
+  cursor: pointer;
+}
+
+button.accent {
+  background-color: var(--accent-color);
+  color: var(--text-on-accent);
+  border: 1px solid var(--accent-hover);
+}
+
+.login-indication form {
+  display: flex;
+}
+
+.theme-selector-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+/*#theme-selector {
+  cursor: pointer;
+  border-color: var(--border-color);
+  background-color: var(--bg-input);
+  color: var(--text-input);
+}*/

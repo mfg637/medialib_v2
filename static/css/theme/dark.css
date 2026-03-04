@@ -1,0 +1,25 @@
+html.dark {
+  --bg-main: #2d2d2d;
+  --bg-accent: #222222;
+  --bg-input: #222222;
+  --bg-header-item: #333333;
+
+  --text-main: #aaaaaa;
+  --text-muted: #999999;
+  --text-on-accent: #ffffff;
+  --text-li: #cccccc;
+  --text-input: #ffffff;
+
+  --border-color: #1a1a1a;
+  --border-hover: #444444;
+  --border-header-item: #444444;
+
+  --accent-color: #999999;
+  --accent-hover: #ffffff;
+  --bg-wrapper: #444444;
+  --text-wrapper: #dbdbdb;
+
+  --similar-item-shadow: rgba(0, 0, 0, 0.5);
+
+  --home-icon: url("../resources/dark_mode_icon.min.svg");
+}
