@@ -10,3 +10,4 @@ pyvips
 python-dotenv
 celery
 redis
+Markdown

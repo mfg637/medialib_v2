@@ -1,4 +1,5 @@
 {% extends "medialib/base.djhtml" %}
+{% load markdown_extras %}
 {% block title %}{{ content.title|default:"Untitled" }} - MediaLib v2{% endblock %}
 {% block content %}
     <style>
@@ -56,6 +57,30 @@
         padding: 15px;
         border-radius: 8px;
         border-left: 4px solid var(--accent-color);
+        word-wrap: break-word;
+    }
+
+    .description img{
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+    }
+
+    .description p {
+        margin-bottom: 1em;
+    }
+
+    .description code {
+        background: var(--bg-input);
+        color: var(--text-input, var(--text-main));
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+    
+    .description ul, .description ol {
+        padding-left: 1.5em;
+        margin-bottom: 1em;
     }
 
     .origin-section, .tags-sidebar {
@@ -155,6 +180,8 @@
         height: 100%;
         object-fit: cover;
     }
+
+
     </style>
     <article class="content-page">
         <section class="viewer-section">
@@ -191,7 +218,7 @@
             <header class="content-header">
                 <h1>{{ content.title|default:"Untitled" }}</h1>
             </header>
-            {% if content.description %}<div class="description">{{ content.description|linebreaks }}</div>{% endif %}
+            {% if content.description %}<div class="description">{{ content.description|markdown }}</div>{% endif %}
             <section class="origin-section">
                 <h3>Sources</h3>
                 <ul class="origin-list">
