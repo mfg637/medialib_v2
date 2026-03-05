@@ -274,7 +274,6 @@
     </article>
     {% if similar_content %}
         <section class="similar-content-section">
-            <hr>
             <h3>Similar Images</h3>
             <div class="similar-grid">
                 {% for item in similar_content %}

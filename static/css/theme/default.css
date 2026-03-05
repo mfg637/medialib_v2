@@ -46,5 +46,7 @@
   /* Тень или подсветка для активных элементов в сетке похожих */
   --similar-item-shadow: rgba(0, 0, 0, 0.1);
 
+  --bg-viewer: black;
+
   --home-icon: url("../resources/home_page_icon.min.svg");
 }
