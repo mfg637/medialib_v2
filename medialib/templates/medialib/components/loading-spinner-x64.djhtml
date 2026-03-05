@@ -1,0 +1,13 @@
+<link rel="stylesheet" href="/static/css/widgets/loading-spinner-x64.css">
+<div class="loading-spinner-x64"
+     role="progressbar"
+     aria-valuetext="Loading...">
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+</div>

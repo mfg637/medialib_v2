@@ -1,0 +1,419 @@
+<style>
+:root {
+    --viewer-bg: black;
+    --viewer-text-color: white;
+    --viewer-text-shadow: 1px 1px 2px black;
+    --spinner-bg: rgba(255, 255, 255, 0.267);
+    --spinner-fg: white;
+    --border-accent: #0078c4;
+    --control-transition: opacity 0.3s ease;
+}
+
+div#imageViewer {
+    background-color: var(--viewer-bg);
+}
+
+div#imageViewer.container, 
+div#imageViewer .container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+div#imageViewer.container:nth-child(1) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+div#imageViewer.fill-mode .image-container {
+    overflow: auto;
+}
+
+div#imageViewer.fill-mode .controls-container {
+    display: none;
+}
+
+#loadingTitle {
+    position: relative;
+    top: 0;
+    left: 0;
+    max-width: 100%;
+    padding: 13px;
+    border-bottom: 1px solid var(--border-accent);
+    text-align: center;
+}
+
+#loadingTitle input {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 9px;
+}
+
+img.content, video.content {
+    display: block;
+    position: relative;
+    max-width: 100vw;
+    max-height: 100vh;
+}
+
+div.loading-animation-wrapper {
+    display: none;
+    position: absolute;
+    top: calc(50% - 32px);
+    left: calc(50% - 32px);
+    width: 72px;
+    height: 72px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.267);
+    border-radius: 7px;
+    box-sizing: border-box;
+}
+
+div#imageViewer.load div.loading-animation-wrapper {
+    display: block;
+}
+
+div#imageViewer .button {
+    position: fixed;
+    width: 64px;
+    height: 48px;
+    margin: 0;
+    opacity: 1;
+    color: black;
+    border-width: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 18px;
+    border-radius: 0;
+    text-decoration: none;
+    transition: var(--control-transition);
+    box-shadow: none;
+}
+
+div#imageViewer .square-button {
+    width: 48px;
+}
+
+div#imageViewer .imageview-text {
+    position: fixed;
+    bottom: 7px;
+    left: 0;
+    margin: 0 auto;
+    width: 100%;
+    color: var(--viewer-text-color);
+    text-align: center;
+    text-shadow: var(--viewer-text-shadow);
+}
+
+#close-button {
+    top: 12px;
+    right: 12px;
+    background: url(/static/resources/close_btn_default.svg);
+}
+#close-button:hover { background: url(/static/resources/close_btn_active.svg); }
+
+#expand-button {
+    bottom: 40px;
+    left: 12px;
+    background: url(/static/resources/expand_btn_default.svg);
+}
+#expand-button:hover { background: url(/static/resources/expand_btn_active.svg); }
+
+#previous-image-button {
+    left: 12px;
+    top: calc(50% - 16px);
+    background: url(/static/resources/arrow_left_default.svg);
+}
+#previous-image-button:hover { background: url(/static/resources/arrow_active_left.svg); }
+
+#next-image-button {
+    right: 12px;
+    top: calc(50% - 16px);
+    background: url(/static/resources/arrow_right_default.svg);
+}
+#next-image-button:hover { background: url(/static/resources/arrow_active_right.svg); }
+
+#previous-image-button.hidden, #next-image-button.hidden {visibility: hidden;}
+
+div#imageViewer.hideControls .button, 
+div#imageViewer.hideControls .imageview-text {
+    visibility: hidden;
+}
+
+div#imageViewer.hideControls.hide-cursor {
+    cursor: none;
+}
+</style>
+<template id="tpl-image-viewer">
+    <div id="imageViewer" class="container">
+        <div class="image-container">
+            <image-view-controller id="view-dispatcher">
+        </image-view-controller>
+        <div class="loading-animation-wrapper">{% include "medialib/components/loading-spinner-x64.djhtml" %}</div>
+    </div>
+    <div class="controls-container container">
+        <div id="close-button" class="button square-button"></div>
+        <div id="previous-image-button" class="button"></div>
+        <div id="next-image-button" class="button"></div>
+        <div id="expand-button" class="button square-button"></div>
+        <div class="imageview-text">
+            <div class="iv-counter"></div>
+            <div class="iv-content-title"></div>
+        </div>
+    </div>
+</div>
+</template>
+<script>
+class ImageViewerApp extends HTMLElement {
+    constructor() {
+        super();
+        this.currentIndex = -1;
+        this.items = [];
+        this.viewMode = 'fit';
+        this._hideTimeout = null;
+        
+        this.xTouchPoint = null;
+        this.xOffset = 0;
+    }
+
+    connectedCallback() {
+        this.initPageLinks();
+        window.addEventListener('keyup', this.handleKeyDown.bind(this));
+        
+        if (!document.getElementById('image-viewer-root')) {
+            this.id = 'image-viewer-root';
+        }
+    }
+
+    initPageLinks() {
+        const linkElements = document.querySelectorAll('.item-card a[data-slug]');
+        this.items = Array.from(linkElements).map(link => ({
+            slug: link.dataset.slug,
+            name: link.dataset.name,
+            contentType: link.dataset.contentType,
+            index: parseInt(link.dataset.index)
+        }));
+
+        linkElements.forEach((link, idx) => {
+            link.addEventListener('click', (e) => {
+                console.debug("link click event, this = ", this, "idx = ", idx);
+                e.preventDefault();
+                this.open(idx);
+            });
+        });
+    }
+
+    setupEventListeners() {
+        this.querySelector('#close-button').onclick = () => this.close();
+        this.querySelector('#previous-image-button').onclick = (e) => { e.stopPropagation(); this.prev(); };
+        this.querySelector('#next-image-button').onclick = (e) => { e.stopPropagation(); this.next(); };
+        this.querySelector('#expand-button').onclick = (e) => { e.stopPropagation(); this.openContentInfo(); };
+
+        const container = this.querySelector('.controls-container');
+        container.onmousemove = () => this.resetCursorTimer();
+        
+        container.addEventListener('touchstart', (e) => {
+            this.xTouchPoint = e.touches[0].clientX;
+        }, {passive: true});
+
+        container.addEventListener('touchmove', (e) => {
+            if (this.xTouchPoint === null) return;
+            this.xOffset = e.touches[0].clientX - this.xTouchPoint;
+        }, {passive: true});
+
+        container.addEventListener('touchend', () => {
+            const minDistance = window.innerWidth / 4;
+            if (Math.abs(this.xOffset) > minDistance) {
+                if (this.xOffset > 0) this.prev();
+                else this.next();
+            }
+            this.xTouchPoint = null;
+            this.xOffset = 0;
+        });
+
+        this.querySelector('#imageViewer').onclick = () => {
+            this.querySelector('#imageViewer').classList.toggle('hideControls');
+        };
+        
+        this.querySelector('.image-container').ondblclick = (e) => {
+            e.stopPropagation();
+            this.toggleViewMode();
+        };
+    }
+
+    openContentInfo(){
+        window.location = `/medialib/static/content/${this.items[this.currentIndex].slug}/info`;
+    }
+
+    toggleViewMode() {
+        const modes = ['fit', 'fill', 'native'];
+        let idx = modes.indexOf(this.viewMode);
+        this.viewMode = modes[(idx + 1) % modes.length];
+        this.updateView();
+    }
+
+    resetCursorTimer() {
+        const viewer = this.querySelector('#imageViewer');
+        viewer.classList.remove('hide-cursor');
+        clearTimeout(this._hideTimeout);
+        this._hideTimeout = setTimeout(() => {
+            viewer.classList.add('hide-cursor');
+        }, 5000);
+    }
+
+    open(index) {
+        this.currentIndex = index;
+        this.innerHTML = '';
+        const tpl = document.getElementById('tpl-image-viewer').content.cloneNode(true);
+        this.appendChild(tpl);
+        
+        this.applySideEffects();
+        this.updateView();
+        this.setupEventListeners();
+        this.resetCursorTimer();
+    }
+
+    updateView() {
+        const data = this.items[this.currentIndex];
+        if (!data) return;
+
+        const viewer = this.querySelector('#imageViewer');
+        const dispatcher = this.querySelector('#view-dispatcher');
+        const counter_view = this.querySelector('.imageview-text .iv-counter');
+        const caption = this.querySelector('.imageview-text .iv-content-title');
+
+        
+        counter_view.textContent = `${this.currentIndex + 1} / ${this.items.length}`
+        caption.textContent = data.name || '';
+
+        dispatcher.render(data, this.viewMode);
+        
+        if (this.currentIndex === 0)
+            this.querySelector('#previous-image-button').classList.add("hidden");
+        else
+            this.querySelector('#previous-image-button').classList.remove("hidden")
+        if (this.currentIndex === this.items.length - 1)
+            this.querySelector('#next-image-button').classList.add("hidden");
+        else
+            this.querySelector('#next-image-button').classList.remove("hidden")
+    }
+
+    prev() {
+        if (this.currentIndex > 0) {
+            this.currentIndex--;
+            this.updateView();
+        }
+    }
+
+    next() {
+        if (this.currentIndex < this.items.length - 1) {
+            this.currentIndex++;
+            this.updateView();
+        }
+    }
+
+    applySideEffects() {
+        document.body.style.overflow = "hidden";
+        const viewer = this.querySelector('#imageViewer');
+        viewer.className = `container load`;
+        document.documentElement.requestFullscreen();
+    }
+
+    close() {
+        document.exitFullscreen();
+        this.currentIndex = -1;
+        this.innerHTML = '';
+        document.body.style.overflow = "auto";
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+
+    handleKeyDown(e) {
+        if (this.currentIndex === -1) return;
+        switch(e.key) {
+            case 'Escape': this.close(); break;
+            case 'ArrowLeft': this.prev(); break;
+            case 'ArrowRight': this.next(); break;
+        }
+    }
+}
+customElements.define('image-viewer-app', ImageViewerApp);
+
+class ImageViewController extends HTMLElement {
+    render(data) {
+        this.innerHTML = '';
+        this.showLoading(true);
+
+        let view;
+        const type = data.contentType; 
+
+        if (type === 'video-loop' || type === 'video') {
+            view = document.createElement('video-loop-view');
+        } else {
+            view = document.createElement('image-view');
+        }
+
+        view.setAttribute('slug', data.slug);
+        view.setAttribute('name', data.name);
+        
+        view.addEventListener('content-loaded', () => this.showLoading(false));
+        
+        this.appendChild(view);
+    }
+
+    showLoading(state) {
+        const viewer = this.closest('#imageViewer');
+        if (viewer) viewer.classList.toggle('load', state);
+    }
+}
+customElements.define('image-view-controller', ImageViewController);
+
+class ImageView extends HTMLElement {
+    connectedCallback() {
+        const slug = this.getAttribute('slug');
+        const name = this.getAttribute('name');
+        
+        const dpr = window.devicePixelRatio || 1;
+        const w = Math.round(window.innerWidth * dpr);
+        const h = Math.round(window.innerHeight * dpr);
+
+        const src = `/medialib/dynamic/content/${slug}/representation?type=image&target_width=${w}&target_height=${h}`;
+
+        this.innerHTML = `<img class="content" src="${src}" alt="${name}" style="visibility: hidden;">`;
+
+        const img = this.querySelector('img');
+        img.onload = () => {
+            img.style.visibility = 'visible';
+            this.dispatchEvent(new CustomEvent('content-loaded', { bubbles: true }));
+        };
+    }
+}
+customElements.define('image-view', ImageView);
+
+class VideoLoopView extends HTMLElement {
+    connectedCallback() {
+        const slug = this.getAttribute('slug');
+        const src = `/medialib/dynamic/content/${slug}/representation?type=video_loop`;
+
+        this.innerHTML = `
+            <video class="loop content" autoplay muted loop playsinline style="visibility: hidden;">
+                <source src="${src}" type="video/mp4">
+                Your browser is not support HTML5 video.
+            </video>
+        `;
+
+        const video = this.querySelector('video');
+        
+        video.onloadeddata = () => {
+            video.style.visibility = 'visible';
+            this.dispatchEvent(new CustomEvent('content-loaded', { bubbles: true }));
+        };
+    }
+}
+customElements.define('video-loop-view', VideoLoopView);
+</script>

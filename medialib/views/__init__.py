@@ -18,6 +18,7 @@ from . import representation
 class ContentListItem:
     slug: str
     base_src: str
+    content_type: str
     name: str = ""
     srcset: str = ""
 
@@ -42,7 +43,13 @@ def get_similar_content(content, limit=50):
             h.content, 128, 128
         )
         similar_items.append(
-            ContentListItem(h.content.slug, base_src, h.content.title, srcset)
+            ContentListItem(
+                h.content.slug,
+                base_src,
+                h.content.content_type,
+                h.content.title,
+                srcset,
+            )
         )
     return similar_items
 
@@ -154,7 +161,13 @@ def content_list(request: HttpRequest) -> HttpResponse:
             content, 256, 256
         )
         content_list.append(
-            ContentListItem(content.slug, base_src, content.title, srcset)
+            ContentListItem(
+                content.slug,
+                base_src,
+                content.content_type,
+                content.title,
+                srcset,
+            )
         )
     return render(
         request,

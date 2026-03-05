@@ -1,0 +1,66 @@
+@keyframes loading {
+  from {
+    background-color: var(--spinner-bg);
+  }
+  to {
+    background-color: var(--spinner-fg);
+  }
+}
+
+.loading-spinner-x64 {
+  display: block;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-spinner-x64 div {
+  background: var(--spinner-bg);
+  width: 12px;
+  height: 12px;
+  position: absolute;
+  border-radius: 50%;
+  animation: 1s ease-in 1s infinite alternate loading;
+}
+
+.loading-spinner-x64 div:nth-child(1) {
+  left: 52px;
+  top: 26px;
+  animation-delay: 0s;
+}
+.loading-spinner-x64 div:nth-child(2) {
+  left: 44px;
+  top: 44px;
+  animation-delay: 0.25s;
+}
+.loading-spinner-x64 div:nth-child(3) {
+  left: 26px;
+  top: 52px;
+  animation-delay: 0.5s;
+}
+.loading-spinner-x64 div:nth-child(4) {
+  left: 8px;
+  top: 44px;
+  animation-delay: 0.75s;
+}
+.loading-spinner-x64 div:nth-child(5) {
+  left: 0px;
+  top: 26px;
+  animation-delay: 1s;
+}
+.loading-spinner-x64 div:nth-child(6) {
+  left: 8px;
+  top: 8px;
+  animation-delay: 1.25s;
+}
+.loading-spinner-x64 div:nth-child(7) {
+  left: 26px;
+  top: 0px;
+  animation-delay: 1.5s;
+}
+.loading-spinner-x64 div:nth-child(8) {
+  left: 44px;
+  top: 8px;
+  animation-delay: 1.75s;
+}
