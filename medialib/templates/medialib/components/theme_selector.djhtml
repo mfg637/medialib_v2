@@ -5,8 +5,7 @@
         <option value="dark">Dark</option>
         <option value="dark-purple">Dark Purple</option>
         <option value="rarity">Rarity</option>
-        <!--<option value="twilight-sparkle">Twilight Sparkle</option>
-        <option value="aqua-rarity">Aqua Rarity</option>-->
+        <option value="princess-luna">Princess Luna</option>
     </select>
 </section>
 <script>

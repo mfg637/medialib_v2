@@ -1,0 +1,29 @@
+html.princess-luna {
+  --bg-main: #090e1d;
+  --bg-accent: #12162c;
+  --bg-input: #12162c;
+  --bg-wrapper: #282d5a;
+
+  --text-main: #c4beff;
+  --text-muted: #7796ec;
+  --text-input: #ffffff;
+  --text-on-accent: #ffffff;
+  --text-li: #9990f2;
+
+  --border-color: #363e7a;
+  --border-header-item: #5684e5;
+
+  --accent-color: #1c4cc2;
+  --accent-hover: #844fde;
+
+  --bg-header-item: #0c6182;
+  --home-icon: url("../resources/luna-theme-icon.svg");
+
+  --similar-item-shadow: rgba(0, 182, 163, 0.2);
+}
+
+/* star glow effect for active elements */
+html.princess-luna .tag-link:hover,
+html.princess-luna .pagination .current {
+  box-shadow: 0 0 8px #5684e5;
+}
