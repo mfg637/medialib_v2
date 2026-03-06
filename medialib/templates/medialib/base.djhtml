@@ -16,7 +16,11 @@
                     document.documentElement.classList.add(savedTheme);
                 }
             })();
+            const DEFAULT_LEVEL = {{ DEFAULT_LEVEL }};
+            const LEVEL_CHOICES = {{ CL_CHOICES_JSON|safe }};
         </script>
+        <script src="/static/js/widgets/cl_selector.js"></script>
+        <script src="/static/js/widgets/theme_selector.js"></script>
     </head>
     <body>
         <header>
@@ -24,8 +28,8 @@
                 <a class="home-page-link" href="/" title="Home page">
                     <span class="nostyle-fallback">Home</span>
                 </a>
-                {% include "medialib/components/theme_selector.djhtml" %}
-                {% include "medialib/components/cl_selector.djhtml" %}
+                <theme-selector class="optional"></theme-selector>
+                <cl-selector current="{{ CURRENT_CL }}" class="optional"></cl-selector>
             </section>
             <section class="login-indication">
                 {% if user.is_authenticated %}

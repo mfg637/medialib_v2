@@ -42,12 +42,16 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        min-width: 0;
     }
 
     .content-header h1 {
         margin: 0 0 10px 0;
         font-size: 1.8rem;
         color: var(--accent-color);
+        inline-size: 100%;
+        overflow-wrap: break-word;
+        word-break: break-all;
     }
 
     .description {
@@ -57,7 +61,7 @@
         padding: 15px;
         border-radius: 8px;
         border-left: 4px solid var(--accent-color);
-        word-wrap: break-word;
+        overflow-wrap: anywhere;
     }
 
     .description img{
@@ -142,6 +146,15 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
+    }
+
+    .technical-info code {
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        cursor: help;
     }
 
     .similar-content-section {
@@ -265,7 +278,7 @@
                 {% endfor %}
             </aside>
             <footer class="technical-info">
-                <code>SHA-256: {{ content.source_hash.hex }}</code>
+                <code title="{{ content.source_hash.hex }}">SHA-256: {{ content.source_hash.hex }}</code>
                 <time datetime="{{ content.addition_date|date:'Y-m-d' }}">
                     Added: {{ content.addition_date|date:"d E Y" }}
                 </time>

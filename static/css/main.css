@@ -111,9 +111,71 @@ button.accent {
   gap: 8px;
 }
 
-/*#theme-selector {
-  cursor: pointer;
-  border-color: var(--border-color);
-  background-color: var(--bg-input);
-  color: var(--text-input);
-}*/
+.portrait-specific {
+  display: none;
+}
+
+@media (max-width: 719px) {
+  header .optional {
+    display: none;
+  }
+
+  .portrait-specific {
+    display: block;
+    padding: 20px;
+    margin: 20px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px dashed var(--border-accent);
+  }
+
+  .portrait-specific h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    color: var(--viewer-text-color);
+    border-bottom: 1px solid var(--border-accent);
+    padding-bottom: 10px;
+  }
+
+  .field-wrapper {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  theme-selector,
+  cl-selector {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .field-wrapper label {
+    font-weight: bold;
+    color: var(--viewer-text-color);
+    opacity: 0.9;
+    font-size: 0.95rem;
+  }
+
+  .field-wrapper select {
+    width: 100%;
+    padding: 12px;
+    background-color: #1a1a1a;
+    color: white;
+    border: 1px solid var(--border-accent);
+    border-radius: 6px;
+    font-size: 1rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+  }
+
+  .field-wrapper select:focus {
+    outline: none;
+    box-shadow: 0 0 5px var(--border-accent);
+  }
+}

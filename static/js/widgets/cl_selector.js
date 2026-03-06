@@ -1,0 +1,55 @@
+class ClSelector extends HTMLElement {
+  applyLevel(level) {
+    localStorage.setItem("clevel", level);
+    window.location.href = `/medialib/set-cl/${level}?next=${window.location.pathname}`;
+  }
+
+  resolveLevelConflict() {
+    const current_cl = parseInt(this.getAttribute("current"));
+    const local_cl_raw = localStorage.getItem("clevel");
+    const local_cl = local_cl_raw !== null ? parseInt(local_cl_raw) : null;
+
+    if (local_cl !== null && current_cl !== local_cl) {
+      if (current_cl === DEFAULT_LEVEL) {
+        this.applyLevel(local_cl);
+      } else {
+        localStorage.setItem("clevel", current_cl);
+      }
+    } else if (local_cl === null) {
+      localStorage.setItem("clevel", current_cl);
+    }
+  }
+
+  connectedCallback() {
+    const current_cl = this.getAttribute("current");
+    this.resolveLevelConflict();
+
+    this.label = document.createElement("label");
+    this.label.textContent = "Compatibility level: ";
+
+    this.select = document.createElement("select");
+    this.select.addEventListener("change", () => this.updateLevelEvent());
+
+    for (const key in LEVEL_CHOICES) {
+      const option = document.createElement("option");
+      option.textContent = LEVEL_CHOICES[key];
+      option.value = key;
+      if (key === current_cl) {
+        option.selected = true;
+      }
+      this.select.appendChild(option);
+    }
+
+    this.innerHTML = "";
+    this.appendChild(this.label);
+    this.label.appendChild(this.select);
+  }
+
+  updateLevelEvent() {
+    this.applyLevel(this.select.value);
+  }
+}
+
+if (!customElements.get("cl-selector")) {
+  customElements.define("cl-selector", ClSelector);
+}

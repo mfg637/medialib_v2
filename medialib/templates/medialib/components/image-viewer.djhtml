@@ -107,6 +107,7 @@ div#imageViewer .imageview-text {
     color: var(--viewer-text-color);
     text-align: center;
     text-shadow: var(--viewer-text-shadow);
+    z-index: -1;
 }
 
 #close-button {

@@ -49,5 +49,14 @@
                 </li>
             </ul>
         </nav>
+        <section class="portrait-specific">
+            <h2>Configuration</h2>
+            <div class="field-wrapper">
+                <theme-selector></theme-selector>
+            </div>
+            <div class="field-wrapper">
+                <cl-selector current="{{ CURRENT_CL }}"></cl-selector>
+            </div>
+        </section>
     </div>
 {% endblock %}
