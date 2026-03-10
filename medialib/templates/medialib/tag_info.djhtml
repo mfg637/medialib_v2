@@ -1,0 +1,167 @@
+{% extends "medialib/base.djhtml" %}
+{% block title %}Tag: {{ tag.title }}{% endblock %}
+{% block content %}
+    <style>
+    :root {
+        --tag-info-bg: var(--bg-accent, #1e162d);
+        --tag-info-border: var(--border-color, #3d2d5a);
+        --tag-header-color: var(--accent-color, #d100d1);
+        --tag-text: var(--text-main, #e0e0e0);
+        --tag-muted: var(--text-muted, #a0a0a0);
+        --tag-link-bg: var(--bg-input, #2a1f3d);
+    }
+
+    .tag-view-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 0 15px;
+        color: var(--tag-text);
+    }
+
+    .tag-card {
+        background: var(--tag-info-bg);
+        border: 1px solid var(--tag-info-border);
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .tag-header {
+        border-bottom: 1px solid var(--tag-info-border);
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tag-header h1 {
+        margin: 0;
+        font-size: 2rem;
+        color: var(--tag-header-color);
+    }
+
+    .tag-category-badge {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        background: var(--tag-link-bg);
+        padding: 4px 12px;
+        border-radius: 20px;
+        border: 1px solid var(--tag-info-border);
+        color: var(--tag-muted);
+    }
+
+    .tag-section {
+        margin-bottom: 25px;
+    }
+
+    .tag-section h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        color: var(--tag-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tag-list-inline {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .tag-pill {
+        display: inline-block;
+        padding: 6px 14px;
+        background: var(--tag-link-bg);
+        border: 1px solid var(--tag-info-border);
+        border-radius: 6px;
+        text-decoration: none;
+        color: var(--tag-text);
+        font-size: 0.9rem;
+        transition: all 0.2s;
+    }
+
+    .tag-pill:hover {
+        border-color: var(--tag-header-color);
+        transform: translateY(-2px);
+    }
+
+    .action-box {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px dashed var(--tag-info-border);
+    }
+
+    .search-button {
+        display: inline-flex;
+        align-items: center;
+        padding: 12px 24px;
+        background: var(--tag-header-color);
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        transition: opacity 0.2s;
+    }
+
+    .search-button:hover {
+        opacity: 0.8;
+    }
+
+    @media (max-width: 600px) {
+        .tag-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+    }
+    </style>
+    <div class="tag-view-container">
+        <div class="tag-card">
+            <div class="tag-header">
+                <h1>{{ tag.title }}</h1>
+                <span class="tag-category-badge">{{ tag.get_category.name }}</span>
+            </div>
+            <div class="tag-section">
+                <h3>Aliases</h3>
+                <div class="tag-list-inline">
+                    {% for alias in aliases %}
+                        <span class="tag-pill">{{ alias.title }}</span>
+                    {% empty %}
+                        <small style="color: var(--tag-muted)">No additional aliases</small>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="tag-section">
+                <h3>Implies (Parent Tags)</h3>
+                <div class="tag-list-inline">
+                    {% for imp in implications %}
+                        <a href="{% url 'tag-info' imp.id %}" class="tag-pill">{{ imp.title }}</a>
+                    {% empty %}
+                        <small style="color: var(--tag-muted)">None</small>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="tag-section">
+                <h3>Is implied by (Child Tags)</h3>
+                <div class="tag-list-inline">
+                    {% for implied_by in is_implied_by %}
+                        <a href="{% url 'tag-info' implied_by.id %}" class="tag-pill">{{ implied_by.title }}</a>
+                    {% empty %}
+                        <small style="color: var(--tag-muted)">None</small>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="action-box">
+                {% with search_query=aliases.first.title %}
+                    <a href="{% url 'content-list' %}?q={{ search_query|urlencode }}"
+                       class="search-button">View all content with this tag</a>
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

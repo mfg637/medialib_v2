@@ -46,12 +46,19 @@ def make_representations(
         return representations_maker(passport.source_file)
     elif isinstance(passport, media_passport.VideoPassport):
         representations = []
-        thumbnail = video_thumbnail.decode(
-            passport.source_file, parsed_data=passport.ffprobe_raw_data
-        )
-        video_thumbnail_strategy = VideoThumbnailRepresentationStrategy(
-            thumbnail
-        )
+        try:
+            thumbnail = video_thumbnail.decode(
+                passport.source_file, parsed_data=passport.ffprobe_raw_data
+            )
+        except ValueError as e:
+            if passport.mime == "image/gif":
+                video_thumbnail_strategy = DefaultRepresentationStrategy()
+            else:
+                raise e
+        else:
+            video_thumbnail_strategy = VideoThumbnailRepresentationStrategy(
+                thumbnail
+            )
         representations.extend(
             video_thumbnail_strategy.make_representations(passport.source_file)
         )

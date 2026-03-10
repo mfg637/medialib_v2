@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from django.http import HttpResponse, HttpRequest
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from base.shared_enums.medialib_model import (
@@ -8,7 +8,7 @@ from base.shared_enums.medialib_model import (
     RepresentationTypeEnum,
 )
 from medialib_v2.settings import MEDIA_URL
-from medialib.models import Content, ImageHash
+from medialib.models import Content, ImageHash, Tag
 from medialib.tags.dsl import TagDSLParser, DSLError
 from medialib.tags import tag_filter
 from . import representation
@@ -192,4 +192,21 @@ def set_cl_level(request, level):
     return redirect(next_url)
 
 
-__all__ = ["content_info", "content_list", "set_cl_level", "representation"]
+def tag_info(request, tag_id: int):
+    tag = get_object_or_404(Tag, id=tag_id)
+    context = {
+        "tag": tag,
+        "aliases": tag.alias_set.all(),
+        "implications": tag.implications.all(),
+        "is_implied_by": tag.is_implied_by.all(),
+    }
+    return render(request, "medialib/tag_info.djhtml", context)
+
+
+__all__ = [
+    "content_info",
+    "content_list",
+    "set_cl_level",
+    "representation",
+    "tag_info",
+]

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Task, AwaitingTaskMetadata
+from .models import Task, AwaitingTaskMetadata, ExecutionError
 from .forms import TaskUploadForm
 from image_processing.flow.processing import run_processing_selected_tasks
 
@@ -19,3 +19,6 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = ("id", "status", "created_at")
     list_filter = ("status",)
     actions = [run_processing_selected_tasks]
+
+
+admin.site.register(ExecutionError)

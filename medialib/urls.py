@@ -13,5 +13,6 @@ urlpatterns = [
         name="content-representation",
     ),
     path("dynamic/content/list", views.content_list, name="content-list"),
+    path("tag/id<int:tag_id>", views.tag_info, name="tag-info"),
     path("set-cl/<int:level>", views.set_cl_level, name="set-cl"),
 ]
