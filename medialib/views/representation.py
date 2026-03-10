@@ -1,3 +1,4 @@
+from urllib.parse import quote
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse, Http404
 from typing import Optional
@@ -102,8 +103,8 @@ def generate_image_srcset(
     content: Content, target_width: int, target_height: int
 ) -> str:
     large_representations: QuerySet = content.representation_set.filter(
-        Q(width__gte=target_width) | Q(height__gte=target_height)
-    )
+        repr_type=RepresentationTypeEnum.IMAGE
+    ).filter(Q(width__gte=target_width) | Q(height__gte=target_height))
     if large_representations.exists():
         src_list_str: list[str] = []
         for representation in large_representations:
@@ -115,7 +116,7 @@ def generate_image_srcset(
             )
             src_list_str.append(
                 (
-                    f"/{MEDIA_URL}{representation.filepath} {representation_relation}x"
+                    f"/{MEDIA_URL}{quote(str(representation.filepath))} {representation_relation}x"
                 )
             )
         return ", ".join(src_list_str)
@@ -128,13 +129,25 @@ def generate_image_srcset_optim_prefetch(
 ) -> tuple[str, str]:
     all_reprs = content.representation_set.all()
 
+    image_representations = sorted(
+        [
+            r
+            for r in all_reprs
+            if r.repr_type == RepresentationTypeEnum.IMAGE.value
+        ],
+        key=lambda r: r.width,
+        reverse=False,
+    )
+
     large_reprs = [
         r
-        for r in all_reprs
+        for r in image_representations
         if r.width >= target_width or r.height >= target_height
     ]
 
-    largest_representation = max(all_reprs, key=lambda r: r.width * r.height)
+    largest_representation = max(
+        image_representations, key=lambda r: r.width * r.height
+    )
 
     if not large_reprs:
         return "", str(largest_representation.filepath)
@@ -147,6 +160,8 @@ def generate_image_srcset_optim_prefetch(
             target_width,
             target_height,
         )
-        src_list_str.append(f"/{MEDIA_URL}{representation.filepath} {rel}x")
+        src_list_str.append(
+            f"/{MEDIA_URL}{quote(str(representation.filepath))} {rel}x"
+        )
 
     return ", ".join(src_list_str), str(large_reprs[0].filepath)
