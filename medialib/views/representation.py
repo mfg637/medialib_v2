@@ -23,8 +23,16 @@ def get_representation(
         return r
 
     content = Content.objects.get(slug=content_slug)
-    content_type = ContentTypeEnum[request.GET.get("type", "image").upper()]
-    clevel = request.session.get("clevel", 2)
+    content_type_str = request.GET.get("type", "")
+    if content_type_str:
+        content_type = ContentTypeEnum[content_type_str.upper()]
+    else:
+        content_type = ContentTypeEnum[content.content_type.upper()]
+    clevel = request.GET.get("clevel", request.session.get("clevel", 2))
+    if clevel:
+        clevel = int(clevel)
+    else:
+        ValueError("clevel can't be None")
     if content_type is ContentTypeEnum.IMAGE:
         side_size: Optional[int] = (
             int(request.GET["side_size"])
@@ -44,7 +52,7 @@ def get_representation(
         if target_width is None and target_height is None:
             reprs = content.representation_set.filter(
                 repr_type=RepresentationTypeEnum.IMAGE
-            ).order_by("-compatibility_level", "-width")
+            ).order_by("-width", "-compatibility_level")
             if reprs.exists():
                 for representation in reprs:
                     if representation.compatibility_level <= clevel:

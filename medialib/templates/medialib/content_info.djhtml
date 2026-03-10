@@ -87,7 +87,7 @@
         margin-bottom: 1em;
     }
 
-    .origin-section, .tags-sidebar {
+    .info-section-element {
         background: var(--bg-accent);
         padding: 20px;
         border-radius: 8px;
@@ -120,7 +120,7 @@
         margin-bottom: 5px;
     }
     
-    .tag-link {
+    .button {
         display: inline-block;
         padding: 4px 10px;
         background: var(--bg-header-item, var(--bg-input));
@@ -133,7 +133,7 @@
         transition: 0.2s;
     }
 
-    .tag-link:hover {
+    .button:hover {
         border-color: var(--accent-color);
         background: var(--bg-main);
     }
@@ -216,10 +216,12 @@
                             </audio>
                         </div>
                     {% elif c_type == "image" or has_image %}
-                        <img src="/{{ MEDIA_URL }}{{ base_src }}"
-                             {% if srcset %}srcset="{{ srcset }}"{% endif %}
-                             alt="{{ content.title }}"
-                             class="main-content-image">
+                        <a href="{% url 'content-representation' content.slug %}?type=image">
+                            <img src="/{{ MEDIA_URL }}{{ base_src }}"
+                                 {% if srcset %}srcset="{{ srcset }}"{% endif %}
+                                 alt="{{ content.title }}"
+                                 class="main-content-image" />
+                        </a>
                     {% else %}
                         <div class="no-content">No representation available</div>
                     {% endif %}
@@ -230,8 +232,20 @@
             <header class="content-header">
                 <h1>{{ content.title|default:"Untitled" }}</h1>
             </header>
+            <div class="download-buttons-wrapper info-section-element">
+                <h3>Download</h3>
+                <a class="button"
+                   href="{% url 'content-representation' content.slug %}?clevel=1"
+                   download>CL 1</a>
+                <a class="button"
+                   href="{% url 'content-representation' content.slug %}?clevel=2"
+                   download>CL 2</a>
+                <a class="button"
+                   href="{% url 'content-representation' content.slug %}?clevel=3"
+                   download>CL 3</a>
+            </div>
             {% if content.description %}<div class="description">{{ content.description|markdown }}</div>{% endif %}
-            <section class="origin-section">
+            <section class="origin-section info-section-element">
                 <h3>Sources</h3>
                 <ul class="origin-list">
                     {% for origin_item in content.origin_set.all %}
@@ -260,7 +274,7 @@
                     {% endfor %}
                 </ul>
             </section>
-            <aside class="tags-sidebar">
+            <aside class="tags-sidebar info-section-element">
                 <h3>Metadata</h3>
                 {% for category_name, tags in grouped_tags.items %}
                     <div class="tag-group">
@@ -268,7 +282,7 @@
                         <ul class="tag-list">
                             {% for tag_id, tag_title in tags %}
                                 <li>
-                                    <a href="/medialib/tag/id{{ tag_id }}" class="tag-link">{{ tag_title }}</a>
+                                    <a href="/medialib/tag/id{{ tag_id }}" class="tag-link button">{{ tag_title }}</a>
                                 </li>
                             {% endfor %}
                         </ul>
