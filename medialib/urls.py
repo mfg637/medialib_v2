@@ -42,4 +42,9 @@ urlpatterns = [
         views.collection.collection_add_item,
         name="collection-add-item",
     ),
+    path(
+        "collections/<int:pk>/toggle-nsfw/",
+        views.collection.collection_toggle_nsfw,
+        name="collection-toggle-nsfw",
+    ),
 ]

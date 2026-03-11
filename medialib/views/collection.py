@@ -1,3 +1,4 @@
+from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from medialib.models import Collection, Content
@@ -8,10 +9,14 @@ from medialib_v2.settings import MEDIA_URL
 
 
 @login_required
-def collection_list(request):
+def collection_list(request: HttpRequest) -> HttpResponse:
     collections = Collection.objects.filter(user=request.user).order_by(
         "-created_at"
     )
+    show_nsfw_raw = request.GET.get("nsfw", 0)
+    show_nsfw = bool(int(show_nsfw_raw))
+    if not show_nsfw:
+        collections = collections.filter(is_nsfw=False)
     return render(
         request,
         "medialib/collection_list.djhtml",
@@ -23,8 +28,12 @@ def collection_list(request):
 def collection_create(request):
     if request.method == "POST":
         title = request.POST.get("title")
+        is_nsfw_raw = request.POST.get("is_nsfw", 0)
+        is_nsfw = bool(int(is_nsfw_raw))
         if title:
-            Collection.objects.get_or_create(user=request.user, title=title)
+            Collection.objects.get_or_create(
+                user=request.user, title=title, is_nsfw=is_nsfw
+            )
     return redirect("collection-list")
 
 
@@ -88,3 +97,12 @@ def collection_add_item_direct(request):
         collection.items.add(content_item)
         return redirect("collection-detail", pk=collection.pk)
     return redirect("collection-list")
+
+
+@login_required
+def collection_toggle_nsfw(request, pk):
+    collection = get_object_or_404(Collection, pk=pk, user=request.user)
+    if request.method == "POST":
+        collection.is_nsfw = not collection.is_nsfw
+        collection.save()
+    return redirect("collection-detail", pk=pk)

@@ -26,8 +26,13 @@
         <form action="{% url 'collection-create' %}" method="post">
             {% csrf_token %}
             <input type="text" name="title" placeholder="Collection title" required />
+            <label>
+                <input type="checkbox" name="is_nsfw" value="1" />
+                NSFW
+            </label>
             <button type="submit" class="button">Create collection</button>
         </form>
+        <a href="{% url 'collection-list' %}?nsfw=1">Show NSFW</a>
         <div class="collection-grid">
             {% for col in collections %}
                 <a href="{% url 'collection-detail' col.pk %}"

@@ -506,6 +506,7 @@ class Collection(models.Model):
         "Content", related_name="in_collection", blank=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    is_nsfw = models.BooleanField(default=False)
 
     class Meta:
         constraints = [

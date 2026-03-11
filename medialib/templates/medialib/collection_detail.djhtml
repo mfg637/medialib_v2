@@ -53,7 +53,24 @@
         }
     </style>
     <div class="info-section-element">
-        <h2>Collection: {{ collection.title }}</h2>
+        <h2>
+            {{ collection.title }}
+            {% if collection.is_nsfw %}<span style="color: var(--accent-color);">[NSFW]</span>{% endif %}
+        </h2>
+        <form action="{% url 'collection-toggle-nsfw' collection.pk %}"
+              method="post"
+              style="display:inline">
+            {% csrf_token %}
+            <button type="submit"
+                    class="button {% if not collection.is_nsfw %}accent{% endif %}">
+                Mark as
+                {% if collection.is_nsfw %}
+                    SFW
+                {% else %}
+                    NSFW
+                {% endif %}
+            </button>
+        </form>
         <form action="{% url 'collection-add-item' collection.pk %}" method="post">
             {% csrf_token %}
             <input type="number" name="content_id" placeholder="Content ID" required>
