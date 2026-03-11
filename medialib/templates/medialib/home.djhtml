@@ -47,6 +47,9 @@
                 <li>
                     <a href="{% url 'content-list' %}">Gallery</a>
                 </li>
+                <li>
+                    <a href="{% url 'collection-list' %}">Collections</a>
+                </li>
             </ul>
         </nav>
         <section class="portrait-specific">

@@ -109,11 +109,12 @@ def get_relation(repr_w, repr_h, target_w, target_h) -> float:
 
 def generate_image_srcset(
     content: Content, target_width: int, target_height: int
-) -> str:
+) -> tuple[str, str]:
     large_representations: QuerySet = content.representation_set.filter(
         repr_type=RepresentationTypeEnum.IMAGE
     ).filter(Q(width__gte=target_width) | Q(height__gte=target_height))
     if large_representations.exists():
+        large_representations = large_representations.order_by("width")
         src_list_str: list[str] = []
         for representation in large_representations:
             representation_relation = get_relation(
@@ -127,9 +128,24 @@ def generate_image_srcset(
                     f"/{MEDIA_URL}{quote(str(representation.filepath))} {representation_relation}x"
                 )
             )
-        return ", ".join(src_list_str)
+        base_representation = large_representations.first()
+        base_representation_url = (
+            f"/{MEDIA_URL}{quote(str(base_representation.filepath))}"
+        )
+        return ", ".join(src_list_str), base_representation_url
     else:
-        return ""
+        largest_representation: Representation = (
+            content.representation_set.filter(
+                repr_type=RepresentationTypeEnum.IMAGE
+            )
+            .filter(Q(width__gte=target_width) | Q(height__gte=target_height))
+            .order_by("width")
+            .last()
+        )
+        base_representation_url = (
+            f"/{MEDIA_URL}{quote(str(largest_representation.filepath))}"
+        )
+        return "", base_representation_url
 
 
 def generate_image_srcset_optim_prefetch(

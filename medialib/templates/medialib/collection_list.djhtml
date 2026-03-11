@@ -1,0 +1,40 @@
+{% extends "medialib/base.djhtml" %}
+{% load url_utils %}
+{% block title %}My Collections - {{ block.super }}{% endblock %}
+{% block content %}
+    <style>
+        .info-section-element{
+            padding: 2em;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        form input[name=title] {
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-main);
+            color: var(--text-main)
+        }
+        a.button.collection-detail-link {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+    <div class="info-section-element">
+        <h2>My Collections</h2>
+        <form action="{% url 'collection-create' %}" method="post">
+            {% csrf_token %}
+            <input type="text" name="title" placeholder="Collection title" required />
+            <button type="submit" class="button">Create collection</button>
+        </form>
+        <div class="collection-grid">
+            {% for col in collections %}
+                <a href="{% url 'collection-detail' col.pk %}"
+                   class="button collection-detail-link">{{ col.title }} ({{ col.items.count }} items)</a>
+            {% empty %}
+                <p>You have no collections yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

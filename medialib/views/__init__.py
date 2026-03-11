@@ -1,7 +1,7 @@
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from medialib.models import Tag
-from . import representation, content
+from . import representation, content, collection
 
 
 def set_cl_level(request: HttpRequest, level: int) -> HttpResponse:
@@ -26,4 +26,5 @@ __all__ = [
     "set_cl_level",
     "representation",
     "tag_info",
+    "collection",
 ]

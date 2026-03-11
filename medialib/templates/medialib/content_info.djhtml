@@ -119,24 +119,6 @@
         color: var(--text-muted);
         margin-bottom: 5px;
     }
-    
-    .button {
-        display: inline-block;
-        padding: 4px 10px;
-        background: var(--bg-header-item, var(--bg-input));
-        border: 1px solid var(--border-header-item, var(--border-color));
-        color: var(--text-input, var(--text-main));
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 0.85rem;
-        margin: 2px;
-        transition: 0.2s;
-    }
-
-    .button:hover {
-        border-color: var(--accent-color);
-        background: var(--bg-main);
-    }
 
     .technical-info {
         margin-top: auto;
@@ -293,6 +275,7 @@
             </aside>
             <footer class="technical-info">
                 <code title="{{ content.source_hash.hex }}">SHA-256: {{ content.source_hash.hex }}</code>
+                <code>Content ID: {{ content.id }}</code>
                 <time datetime="{{ content.addition_date|date:'Y-m-d' }}">
                     Added: {{ content.addition_date|date:"d E Y" }}
                 </time>

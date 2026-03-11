@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 import pathlib
 from medialib_v2.settings import MEDIALIB_COLLECTION_DIRECTORY
 from base.shared_enums.medialib_model import (
@@ -492,3 +493,29 @@ class AlbumOrder(models.Model):
             f"content id: {self.content.id}, "
             f"order: {self.order}"
         )
+
+
+class Collection(models.Model):
+    title = models.CharField(max_length=255, blank=False, null=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="collections",
+    )
+    items = models.ManyToManyField(
+        "Content", related_name="in_collection", blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "title"],
+                name="unique_collection",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=["user", "title"], name="collection_user_title_idx"
+            )
+        ]

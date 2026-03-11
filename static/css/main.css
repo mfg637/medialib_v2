@@ -75,12 +75,26 @@ li {
 input,
 select,
 textarea,
-button {
+button,
+.button {
   background-color: var(--bg-input);
   color: var(--text-input, var(--text-main));
   border: 1px solid var(--border-color);
-  padding: 0.5em;
-  border-radius: 5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: inherit;
+  transition: 0.2s;
+}
+
+button,
+.button {
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 0.85rem;
+  margin: 2px;
+  text-align: center;
 }
 
 header input,
@@ -91,14 +105,38 @@ header button {
   border-color: var(--border-header-item, var(--border-color));
 }
 
-button {
-  cursor: pointer;
+.button,
+header button {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: var(--bg-header-item, var(--bg-input));
+  border: 1px solid var(--border-header-item, var(--border-color));
+  color: var(--text-input, var(--text-main));
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  margin: 2px;
+  box-sizing: border-box;
 }
 
-button.accent {
-  background-color: var(--accent-color);
-  color: var(--text-on-accent);
+.button:hover,
+button:not(.accent):hover,
+header button:hover {
+  border-color: var(--accent-color);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
+
+button.accent,
+.button.accent {
+  background-color: var(--accent-color) !important;
+  color: var(--text-on-accent) !important;
   border: 1px solid var(--accent-hover);
+}
+
+button.accent:hover,
+.button.accent:hover {
+  background-color: var(--accent-hover) !important;
 }
 
 .login-indication form {
