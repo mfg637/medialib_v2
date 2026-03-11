@@ -4,7 +4,7 @@ from . import views
 urlpatterns = [
     path(
         "static/content/<slug:content_slug>/info",
-        views.content_info,
+        views.content.content_info,
         name="content-info",
     ),
     path(
@@ -12,7 +12,9 @@ urlpatterns = [
         views.representation.get_representation,
         name="content-representation",
     ),
-    path("dynamic/content/list", views.content_list, name="content-list"),
+    path(
+        "dynamic/content/list", views.content.content_list, name="content-list"
+    ),
     path("tag/id<int:tag_id>", views.tag_info, name="tag-info"),
     path("set-cl/<int:level>", views.set_cl_level, name="set-cl"),
 ]
