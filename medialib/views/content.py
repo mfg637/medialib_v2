@@ -8,7 +8,7 @@ from base.shared_enums.medialib_model import (
     RepresentationTypeEnum,
 )
 from medialib_v2.settings import MEDIA_URL
-from medialib.models import Content, ImageHash
+from medialib.models import Content, ImageHash, Collection
 from medialib.tags.dsl import TagDSLParser, DSLError
 from medialib.tags import tag_filter
 from . import representation
@@ -59,7 +59,12 @@ def content_info(request, content_slug: str) -> HttpResponse:
         "representation_set", "origin_set", "tags"
     ).get(slug=content_slug)
     all_tags = content.tags.all()
-    if not request.user.is_authenticated:
+    user_collections = []
+    if request.user.is_authenticated:
+        user_collections = Collection.objects.filter(
+            user=request.user
+        ).order_by("title")
+    else:
         is_safe = any(t.title == "safe" for t in all_tags)
         if not is_safe:
             raise PermissionDenied("This content is unavailable.")
@@ -103,6 +108,7 @@ def content_info(request, content_slug: str) -> HttpResponse:
             "video_representations": video_representations,
             "grouped_tags": grouped_tags,
             "similar_content": similar_content,
+            "user_collections": user_collections,
         },
     )
 

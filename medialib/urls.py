@@ -33,6 +33,11 @@ urlpatterns = [
         name="collection-create",
     ),
     path(
+        "collection/add-item",
+        views.collection.collection_add_item_direct,
+        name="collection-add-item-direct",
+    ),
+    path(
         "collections/<int:pk>/add/",
         views.collection.collection_add_item,
         name="collection-add-item",

@@ -73,3 +73,18 @@ def collection_add_item(request, pk):
         except Content.DoesNotExist, ValueError:
             pass
     return redirect("collection-detail", pk=pk)
+
+
+@login_required
+def collection_add_item_direct(request):
+    if request.method == "POST":
+        col_id = request.POST.get("collection_id")
+        content_id = request.POST.get("content_id")
+        collection = get_object_or_404(
+            Collection, pk=col_id, user=request.user
+        )
+        content_item = get_object_or_404(Content, id=content_id)
+
+        collection.items.add(content_item)
+        return redirect("collection-detail", pk=collection.pk)
+    return redirect("collection-list")
