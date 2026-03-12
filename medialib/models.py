@@ -10,8 +10,9 @@ from base.shared_enums.medialib_model import (
 )
 from base.shared_knowledge import origin, file_format
 
-# from medialib_v2 import secrets
 from django.core.exceptions import ValidationError
+
+from django.db import transaction
 
 DEBUG = True
 REPRESENATION_FILE_PATH_LIMIT = 512
@@ -410,14 +411,17 @@ class Album(models.Model):
     album_set = models.ForeignKey(
         Tag, on_delete=models.PROTECT, related_name="album_set", null=True
     )
-    creator_tags = models.ManyToManyField(Tag, related_name="creator_albums")
-    album_name = models.TextField(null=True)
+    creator_tags = models.ManyToManyField(
+        Tag, related_name="creator_albums", blank=True
+    )
+    album_name = models.TextField(blank=True, default="")
     contents = models.ManyToManyField(
         Content,
         through="AlbumOrder",
         through_fields=("album", "content"),
         related_name="albums",
     )
+    is_nsfw = models.BooleanField(default=False)
 
     def clean(self):
         if self.album_set is not None and self.album_set.category not in {
@@ -446,8 +450,66 @@ class Album(models.Model):
                 )
         super().clean()
 
+    def sync_from_set(self):
+        if not self.album_set:
+            return 0
+
+        contents = Content.objects.filter(
+            tags=self.album_set
+        ).prefetch_related(
+            models.Prefetch(
+                "tags",
+                queryset=Tag.objects.filter(
+                    category=CategoryEnum.CREATOR.value
+                ),
+                to_attr="prefetched_creators",
+            ),
+            "origin_set",
+        )
+
+        def get_sort_key(content_item):
+            try:
+                origins = [
+                    o for o in content_item.origin_set.all() if not o.alternate
+                ]
+                origin_obj = (
+                    origins[0]
+                    if origins
+                    else content_item.origin_set.all().first()
+                )
+
+                if origin_obj and origin_obj.origin_id:
+                    val = int(origin_obj.origin_id)
+                else:
+                    val = 2**64 - 1
+
+                return (val, content_item.id)
+            except ValueError, TypeError, AttributeError:
+                return (2**64 - 1, content_item.id)
+
+        sorted_contents = sorted(contents, key=get_sort_key)
+
+        creators_unique = set()
+        for content in contents:
+            for creator in content.prefetched_creators:
+                creators_unique.add(creator)
+
+        with transaction.atomic():
+            if creators_unique:
+                self.creator_tags.set(list(creators_unique))
+
+            AlbumOrder.objects.filter(album=self).delete()
+
+            new_orders = [
+                AlbumOrder(album=self, content=item, order=idx + 1)
+                for idx, item in enumerate(sorted_contents)
+            ]
+            AlbumOrder.objects.bulk_create(new_orders)
+
+        return len(new_orders)
+
     def get_album_name(self) -> str:
-        if self.album_name is not None:
+        if self.album_name:
             return self.album_name
         elif self.album_set is not None:
             return self.album_set.title
@@ -483,13 +545,16 @@ class AlbumOrder(models.Model):
                     "content",
                 ],
                 name="unique_content_to_album",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["album", "order"],
+                name="unique_album_order_position",
+            ),
         ]
-        unique_together = (("album", "order"),)
 
     def __str__(self) -> str:
         return (
-            f"AlbumOrder album id: {self.album.id}, "
+            f"AlbumOrder id: {self.album.id}, "
             f"content id: {self.content.id}, "
             f"order: {self.order}"
         )

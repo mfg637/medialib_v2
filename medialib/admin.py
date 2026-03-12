@@ -1,10 +1,13 @@
-from django.contrib import admin
+from typing import Optional
+from django.contrib import admin, messages
+from django.shortcuts import redirect
 from . import models as ml_models
 from base.shared_knowledge.tags import generate_aliases
 from .tags import smart_tag_search
 from medialib_v2.settings import MEDIA_URL
 from django.utils.safestring import mark_safe
-from django.urls import reverse
+from django.urls import reverse, path
+from .forms import AlbumAdminForm
 
 
 class TagAliasAdmin(admin.StackedInline):
@@ -21,7 +24,7 @@ class TagImplicationAdmin(admin.TabularInline):
 @admin.register(ml_models.Tag)
 class TagAdmin(admin.ModelAdmin):
     inlines = [TagAliasAdmin, TagImplicationAdmin]
-    list_display = ["title", "category", "aliases_count"]
+    list_display = ["title", "category", "aliases_count", "content_count"]
     list_filter = ["category"]
     search_fields = ["title", "alias_set__title"]
 
@@ -32,6 +35,11 @@ class TagAdmin(admin.ModelAdmin):
         return obj.alias_set.count()
 
     aliases_count.short_description = "Aliases"
+
+    def content_count(self, obj):
+        return obj.content_set.count()
+
+    content_count.short_description = "Content count"
 
     def get_search_results(self, request, queryset, search_term):
         if not search_term:
@@ -227,4 +235,57 @@ class ContentAdmin(admin.ModelAdmin):
         )
 
 
-# admin.site.register(ml_models.Content, ContentAdmin)
+class AlbumOrderInline(admin.TabularInline):
+    model = ml_models.AlbumOrder
+    extra = 0
+    autocomplete_fields = ["content"]
+    ordering = ("order",)
+
+
+@admin.register(ml_models.Album)
+class AlbumAdmin(admin.ModelAdmin):
+    form = AlbumAdminForm
+    inlines = [AlbumOrderInline]
+    list_display = ("get_album_name", "get_creator_string", "album_set")
+    exclude = ["creator_tags"]
+
+    autocomplete_fields = ["album_set"]
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "album_set":
+            kwargs["queryset"] = ml_models.Tag.objects.filter(
+                category__in=[
+                    ml_models.CategoryEnum.SET.value,
+                    ml_models.CategoryEnum.COMIC.value,
+                ]
+            )
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<int:pk>/sync/",
+                self.admin_site.admin_view(self.sync_album_view),
+                name="medialib_album_sync",
+            ),
+        ]
+        return custom_urls + urls
+
+    def sync_album_view(self, request, pk):
+        album = self.get_object(request, pk)
+        if album:
+            count = album.sync_from_set()
+            if count > 0:
+                self.message_user(
+                    request, f"Successful sync {count} elements."
+                )
+            else:
+                self.message_user(
+                    request,
+                    "Nothing to sync (check album_set tag).",
+                    messages.WARNING,
+                )
+        return redirect("admin:medialib_album_change", pk)
+
+    change_form_template = "admin/medialib/album/change_form.html"
