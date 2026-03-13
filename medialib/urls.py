@@ -47,4 +47,14 @@ urlpatterns = [
         views.collection.collection_toggle_nsfw,
         name="collection-toggle-nsfw",
     ),
+    path(
+        "albums/list",
+        views.album.AlbumListView.as_view(),
+        name="album-list",
+    ),
+    path(
+        "albums/<int:pk>/view",
+        views.album.AlbumDetailView.as_view(),
+        name="album-detail",
+    ),
 ]

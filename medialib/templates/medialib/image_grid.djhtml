@@ -3,43 +3,6 @@
 {% block title %}Gallery - {{ block.super }}{% endblock %}
 {% block content %}
     <style>
-    .items-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, 256px);
-        gap: 20px;
-        justify-content: center;
-        padding: 20px;
-        background-color: var(--bg-main);
-    }
-
-    .item-card {
-        width: 256px;
-        height: 256px;
-        position: relative;
-        overflow: hidden;
-        border-radius: 8px;
-        background-color: var(--bg-accent);
-        border: 1px solid var(--border-color);
-        transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .item-card:hover {
-        transform: scale(1.03);
-        border-color: var(--accent-color);
-        box-shadow: 0 4px 12px var(--similar-item-shadow);
-    }
-
-    .item-card img {
-        max-width: 100%;
-        max-height: 100%;
-        display: block;
-        object-fit: contain;
-    }
-
     .search-container {
         padding: 24px;
         background-color: var(--bg-accent);
@@ -94,38 +57,6 @@
         border-color: var(--border-header-item, var(--border-color));
     }
 
-    .pagination {
-        margin: 40px 0;
-        text-align: center;
-        display: flex;
-        justify-content: center;
-        gap: 5px;
-    }
-
-    .pagination a, 
-    .pagination span {
-        padding: 8px 16px;
-        text-decoration: none;
-        border: 1px solid var(--border-color);
-        background-color: var(--bg-input);
-        color: var(--text-main);
-        border-radius: 4px;
-        transition: all 0.2s;
-    }
-
-    .pagination a:hover {
-        border-color: var(--accent-color);
-        color: var(--accent-color);
-        background-color: var(--bg-accent);
-    }
-
-    .pagination .current {
-        background-color: var(--accent-color);
-        color: var(--text-on-accent);
-        border-color: var(--accent-color);
-        font-weight: bold;
-    }
-
     @media (max-width: 689px) {
         .search-container .additional-fields {
             width: 95%;
@@ -164,6 +95,7 @@
         }
     }
     </style>
+    <link rel="stylesheet" href="/static/css/image-grid.css">
     <div class="search-container">
         <form method="get" action="{% url 'content-list' %}">
             <div class="main-field">
@@ -231,17 +163,6 @@
             <p>Not found.</p>
         {% endfor %}
     </div>
-    {% if page_obj.has_other_pages %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a href="?{% replace_param page=page_obj.previous_page_number %}">Previous</a>
-            {% endif %}
-            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}
-                <a href="?{% replace_param page=page_obj.next_page_number %}">Next</a>
-            {% endif %}
-        </div>
-    {% endif %}
     {% include "medialib/components/image-viewer.djhtml" %}
     <image-viewer-app>
 </image-viewer-app>

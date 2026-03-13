@@ -50,6 +50,9 @@
                 <li>
                     <a href="{% url 'collection-list' %}">Collections</a>
                 </li>
+                <li>
+                    <a href="{% url 'album-list' %}">Albums</a>
+                </li>
             </ul>
         </nav>
         <section class="portrait-specific">

@@ -1,0 +1,18 @@
+{% extends "medialib/base.djhtml" %}
+{% block content %}
+    <div class="wrapper">
+        <h1>Albums</h1>
+        <a href="{% url 'album-list' %}?nsfw=1">Show NSFW</a>
+    </div>
+    <div class="album-grid wrapper">
+        {% for album in albums %}
+            <div class="album-card">
+                <a href="{% url 'album-detail' album.pk %}">
+                    <h3>{{ album.get_album_name }}</h3>
+                </a>
+                <p>By: {{ album.get_creator_string }}</p>
+                {% if album.is_nsfw %}<span class="badge nsfw">NSFW</span>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -149,6 +149,10 @@ button.accent:hover,
   gap: 8px;
 }
 
+.wrapper {
+  padding: 2em;
+}
+
 .portrait-specific {
   display: none;
 }

@@ -3,9 +3,6 @@
 {% block title %}My Collections - {{ block.super }}{% endblock %}
 {% block content %}
     <style>
-        .info-section-element{
-            padding: 2em;
-        }
         form {
             margin-bottom: 20px;
         }
@@ -21,7 +18,7 @@
             margin-bottom: 10px;
         }
     </style>
-    <div class="info-section-element">
+    <div class="info-section-element wrapper">
         <h2>My Collections</h2>
         <form action="{% url 'collection-create' %}" method="post">
             {% csrf_token %}

@@ -1,0 +1,70 @@
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 256px);
+  gap: 20px;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--bg-main);
+}
+.item-card {
+  width: 256px;
+  height: 256px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  transition:
+    transform 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-card:hover {
+  transform: scale(1.03);
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px var(--similar-item-shadow);
+}
+
+.item-card img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.pagination {
+  margin: 40px 0;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.pagination a,
+.pagination span {
+  padding: 8px 16px;
+  text-decoration: none;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-input);
+  color: var(--text-main);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.pagination a:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background-color: var(--bg-accent);
+}
+
+.pagination .current {
+  background-color: var(--accent-color);
+  color: var(--text-on-accent);
+  border-color: var(--accent-color);
+  font-weight: bold;
+}

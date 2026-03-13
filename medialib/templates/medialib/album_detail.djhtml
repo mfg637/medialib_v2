@@ -1,49 +1,12 @@
 {% extends "medialib/base.djhtml" %}
 {% load url_utils %}
-{% block title %}Collection: {{ collection.title }} - {{ block.super }}{% endblock %}
 {% block content %}
-    <style>
-        form {
-            margin-bottom: 20px;
-        }
-        form input[name=content_id] {
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-main);
-            color: var(--text-main)
-        }
-
-    </style>
     <link rel="stylesheet" href="/static/css/image-grid.css">
-    <div class="info-section-element wrapper">
-        <h2>
-            {{ collection.title }}
-            {% if collection.is_nsfw %}<span style="color: var(--accent-color);">[NSFW]</span>{% endif %}
-        </h2>
-        <form action="{% url 'collection-toggle-nsfw' collection.pk %}"
-              method="post"
-              style="display:inline">
-            {% csrf_token %}
-            <button type="submit"
-                    class="button {% if not collection.is_nsfw %}accent{% endif %}">
-                Mark as
-                {% if collection.is_nsfw %}
-                    SFW
-                {% else %}
-                    NSFW
-                {% endif %}
-            </button>
-        </form>
-        <form action="{% url 'collection-add-item' collection.pk %}" method="post">
-            {% csrf_token %}
-            <input type="number" name="content_id" placeholder="Content ID" required>
-            <button type="submit" class="button">Add by ID</button>
-        </form>
-        <hr>
-        <a href="{% url 'collection-list' %}" class="button">Back to list</a>
+    <div class="album-info wrapper">
+        <h1>{{ album.get_album_name }}</h1>
+        <p>Creators: {{ album.get_creator_string }}</p>
     </div>
-    <div class="items-grid">
+    <div class="items-grid" id="items-grid">
         {% for content_item in content_list %}
             <div class="item-card">
                 <a href="{% url 'content-info' content_item.slug %}"
@@ -74,5 +37,4 @@
     {% endif %}
     {% include "medialib/components/image-viewer.djhtml" %}
     <image-viewer-app>
-</image-viewer-app>
 {% endblock %}
