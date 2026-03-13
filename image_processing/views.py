@@ -5,10 +5,11 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import transaction, models
 from django.core.files import File
 
 from base.shared_knowledge.file_format import GENERIC_BINARY_FILE_MIME
+from base.shared_enums.medialib_model import CategoryEnum
 from image_processing.flow.uploading import process_task_file
 from medialib import models as ml_models
 from .models import Task, AwaitingTaskMetadata, TaskStatusEnum
@@ -191,3 +192,114 @@ def origin_info(request):
         )
     else:
         return JsonResponse({"status": "not found"}, status=404)
+
+
+@csrf_exempt
+def register_album_api(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Only POST allowed"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        origin_name = data.get("origin_name")
+        album_title = data.get("album_title")
+        content_sequence = data.get("content_sequence")
+        ordered_content = data.get("ordered_content")
+
+        if not origin_name or not album_title:
+            return JsonResponse(
+                {"error": "Missing origin_name or album_title"}, status=400
+            )
+
+        if content_sequence is not None and ordered_content is not None:
+            return JsonResponse(
+                {
+                    "error": "Provide either content_sequence or ordered_content, not both"
+                },
+                status=400,
+            )
+
+        final_order = {}
+        if content_sequence is not None:
+            for idx, oid in enumerate(content_sequence):
+                final_order[idx + 1] = oid
+        elif ordered_content is not None:
+            final_order = {int(k): v for k, v in ordered_content.items()}
+        else:
+            return JsonResponse(
+                {"error": "No content data provided"}, status=400
+            )
+
+        with transaction.atomic():
+            album, created = ml_models.Album.objects.get_or_create(
+                album_name=album_title, defaults={"is_nsfw": False}
+            )
+
+            if not created:
+                ml_models.AlbumOrder.objects.filter(album=album).delete()
+
+            origin_ids = list(final_order.values())
+            origins = (
+                ml_models.ContentOrigin.objects.filter(
+                    name=origin_name, origin_id__in=origin_ids
+                )
+                .select_related("content")
+                .prefetch_related(
+                    models.Prefetch(
+                        "content__tags",
+                        queryset=ml_models.Tag.objects.filter(
+                            category=CategoryEnum.CREATOR.value
+                        ),
+                        to_attr="prefetched_creators",
+                    )
+                )
+            )
+
+            origin_map = {o.origin_id: o.content for o in origins}
+
+            creators_unique = set()
+            new_orders = []
+
+            for order_val, oid in final_order.items():
+                content_obj = origin_map.get(str(oid))
+                if content_obj:
+                    for creator in content_obj.prefetched_creators:
+                        creators_unique.add(creator)
+
+                    new_orders.append(
+                        ml_models.AlbumOrder(
+                            album=album, content=content_obj, order=order_val
+                        )
+                    )
+
+            if new_orders:
+                ml_models.AlbumOrder.objects.bulk_create(new_orders)
+
+            if creators_unique:
+                album.creator_tags.set(list(creators_unique))
+
+            if not album.album_set:
+                tag = ml_models.Tag.objects.filter(
+                    title=album_title,
+                    category__in=[
+                        CategoryEnum.SET.value,
+                        CategoryEnum.COMIC.value,
+                    ],
+                ).first()
+                if tag:
+                    album.album_set = tag
+                    album.save()
+
+        return JsonResponse(
+            {
+                "status": "success",
+                "album_id": album.id,
+                "created": created,
+                "items_registered": len(new_orders),
+                "items_total": len(final_order),
+                "creators_found": len(creators_unique),
+            }
+        )
+
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

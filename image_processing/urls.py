@@ -13,4 +13,9 @@ urlpatterns = [
         name="api-task-create-file",
     ),
     path("origin/info", views.origin_info, name="api-origin-info"),
+    path(
+        "api/album/register/",
+        views.register_album_api,
+        name="api-album-register",
+    ),
 ]
