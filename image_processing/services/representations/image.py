@@ -162,17 +162,27 @@ IMAGE_REPRESENTATION_SAVERS: dict[int, saver_function_type] = {
 }
 
 
-def save_img_jpeg(img: Image, source_file: pathlib.Path) -> Representation:
+def save_img_original(
+    img: Image, source_file: pathlib.Path, file_format: FormatEnum
+) -> Representation:
     width = img.width
     height = img.height
     return Representation(
-        get_image_compatibility_level((width, height), FormatEnum.JPEG),
+        get_image_compatibility_level((width, height), file_format),
         source_file,
         width,
         height,
         RepresentationTypeEnum.IMAGE,
-        FormatEnum.JPEG,
+        file_format,
     )
+
+
+def save_img_jpeg(img: Image, source_file: pathlib.Path) -> Representation:
+    return save_img_original(img, source_file, FormatEnum.JPEG)
+
+
+def save_img_webp(img: Image, source_file: pathlib.Path) -> Representation:
+    return save_img_original(img, source_file, FormatEnum.WEBP)
 
 
 def save_img_svg(img: Image, source_file: pathlib.Path) -> Representation:
@@ -296,6 +306,33 @@ class JPEG_RepresentationStrategy(BaseRepresentationStrategy):
             return IMAGE_REPRESENTATION_SAVERS[size]
         else:
             return save_img_jpeg
+
+
+def is_webp_lossless(source_file: pathlib.Path) -> bool:
+    img = Image.new_from_file(str(source_file))
+    if "webp-lossless" in img.get_fields():
+        return bool(img.get("webp-lossless"))
+    return False
+
+
+class WEBP_RepresentationStrategy(BaseRepresentationStrategy):
+    def __init__(self, proxy_threshold: int = 4096):
+        super().__init__(proxy_threshold)
+        self.is_lossless = False
+
+    def _prepare_image_data(
+        self, source_file: pathlib.Path
+    ) -> tuple[Image, int, int, Optional[ProxyFile]]:
+        self.is_lossless = is_webp_lossless(source_file)
+        return super()._prepare_image_data(source_file)
+
+    def get_saver(
+        self, size: int, _case: ProcessingCases
+    ) -> saver_function_type:
+        if not self.is_lossless and _case is not ProcessingCases.LARGER:
+            return save_img_webp
+
+        return IMAGE_REPRESENTATION_SAVERS[size]
 
 
 class SVG_RepresentationStrategy(BaseRepresentationStrategy):

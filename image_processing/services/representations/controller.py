@@ -4,6 +4,7 @@ from .common import Representation
 from .image import (
     DefaultRepresentationStrategy,
     JPEG_RepresentationStrategy,
+    WEBP_RepresentationStrategy,
     SVG_RepresentationStrategy,
     VideoThumbnailRepresentationStrategy,
 )
@@ -21,6 +22,7 @@ import pathlib
 default_strategy = DefaultRepresentationStrategy()
 jpeg_strategy = JPEG_RepresentationStrategy()
 svg_strategy = SVG_RepresentationStrategy()
+webp_strategy = WEBP_RepresentationStrategy()
 
 
 RepresentationMaker = Callable[[pathlib.Path], list[Representation]]
@@ -28,6 +30,7 @@ RepresentationMaker = Callable[[pathlib.Path], list[Representation]]
 
 REPRESENTATION_PROCESSING_STRATEGY: dict[FormatEnum, RepresentationMaker] = {
     FormatEnum.JPEG: jpeg_strategy.make_representations,
+    FormatEnum.WEBP: webp_strategy.make_representations,
     FormatEnum.SVG: svg_strategy.make_representations,
 }
 

@@ -1,6 +1,6 @@
 import typing
 from collections.abc import Sequence, Buffer
-from typing import Optional
+from typing import Optional, Any
 import pyvips
 import warnings
 import numpy
@@ -164,6 +164,13 @@ class Image:
         return Image(
             self._img.__abs__()  # pyright: ignore[reportArgumentType]
         )
+
+    def get(self, name: str) -> Any:
+        return self._img.get(name)
+
+    def get_fields(self) -> set[str]:
+        raw_fields: list[str] | set[str] = self._img.get_fields()
+        return set(raw_fields)
 
     def colourspace(
         self,
