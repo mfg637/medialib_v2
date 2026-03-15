@@ -1,13 +1,20 @@
-from typing import Optional
+import requests
 from django.contrib import admin, messages
 from django.shortcuts import redirect
+
+from base.shared_enums.medialib_model import (
+    CategoryEnum,
+    RepresentationTypeEnum,
+)
 from . import models as ml_models
 from base.shared_knowledge.tags import generate_aliases
 from .tags import smart_tag_search
+from .tags.tags_processing import resolve_tag, get_all_implications
 from medialib_v2.settings import MEDIA_URL
 from django.utils.safestring import mark_safe
 from django.urls import reverse, path
 from .forms import AlbumAdminForm
+from django.template.response import TemplateResponse
 
 
 class TagAliasAdmin(admin.StackedInline):
@@ -108,6 +115,7 @@ class ImageHashInline(admin.StackedInline):
 
 @admin.register(ml_models.Content)
 class ContentAdmin(admin.ModelAdmin):
+    change_form_template = "admin/medialib/content/change_form.djhtml"
     list_display = [
         "content_thumbnail",
         "title_short",
@@ -138,7 +146,8 @@ class ContentAdmin(admin.ModelAdmin):
 
     formatted_hash.short_description = "Source Hash"
 
-    def abstract_representation(self, obj, size_limit, substitute_text):
+    @staticmethod
+    def get_image_representation(obj, size_limit):
         repr_list = obj.representation_set.filter(
             repr_type=ml_models.RepresentationTypeEnum.IMAGE.value
         ).order_by("width")
@@ -146,6 +155,10 @@ class ContentAdmin(admin.ModelAdmin):
         for current_repr in repr_list:
             if current_repr.check_side_size_limit(size_limit):
                 rep = current_repr
+        return rep
+
+    def abstract_representation(self, obj, size_limit, substitute_text):
+        rep = self.get_image_representation(obj, size_limit)
 
         if rep and rep.filepath:
             url = f"/{MEDIA_URL}{rep.filepath}"
@@ -232,6 +245,69 @@ class ContentAdmin(admin.ModelAdmin):
             super()
             .get_queryset(request)
             .prefetch_related("tags", "representation_set")
+        )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "<int:content_id>/suggest-tags/",
+                self.admin_site.admin_view(self.suggest_tags_view),
+                name="content-suggest-tags",
+            ),
+        ]
+        return custom_urls + urls
+
+    def suggest_tags_view(self, request, content_id):
+        content_obj = self.get_object(request, content_id)
+        if not content_obj:
+            return redirect("admin:medialib_content_changelist")
+
+        if request.method == "POST":
+            selected_tags = request.POST.getlist("selected_tags")
+            for tag_title in selected_tags:
+                tag, _ = resolve_tag(tag_title, CategoryEnum.CONTENT)
+                content_obj.tags.add(tag)
+                implications = get_all_implications(tag)
+                for i_tag in implications:
+                    content_obj.tags.add(i_tag)
+
+            self.message_user(request, f"Added {len(selected_tags)} tags.")
+            return redirect("admin:medialib_content_change", content_id)
+
+        try:
+            cl1_image_representation = (
+                content_obj.representation_set.filter(
+                    repr_type=RepresentationTypeEnum.IMAGE,
+                    compatibility_level=1,
+                )
+                .order_by("-width")
+                .first()
+            )
+            with cl1_image_representation.filepath.open("rb") as f:
+                response = requests.post(
+                    "http://127.0.0.1:10877/tagging",
+                    files={"image-file": f},
+                    data={"threshold": 0.2},
+                )
+            tags_data = response.json()
+        except Exception as e:
+            self.message_user(
+                request, f"AI Tagger error: {str(e)}", level=messages.ERROR
+            )
+            return redirect("admin:medialib_content_change", content_id)
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "content_obj": content_obj,
+            "representation": self.get_image_representation(content_obj, 512),
+            "tags": tags_data,
+            "title": f"Suggest tags for {content_obj.title}",
+            "MEDIA_URL": MEDIA_URL,
+        }
+        return TemplateResponse(
+            request, "admin/medialib/content/suggest_tags.djhtml", context
         )
 
 

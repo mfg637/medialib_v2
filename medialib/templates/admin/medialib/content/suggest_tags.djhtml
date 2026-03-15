@@ -1,0 +1,158 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+    .tag-suggestion-list { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 12px; 
+        margin: 20px 0; 
+    }
+
+    .tag-item { 
+        border: 1px solid var(--border-color, #ccc); 
+        padding: 12px; 
+        border-radius: 4px; 
+        background: var(--darkened-bg, var(--bg-color, #f9f9f9)); 
+        width: 210px;
+        color: var(--body-fg, #333);
+        transition: border-color 0.2s;
+
+        position: relative;
+    }
+
+    .tag-item:hover {
+        border-color: var(--primary, #417690); [cite: 212]
+    }
+
+    .tag-item label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .probability-bar { 
+        height: 6px; 
+        background: var(--hairline-color, #eee); 
+        width: 100%; 
+        margin-top: 8px;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .probability-fill { 
+        height: 100%; 
+        background: var(--primary, #417690); [cite: 218]
+    }
+
+    .probability-text {
+        display: block;
+        font-size: 0.85em;
+        margin-top: 4px;
+        color: var(--body-quiet-color, #666);
+    }
+
+    .preview-img { 
+        max-width: 512px; 
+        max-height: 512px; 
+        display: block; 
+        margin-bottom: 20px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .blacklist-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: none;
+        border: none;
+        color: var(--body-quiet-color);
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        display: none;
+    }
+    
+    .tag-item:hover .blacklist-btn { display: block; }
+    .blacklist-btn:hover { color: var(--error-log-error-color, #ba2121); }
+    
+    .tag-item.blacklisted {
+        opacity: 0.4;
+        filter: grayscale(1);
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="content-main">
+        <div class="module">
+            <h2>Preview</h2>
+            <img src="/{{ MEDIA_URL }}{{ representation.filepath }}"
+                 class="preview-img">
+            <form method="post">
+                {% csrf_token %}
+                <div class="tag-suggestion-list">
+                    {% for tag_name, prob in tags.items %}
+                        <div class="tag-item" data-tag-name="{{ tag_name }}">
+                            <label>
+                                <input type="checkbox" name="selected_tags" value="{{ tag_name }}" checked>
+                                <strong>{{ tag_name }}</strong>
+                            </label>
+                            <button type="button"
+                                    class="blacklist-btn"
+                                    title="Add to blacklist"
+                                    onclick="addToBlacklist('{{ tag_name }}')">×</button>
+                            <div class="probability-bar">
+                                <div class="probability-fill"
+                                     style="width: {% widthratio prob 1.0 100 %}%"></div>
+                            </div>
+                            <small class="probability-text">{{ prob|floatformat:3 }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="submit-row">
+                    <input type="submit" value="Add Selected Tags" class="default">
+                    <a href="../" class="closable">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+    const BLACKLIST_KEY = 'ai_tagger_blacklist';
+    
+    function getBlacklist() {
+        const stored = localStorage.getItem(BLACKLIST_KEY);
+        return stored ? JSON.parse(stored) : [];
+    }
+    
+    function addToBlacklist(tagName) {
+        let blacklist = getBlacklist();
+        if (!blacklist.includes(tagName)) {
+            blacklist.push(tagName);
+            localStorage.setItem(BLACKLIST_KEY, JSON.stringify(blacklist));
+        }
+        applyBlacklist();
+    }
+    
+    function applyBlacklist() {
+        const blacklist = getBlacklist();
+        const tagElements = document.querySelectorAll('.tag-item');
+    
+        tagElements.forEach(el => {
+            const tagName = el.getAttribute('data-tag-name');
+            if (blacklist.includes(tagName)) {
+                const checkbox = el.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = false;
+                    el.classList.add('blacklisted');
+                }
+            }
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', applyBlacklist);
+    </script>
+{% endblock %}

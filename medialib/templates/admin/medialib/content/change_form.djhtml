@@ -1,0 +1,8 @@
+{% extends "admin/change_form.html" %}
+{% block object-tools-items %}
+    <li>
+        <a href="{% url 'admin:content-suggest-tags' object_id %}"
+           class="viewsitelink">AI Suggest Tags</a>
+    </li>
+    {{ block.super }}
+{% endblock %}
