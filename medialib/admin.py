@@ -310,6 +310,22 @@ class ContentAdmin(admin.ModelAdmin):
             request, "admin/medialib/content/suggest_tags.djhtml", context
         )
 
+    def save_related(self, request, form, formsets, change):
+        super().save_related(request, form, formsets, change)
+
+        content = form.instance
+
+        all_current_tags = content.tags.all()
+        implied_tags_to_add = set()
+
+        for tag in all_current_tags:
+            implications = get_all_implications(tag)
+            for implied_tag in implications:
+                implied_tags_to_add.add(implied_tag)
+
+        if implied_tags_to_add:
+            content.tags.add(*implied_tags_to_add)
+
 
 class AlbumOrderInline(admin.TabularInline):
     model = ml_models.AlbumOrder
