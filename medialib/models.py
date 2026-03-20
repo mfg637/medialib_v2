@@ -409,7 +409,11 @@ class TagAlias(models.Model):
 
 class Album(models.Model):
     album_set = models.ForeignKey(
-        Tag, on_delete=models.PROTECT, related_name="album_set", null=True
+        Tag,
+        on_delete=models.PROTECT,
+        related_name="album_set",
+        null=True,
+        blank=True,
     )
     creator_tags = models.ManyToManyField(
         Tag, related_name="creator_albums", blank=True
