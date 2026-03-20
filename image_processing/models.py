@@ -4,6 +4,7 @@ import enum
 import medialib.models
 from django.core.exceptions import ValidationError
 from base.view import format_file_size
+from base.shared_knowledge.origin import get_origin_type
 from base.shared_enums.image_processing_model import MediaType
 from image_processing.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
 
@@ -73,6 +74,20 @@ class AwaitingTaskMetadata(models.Model):
     origin_id = models.CharField(max_length=512, blank=True, default="")
     tags = models.JSONField(null=True, blank=True)
     task = models.OneToOneField(Task, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        if self.origin_id and self.origin_id.startswith("https://"):
+            try:
+                origin_class = get_origin_type(self.origin_name)
+                if origin_class:
+                    origin_object = origin_class()
+                    parsed_id = origin_object.parse_url(self.origin_id)
+
+                    self.origin_id = parsed_id or ""
+            except ValueError, KeyError:
+                self.origin_id = ""
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return (
