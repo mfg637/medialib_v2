@@ -12,6 +12,7 @@ from medialib.models import Content, ImageHash, Collection
 from medialib.tags.dsl import TagDSLParser, DSLError
 from medialib.tags import tag_filter
 from . import representation
+from django.db.models import QuerySet
 
 
 @dataclass(frozen=True)
@@ -59,11 +60,13 @@ def content_info(request, content_slug: str) -> HttpResponse:
         "representation_set", "origin_set", "tags"
     ).get(slug=content_slug)
     all_tags = content.tags.all()
-    user_collections = []
+    user_collections = Collection.objects.none()
     if request.user.is_authenticated:
-        user_collections = Collection.objects.filter(
-            user=request.user
-        ).order_by("title")
+        user_collections = (
+            Collection.objects.filter(user=request.user)
+            .exclude(items=content)
+            .order_by("title")
+        )
     else:
         is_safe = any(t.title == "safe" for t in all_tags)
         if not is_safe:
