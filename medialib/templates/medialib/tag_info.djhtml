@@ -157,10 +157,10 @@
                 </div>
             </div>
             <div class="action-box">
-                {% with search_query=aliases.first.title %}
-                    <a href="{% url 'content-list' %}?q={{ search_query|urlencode }}"
+                {% if valid_alias %}
+                    <a href="{% url 'content-list' %}?q={{ valid_alias.title|urlencode }}"
                        class="search-button">View all content with this tag</a>
-                {% endwith %}
+                {% endif %}
             </div>
         </div>
     </div>
