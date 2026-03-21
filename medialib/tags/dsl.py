@@ -44,7 +44,7 @@ class TagDSLParser:
                 "UNARY_NOT",
                 r"\-",
             ),
-            ("TAG", r"[a-zA-Z0-9_:]+"),
+            ("TAG", r"[a-zA-Z0-9_:']+"),
             ("WS", r"\s+"),
         ]
         tok_regex = "|".join(
