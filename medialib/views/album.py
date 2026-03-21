@@ -3,6 +3,7 @@ from medialib.models import Album
 from .content import get_items_per_page, ContentListItem
 from .representation import generate_image_srcset
 from django.core.paginator import Paginator
+from django.core.exceptions import PermissionDenied
 
 
 class AlbumListView(ListView):
@@ -20,7 +21,7 @@ class AlbumListView(ListView):
         except ValueError, TypeError:
             show_nsfw = False
 
-        if not show_nsfw:
+        if not show_nsfw or not self.request.user.is_authenticated:
             queryset = queryset.filter(is_nsfw=False)
 
         return queryset
@@ -35,6 +36,9 @@ class AlbumDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         album = self.object
         request = self.request
+
+        if album.is_nsfw and not request.user.is_authenticated:
+            raise PermissionDenied("Unable to show this album")
 
         queryset = album.contents.all().order_by("albumorder__order")
 
