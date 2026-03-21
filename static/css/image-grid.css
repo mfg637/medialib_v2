@@ -36,35 +36,3 @@
   display: block;
   object-fit: contain;
 }
-
-.pagination {
-  margin: 40px 0;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-}
-
-.pagination a,
-.pagination span {
-  padding: 8px 16px;
-  text-decoration: none;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-input);
-  color: var(--text-main);
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.pagination a:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
-  background-color: var(--bg-accent);
-}
-
-.pagination .current {
-  background-color: var(--accent-color);
-  color: var(--text-on-accent);
-  border-color: var(--accent-color);
-  font-weight: bold;
-}

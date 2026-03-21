@@ -17,4 +17,5 @@
             </div>
         {% endfor %}
     </div>
+    {% include "medialib/components/pagination.djhtml" %}
 {% endblock %}
