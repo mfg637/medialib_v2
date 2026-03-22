@@ -1,5 +1,86 @@
 {% extends "medialib/base.djhtml" %}
 {% block content %}
+    <style>
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 192px); 
+  gap: 25px;
+  justify-content: center;
+  padding: 20px;
+  background-color: var(--bg-main);
+}
+
+.album-card {
+  width: 192px;
+  height: auto; 
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s;
+}
+
+.album-cover {
+  width: 192px;
+  height: 256px;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: var(--bg-accent);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.album-card:hover {
+  transform: scale(1.03);
+}
+
+.album-card:hover .album-cover {
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px var(--similar-item-shadow);
+}
+
+.album-cover img {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  object-fit: contain; 
+}
+
+.album-info {
+  margin-top: 10px;
+  padding: 0 4px;
+  text-align: center;
+}
+
+.album-title {
+  display: block;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--text-main);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nsfw-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  background-color: #ba2121;
+  color: #ffffff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+    </style>
     <div class="wrapper">
         <h1>Albums</h1>
         {% if request.user.is_authenticated %}
@@ -9,11 +90,24 @@
     <div class="album-grid wrapper">
         {% for album in albums %}
             <div class="album-card">
-                <a href="{% url 'album-detail' album.pk %}">
-                    <h3>{{ album.get_album_name }}</h3>
-                </a>
-                <p>By: {{ album.get_creator_string }}</p>
-                {% if album.is_nsfw %}<span class="badge nsfw">NSFW</span>{% endif %}
+                {% if album.is_nsfw %}<span class="nsfw-badge">NSFW</span>{% endif %}
+                {% with cover_item=album.items.all.0 %}
+                    <a href="{% url 'album-detail' album.pk %}" class="album-cover">
+                        {% if cover_item %}
+                            <img src="{% url 'content-representation' cover_item.content.slug %}?type=image&target_width=192&target_height=256"
+                                 srcset="{% for repr in cover_item.content.representation_set.all %}{{ repr.filepath.url }} {{ repr.get_portrait_thumb_medium_relation|floatformat:3 }}x{% if not forloop.last %}, {% endif %}{% endfor %}"
+                                 alt="{{ cover_item.content.title|default:'Untitled' }}"
+                                 loading="lazy">
+                        {% else %}
+                            <div class="no-cover">No Content</div>
+                        {% endif %}
+                    </a>
+                {% endwith %}
+                <div class="album-info">
+                    <a href="{% url 'album-detail' album.pk %}">
+                        <span class="album-title">{{ album.get_album_name }}</span>
+                    </a>
+                </div>
             </div>
         {% endfor %}
     </div>

@@ -1,9 +1,10 @@
 from django.views.generic import ListView, DetailView
-from medialib.models import Album
+from medialib.models import Album, AlbumOrder, Representation
 from .content import get_items_per_page, ContentListItem
 from .representation import generate_image_srcset
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q, Prefetch
 
 
 class AlbumListView(ListView):
@@ -13,7 +14,21 @@ class AlbumListView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        repr_qs = Representation.objects.filter(
+            Q(width__gte=192) | Q(height__gte=256)
+        ).order_by("width")
+
+        items_qs = (
+            AlbumOrder.objects.order_by("order")
+            .select_related("content")
+            .prefetch_related(
+                Prefetch("content__representation_set", queryset=repr_qs)
+            )
+        )
+
+        queryset = Album.objects.all().prefetch_related(
+            Prefetch("items", queryset=items_qs)
+        )
 
         show_nsfw_raw = self.request.GET.get("nsfw", 0)
         try:

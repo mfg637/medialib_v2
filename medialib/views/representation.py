@@ -100,13 +100,6 @@ def get_representation(
         raise Http404("Not found any audio representation")
 
 
-def get_relation(repr_w, repr_h, target_w, target_h) -> float:
-    if repr_w * target_h >= target_w * repr_h:
-        return repr_w / target_w
-    else:
-        return repr_h / target_h
-
-
 def generate_image_srcset(
     content: Content, target_width: int, target_height: int
 ) -> tuple[str, str]:
@@ -117,9 +110,7 @@ def generate_image_srcset(
         large_representations = large_representations.order_by("width")
         src_list_str: list[str] = []
         for representation in large_representations:
-            representation_relation = get_relation(
-                representation.width,
-                representation.height,
+            representation_relation = representation.get_size_relation(
                 target_width,
                 target_height,
             )
@@ -151,6 +142,12 @@ def generate_image_srcset(
 def generate_image_srcset_optim_prefetch(
     content: Content, target_width: int, target_height: int
 ) -> tuple[str, str]:
+    def get_relation(repr_w, repr_h, target_w, target_h) -> float:
+        if repr_w * target_h >= target_w * repr_h:
+            return repr_w / target_w
+        else:
+            return repr_h / target_h
+
     all_reprs = content.representation_set.all()
 
     image_representations = sorted(

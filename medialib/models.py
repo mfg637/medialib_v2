@@ -183,6 +183,18 @@ class Representation(models.Model):
     def get_mime_type(self):
         return file_format.MIME_BY_EXTENSION[f".{self.format}"]
 
+    def get_size_relation(self, target_w, target_h) -> float:
+        if self.width is None or self.height is None:
+            raise Exception("Representation has no width or height")
+        if self.width * target_h >= target_w * self.height:
+            return self.width / target_w
+        else:
+            return self.height / target_h
+
+    @property
+    def get_portrait_thumb_medium_relation(self):
+        return self.get_size_relation(192, 256)
+
     def clean(self):
         if self.repr_type >= RepresentationTypeEnum.IMAGE:
             errors = {}
@@ -535,7 +547,9 @@ class Album(models.Model):
 
 
 class AlbumOrder(models.Model):
-    album = models.ForeignKey(Album, on_delete=models.CASCADE, db_index=True)
+    album = models.ForeignKey(
+        Album, on_delete=models.CASCADE, db_index=True, related_name="items"
+    )
     content = models.ForeignKey(
         Content, on_delete=models.CASCADE, db_index=True
     )
