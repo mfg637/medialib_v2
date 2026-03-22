@@ -1,6 +1,6 @@
 <style>
 :root {
-    --viewer-bg: black;
+    /*--viewer-bg: black;*/
     --viewer-text-color: white;
     --viewer-text-shadow: 1px 1px 2px black;
     --spinner-bg: rgba(255, 255, 255, 0.267);
@@ -10,7 +10,8 @@
 }
 
 div#imageViewer {
-    background-color: var(--viewer-bg);
+    background-color: var(--viewer-bg, #000);
+    z-index: 1000;
 }
 
 div#imageViewer.container, 
@@ -18,23 +19,28 @@ div#imageViewer .container {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
 }
 
-div#imageViewer.container:nth-child(1) {
+div#imageViewer .image-container {
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 1;
+    height: 100%;
 }
 
-div#imageViewer.fill-mode .image-container {
-    overflow: auto;
+div#imageViewer .controls-container {
+    z-index: 2;
+    pointer-events: none;
 }
 
-div#imageViewer.fill-mode .controls-container {
-    display: none;
+div#imageViewer .controls-container .button {
+    pointer-events: auto;
 }
+
+
 
 #loadingTitle {
     position: relative;
@@ -148,6 +154,27 @@ div#imageViewer.hideControls .imageview-text {
 div#imageViewer.hideControls.hide-cursor {
     cursor: none;
 }
+
+/* --- FILL mode (with scrolling) --- */
+div#imageViewer.view-mode-fill{
+    overflow: auto;
+}
+
+div#imageViewer.view-mode-fill .image-container {
+    display: block;
+    text-align: center;
+}
+
+div#imageViewer.view-mode-fill .controls-container {
+    display: none;
+}
+
+div#imageViewer.view-mode-fill .image-container img {
+    max-width: none;
+    max-height: none;
+
+    margin: 0 auto;
+}
 </style>
 <template id="tpl-image-viewer">
     <div id="imageViewer" class="container">
@@ -209,6 +236,7 @@ class ImageViewerApp extends HTMLElement {
     }
 
     setupEventListeners() {
+        const viewer = this.querySelector('#imageViewer');
         this.querySelector('#close-button').onclick = () => this.close();
         this.querySelector('#previous-image-button').onclick = (e) => { e.stopPropagation(); this.prev(); };
         this.querySelector('#next-image-button').onclick = (e) => { e.stopPropagation(); this.next(); };
@@ -217,20 +245,22 @@ class ImageViewerApp extends HTMLElement {
         const container = this.querySelector('.controls-container');
         container.onmousemove = () => this.resetCursorTimer();
         
-        container.addEventListener('touchstart', (e) => {
+        viewer.addEventListener('touchstart', (e) => {
             this.xTouchPoint = e.touches[0].clientX;
         }, {passive: true});
 
-        container.addEventListener('touchmove', (e) => {
+        viewer.addEventListener('touchmove', (e) => {
             if (this.xTouchPoint === null) return;
             this.xOffset = e.touches[0].clientX - this.xTouchPoint;
         }, {passive: true});
 
-        container.addEventListener('touchend', () => {
-            const minDistance = window.innerWidth / 4;
-            if (Math.abs(this.xOffset) > minDistance) {
-                if (this.xOffset > 0) this.prev();
-                else this.next();
+        viewer.addEventListener('touchend', () => {
+            if (this.viewMode === "fit"){
+                const minDistance = window.innerWidth / 4;
+                if (Math.abs(this.xOffset) > minDistance) {
+                    if (this.xOffset > 0) this.prev();
+                    else this.next();
+                }
             }
             this.xTouchPoint = null;
             this.xOffset = 0;
@@ -251,7 +281,8 @@ class ImageViewerApp extends HTMLElement {
     }
 
     toggleViewMode() {
-        const modes = ['fit', 'fill', 'native'];
+        console.debug("toggleViewMode() was called")
+        const modes = ['fit', 'fill'];
         let idx = modes.indexOf(this.viewMode);
         this.viewMode = modes[(idx + 1) % modes.length];
         this.updateView();
@@ -292,6 +323,12 @@ class ImageViewerApp extends HTMLElement {
         caption.textContent = data.name || '';
 
         dispatcher.render(data, this.viewMode);
+
+        if (this.viewMode === 'fill' && data.contentType !== 'video' && data.contentType !== 'video-loop') {
+            viewer.classList.add('view-mode-fill');
+        } else {
+            viewer.classList.remove('view-mode-fill');
+        }
         
         if (this.currentIndex === 0)
             this.querySelector('#previous-image-button').classList.add("hidden");
@@ -336,6 +373,7 @@ class ImageViewerApp extends HTMLElement {
 
     handleKeyDown(e) {
         if (this.currentIndex === -1) return;
+        if (this.viewMode !== "fit") return;
         switch(e.key) {
             case 'Escape': this.close(); break;
             case 'ArrowLeft': this.prev(); break;
@@ -346,7 +384,7 @@ class ImageViewerApp extends HTMLElement {
 customElements.define('image-viewer-app', ImageViewerApp);
 
 class ImageViewController extends HTMLElement {
-    render(data) {
+    render(data, viewMode) {
         this.innerHTML = '';
         this.showLoading(true);
 
@@ -361,6 +399,8 @@ class ImageViewController extends HTMLElement {
 
         view.setAttribute('slug', data.slug);
         view.setAttribute('name', data.name);
+
+        view.setAttribute('view-mode', viewMode);
         
         view.addEventListener('content-loaded', () => this.showLoading(false));
         
@@ -378,14 +418,22 @@ class ImageView extends HTMLElement {
     connectedCallback() {
         const slug = this.getAttribute('slug');
         const name = this.getAttribute('name');
+        const mode = this.getAttribute('view-mode') || 'fit';
         
         const dpr = window.devicePixelRatio || 1;
-        const w = Math.round(window.innerWidth * dpr);
-        const h = Math.round(window.innerHeight * dpr);
+        const real_width = Math.round(window.innerWidth * dpr);
+        const real_height = Math.round(window.innerHeight * dpr);
+        let w = real_width;
+        let h = real_height;
+        if (mode === "fill"){
+            const max_side = Math.max(w, h);
+            w = max_side;
+            h = max_side;
+        }
 
         const src = `/medialib/dynamic/content/${slug}/representation?type=image&target_width=${w}&target_height=${h}`;
 
-        this.innerHTML = `<img class="content" src="${src}" alt="${name}" style="visibility: hidden;">`;
+        this.innerHTML = `<img class="content mode-${mode}" src="${src}" alt="${name}" style="visibility: hidden;">`;
 
         const img = this.querySelector('img');
         img.onload = () => {
