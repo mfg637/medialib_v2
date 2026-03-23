@@ -55,7 +55,9 @@ class AlbumDetailView(DetailView):
         if album.is_nsfw and not request.user.is_authenticated:
             raise PermissionDenied("Unable to show this album")
 
-        queryset = album.contents.all().order_by("albumorder__order")
+        queryset = album.contents.filter(album_item__album=album).order_by(
+            "album_item__order"
+        )
 
         items_per_page = get_items_per_page(request)
         paginator = Paginator(queryset, items_per_page)

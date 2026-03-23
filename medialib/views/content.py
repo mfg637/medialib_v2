@@ -57,7 +57,11 @@ def get_similar_content(content, limit=50):
 
 def content_info(request, content_slug: str) -> HttpResponse:
     content = Content.objects.prefetch_related(
-        "representation_set", "origin_set", "tags"
+        "representation_set",
+        "origin_set",
+        "tags",
+        "album_item",
+        "album_item__album",
     ).get(slug=content_slug)
     all_tags = content.tags.all()
     user_collections = Collection.objects.none()

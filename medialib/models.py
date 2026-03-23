@@ -551,7 +551,10 @@ class AlbumOrder(models.Model):
         Album, on_delete=models.CASCADE, db_index=True, related_name="items"
     )
     content = models.ForeignKey(
-        Content, on_delete=models.CASCADE, db_index=True
+        Content,
+        on_delete=models.CASCADE,
+        db_index=True,
+        related_name="album_item",
     )
     order = models.IntegerField()
 
