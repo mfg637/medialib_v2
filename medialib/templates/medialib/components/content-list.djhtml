@@ -6,12 +6,19 @@
                data-slug="{{ content_item.slug }}"
                data-name="{{ content_item.name }}"
                data-content-type="{{ content_item.content_type }}"
-               data-index="{{ forloop.counter0 }}">
+               data-index="{{ forloop.counter0 }}"
+               class="thumbnail-wrapper clickable-element">
                 <img src="/{{ MEDIA_URL }}{{ content_item.base_src }}"
                      {% if content_item.srcset %}srcset="{{ content_item.srcset }}"{% endif %}
                      alt="{{ content_item.name|default:"Untitled" }}"
                      loading="lazy">
             </a>
+            <div class="item-footer clickable-element">
+                <a href="{% url 'content-info' content_item.slug %}" class="info-link">
+                    <span class="item-title">{{ content_item.name|default:"Untitled" }}</span>
+                    <span class="info-icon">ⓘ</span>
+                </a>
+            </div>
         </div>
     {% empty %}
         <p>Not found.</p>
