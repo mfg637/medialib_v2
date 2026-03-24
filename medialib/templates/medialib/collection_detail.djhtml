@@ -15,7 +15,6 @@
         }
 
     </style>
-    <link rel="stylesheet" href="/static/css/image-grid.css">
     <div class="info-section-element wrapper">
         <h2>
             {{ collection.title }}
@@ -43,35 +42,8 @@
         <hr>
         <a href="{% url 'collection-list' %}" class="button">Back to list</a>
     </div>
-    <div class="items-grid">
-        {% for content_item in content_list %}
-            <div class="item-card">
-                <a href="{% url 'content-info' content_item.slug %}"
-                   data-slug="{{ content_item.slug }}"
-                   data-name="{{ content_item.name }}"
-                   data-content-type="{{ content_item.content_type }}"
-                   data-index="{{ forloop.counter0 }}">
-                    <img src="/{{ MEDIA_URL }}{{ content_item.base_src }}"
-                         {% if content_item.srcset %}srcset="{{ content_item.srcset }}"{% endif %}
-                         alt="{{ content_item.name|default:"Untitled" }}"
-                         loading="lazy">
-                </a>
-            </div>
-        {% empty %}
-            <p>Not found.</p>
-        {% endfor %}
-    </div>
-    {% if page_obj.has_other_pages %}
-        <div class="pagination">
-            {% if page_obj.has_previous %}
-                <a href="?{% replace_param page=page_obj.previous_page_number %}">Previous</a>
-            {% endif %}
-            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}
-                <a href="?{% replace_param page=page_obj.next_page_number %}">Next</a>
-            {% endif %}
-        </div>
-    {% endif %}
+    {% include "medialib/components/content-list.djhtml" %}
+    {% include "medialib/components/pagination.djhtml" %}
     {% include "medialib/components/image-viewer.djhtml" %}
     <image-viewer-app>
 </image-viewer-app>

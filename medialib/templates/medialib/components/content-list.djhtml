@@ -1,0 +1,19 @@
+<link rel="stylesheet" href="/static/css/image-grid.css">
+<div class="items-grid" id="items-grid">
+    {% for content_item in content_list %}
+        <div class="item-card">
+            <a href="{% url 'content-info' content_item.slug %}"
+               data-slug="{{ content_item.slug }}"
+               data-name="{{ content_item.name }}"
+               data-content-type="{{ content_item.content_type }}"
+               data-index="{{ forloop.counter0 }}">
+                <img src="/{{ MEDIA_URL }}{{ content_item.base_src }}"
+                     {% if content_item.srcset %}srcset="{{ content_item.srcset }}"{% endif %}
+                     alt="{{ content_item.name|default:"Untitled" }}"
+                     loading="lazy">
+            </a>
+        </div>
+    {% empty %}
+        <p>Not found.</p>
+    {% endfor %}
+</div>

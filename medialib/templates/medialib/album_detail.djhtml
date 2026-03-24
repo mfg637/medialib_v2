@@ -1,29 +1,11 @@
 {% extends "medialib/base.djhtml" %}
 {% load url_utils %}
 {% block content %}
-    <link rel="stylesheet" href="/static/css/image-grid.css">
     <div class="album-info wrapper">
         <h1>{{ album.get_album_name }}</h1>
         <p>Creators: {{ album.get_creator_string }}</p>
     </div>
-    <div class="items-grid" id="items-grid">
-        {% for content_item in content_list %}
-            <div class="item-card">
-                <a href="{% url 'content-info' content_item.slug %}"
-                   data-slug="{{ content_item.slug }}"
-                   data-name="{{ content_item.name }}"
-                   data-content-type="{{ content_item.content_type }}"
-                   data-index="{{ forloop.counter0 }}">
-                    <img src="/{{ MEDIA_URL }}{{ content_item.base_src }}"
-                         {% if content_item.srcset %}srcset="{{ content_item.srcset }}"{% endif %}
-                         alt="{{ content_item.name|default:"Untitled" }}"
-                         loading="lazy">
-                </a>
-            </div>
-        {% empty %}
-            <p>Not found.</p>
-        {% endfor %}
-    </div>
+    {% include "medialib/components/content-list.djhtml" %}
     {% include "medialib/components/pagination.djhtml" %}
     {% include "medialib/components/image-viewer.djhtml" %}
     <image-viewer-app>
