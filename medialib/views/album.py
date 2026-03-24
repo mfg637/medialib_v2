@@ -5,6 +5,7 @@ from .representation import generate_image_srcset
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Prefetch
+from base.shared_enums.medialib_model import RepresentationTypeEnum
 
 
 class AlbumListView(ListView):
@@ -14,9 +15,13 @@ class AlbumListView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        repr_qs = Representation.objects.filter(
-            Q(width__gte=192) | Q(height__gte=256)
-        ).order_by("width")
+        repr_qs = (
+            Representation.objects.filter(
+                repr_type=RepresentationTypeEnum.IMAGE.value
+            )
+            .filter(Q(width__gte=192) | Q(height__gte=256))
+            .order_by("width")
+        )
 
         items_qs = (
             AlbumOrder.objects.order_by("order")

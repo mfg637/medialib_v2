@@ -195,6 +195,10 @@ class Representation(models.Model):
     def get_portrait_thumb_medium_relation(self):
         return self.get_size_relation(192, 256)
 
+    @property
+    def get_thumb_small_relation(self):
+        return self.get_size_relation(128, 128)
+
     def clean(self):
         if self.repr_type >= RepresentationTypeEnum.IMAGE:
             errors = {}

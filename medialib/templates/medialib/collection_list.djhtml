@@ -13,9 +13,74 @@
             background: var(--bg-main);
             color: var(--text-main)
         }
-        a.button.collection-detail-link {
-            display: block;
-            margin-bottom: 10px;
+
+        .collection-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .collection-card {
+            display: flex;
+            background: var(--bg-accent);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            text-decoration: none;
+            color: var(--text-main);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .collection-card:hover {
+            border-color: var(--accent-color);
+            transform: translateX(5px);
+        }
+
+        .collection-thumb-wrapper {
+            flex: 0 0 128px;
+            height: 128px;
+            background: var(--bg-input);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .collection-thumb-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .collection-info {
+            flex: 1;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .collection-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        .collection-meta {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .nsfw-badge {
+            display: inline-block;
+            background: #ff4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-left: 8px;
         }
     </style>
     <div class="info-section-element wrapper">
@@ -30,10 +95,29 @@
             <button type="submit" class="button">Create collection</button>
         </form>
         <a href="{% url 'collection-list' %}?nsfw=1">Show NSFW</a>
-        <div class="collection-grid">
+        <div class="collection-list">
             {% for col in collections %}
-                <a href="{% url 'collection-detail' col.pk %}"
-                   class="button collection-detail-link">{{ col.title }} ({{ col.items.count }} items)</a>
+                <a href="{% url 'collection-detail' col.pk %}" class="collection-card">
+                    <div class="collection-thumb-wrapper">
+                        {% with first_item=col.preloaded_items.0 %}
+                            {% if first_item %}
+                                <img src="{% url 'content-representation' first_item.slug %}?type=image&target_width=128&target_height=128"
+                                     srcset="{% for repr in first_item.representation_set.all %}{{ repr.filepath.url }} {{ repr.get_thumb_small_relation|floatformat:3 }}x{% if not forloop.last %}, {% endif %}{% endfor %}"
+                                     alt="{{ col.title }}"
+                                     loading="lazy">
+                            {% else %}
+                                <span class="text-muted">Empty</span>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    <div class="collection-info">
+                        <div class="collection-title">
+                            {{ col.title }}
+                            {% if col.is_nsfw %}<span class="nsfw-badge">NSFW</span>{% endif %}
+                        </div>
+                        <div class="collection-meta">{{ col.items.count }} items • Created {{ col.created_at|date:"d E Y" }}</div>
+                    </div>
+                </a>
             {% empty %}
                 <p>You have no collections yet.</p>
             {% endfor %}

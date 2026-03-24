@@ -1,17 +1,35 @@
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from medialib.models import Collection, Content
+from medialib.models import Collection, Content, Representation
 from django.core.paginator import Paginator
 from .content import get_items_per_page, ContentListItem
 from .representation import generate_image_srcset
 from medialib_v2.settings import MEDIA_URL
+from django.db.models import Q, Prefetch
+from base.shared_enums.medialib_model import RepresentationTypeEnum
 
 
 @login_required
 def collection_list(request: HttpRequest) -> HttpResponse:
-    collections = Collection.objects.filter(user=request.user).order_by(
-        "-created_at"
+    repr_qs = (
+        Representation.objects.filter(
+            repr_type=RepresentationTypeEnum.IMAGE.value
+        )
+        .filter(Q(width__gte=128) | Q(height__gte=128))
+        .order_by("width")
+    )
+
+    content_qs = Content.objects.prefetch_related(
+        Prefetch("representation_set", queryset=repr_qs)
+    )
+
+    collections = (
+        Collection.objects.filter(user=request.user)
+        .order_by("-created_at")
+        .prefetch_related(
+            Prefetch("items", queryset=content_qs, to_attr="preloaded_items")
+        )
     )
     show_nsfw_raw = request.GET.get("nsfw", 0)
     show_nsfw = bool(int(show_nsfw_raw))
