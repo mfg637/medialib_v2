@@ -113,6 +113,10 @@ class ImageHashInline(admin.StackedInline):
         return False
 
 
+class ContentOriginInline(admin.StackedInline):
+    model = ml_models.ContentOrigin
+
+
 @admin.register(ml_models.Content)
 class ContentAdmin(admin.ModelAdmin):
     change_form_template = "admin/medialib/content/change_form.djhtml"
@@ -137,7 +141,7 @@ class ContentAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ["tags"]
 
-    inlines = [RepresentationInline, ImageHashInline]
+    inlines = [RepresentationInline, ImageHashInline, ContentOriginInline]
 
     def formatted_hash(self, obj):
         if obj.source_hash:
