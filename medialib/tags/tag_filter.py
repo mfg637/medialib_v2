@@ -31,7 +31,7 @@ def aesthetic_filter(
     queryset: QuerySet[ml_models.Content],
 ) -> QuerySet[ml_models.Content]:
     q_object = TagDSLParser(
-        "safe & !(vector | sketch | simple background | screencap | photo | ai:generated)"
+        "safe & !(vector | sketch | simple background | screencap | photo | ai:generated | comic)"
     ).parse()
     return basic_filter(queryset).filter(q_object)
 
