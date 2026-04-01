@@ -175,6 +175,13 @@
         height: 100%;
         object-fit: cover;
     }
+    #slug-clipboard-copy-btn {
+        transition: background-color 1s, border-color 1s;
+    }
+    #slug-clipboard-copy-btn.highlight{
+        border-color: var(--bg-main);
+        background-color: var(--accent-color);
+    }
 
     </style>
     <article class="content-page">
@@ -309,6 +316,30 @@
             <footer class="technical-info">
                 <code title="{{ content.source_hash.hex }}">SHA-256: {{ content.source_hash.hex }}</code>
                 <code>Content ID: {{ content.id }}</code>
+                <div>
+                    <button type="button"
+                            data-content-slug="{{ content.slug }}"
+                            id="slug-clipboard-copy-btn"
+                            class="clipboard-copy">Copy content slug to clipboard</button>
+                    <script>
+                        const btn = document.getElementById("slug-clipboard-copy-btn");
+                        function remove_highlight_from_button(button) {
+                            const btn = document.getElementById("slug-clipboard-copy-btn");
+                            btn.classList.remove("highlight");
+                        }
+                        btn.onclick = function(e){
+                            const button = e.currentTarget;
+                            const slug = button.dataset.contentSlug;
+                            if (navigator.clipboard && navigator.clipboard.writeText){
+                                navigator.clipboard.writeText(slug);
+                                button.classList.add("highlight");
+                                setTimeout(remove_highlight_from_button, 2000, button);
+                            } else {
+                                alert("Unable to copy to the clipboard")
+                            }
+                        }
+                    </script>
+                </div>
                 <time datetime="{{ content.addition_date|date:'Y-m-d' }}">
                     Added: {{ content.addition_date|date:"d E Y" }}
                 </time>
