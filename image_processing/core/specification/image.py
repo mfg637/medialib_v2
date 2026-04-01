@@ -37,4 +37,7 @@ def get_image_compatibility_level(
 ) -> int:
     level_by_size = get_compatibility_level_by_size(*size)
     level_by_format = FORMAT_LEVEL.get(file_format, 0)
+    if file_format is FormatEnum.AVIF:
+        # AVIF 4096x4096 now CL3
+        return max(level_by_size + 1, level_by_format)
     return max(level_by_size, level_by_format)
