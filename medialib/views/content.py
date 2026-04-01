@@ -55,14 +55,7 @@ def get_similar_content(content, limit=50):
     return similar_items
 
 
-def content_info(request, content_slug: str) -> HttpResponse:
-    content = Content.objects.prefetch_related(
-        "representation_set",
-        "origin_set",
-        "tags",
-        "album_item",
-        "album_item__album",
-    ).get(slug=content_slug)
+def _content_info(request: HttpRequest, content: Content) -> HttpResponse:
     all_tags = content.tags.all()
     user_collections = Collection.objects.none()
     if request.user.is_authenticated:
@@ -118,6 +111,28 @@ def content_info(request, content_slug: str) -> HttpResponse:
             "user_collections": user_collections,
         },
     )
+
+
+def content_info_by_slug(request, content_slug: str) -> HttpResponse:
+    content = Content.objects.prefetch_related(
+        "representation_set",
+        "origin_set",
+        "tags",
+        "album_item",
+        "album_item__album",
+    ).get(slug=content_slug)
+    return _content_info(request, content)
+
+
+def content_info_by_id(request, content_id: int) -> HttpResponse:
+    content = Content.objects.prefetch_related(
+        "representation_set",
+        "origin_set",
+        "tags",
+        "album_item",
+        "album_item__album",
+    ).get(id=content_id)
+    return _content_info(request, content)
 
 
 SORTING_ORDER: dict[str, str] = {

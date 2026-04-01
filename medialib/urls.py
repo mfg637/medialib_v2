@@ -3,8 +3,13 @@ from . import views
 
 urlpatterns = [
     path(
+        "static/content/mlid<int:content_id>/info",
+        views.content.content_info_by_id,
+        name="content-info",
+    ),
+    path(
         "static/content/<slug:content_slug>/info",
-        views.content.content_info,
+        views.content.content_info_by_slug,
         name="content-info",
     ),
     path(
