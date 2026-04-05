@@ -1,15 +1,25 @@
-from urllib.parse import quote
+from urllib.parse import quote, unquote
+from typing import Optional
+from pathlib import Path
+import string
+from random import choices
 from django.db.models import QuerySet
-from django.http import HttpRequest, HttpResponse, Http404
+from django.http import (
+    HttpRequest,
+    HttpResponse,
+    Http404,
+    FileResponse,
+    HttpResponseRedirect,
+)
 from typing import Optional
 from django.db.models import Q
 from django.shortcuts import redirect
-from medialib_v2.settings import MEDIA_URL
+from medialib_v2.settings import MEDIA_URL, MEDIALIB_ROOT
 from base.shared_enums.medialib_model import (
     ContentTypeEnum,
     RepresentationTypeEnum,
 )
-from medialib.models import Content, Representation
+from medialib.models import Content, Representation, ContentOrigin
 
 
 def get_representation(
@@ -98,6 +108,78 @@ def get_representation(
                     return redirect(f"/{MEDIA_URL}{representation.filepath}")
             raise Http404("Not found any compatible representation")
         raise Http404("Not found any audio representation")
+
+
+RANDOM_STRING_POPULATION = string.ascii_letters + string.digits
+
+
+def get_representation_with_custom_name(
+    request: HttpRequest, content_slug: str
+) -> HttpResponse | FileResponse:
+    response = get_representation(request, content_slug)
+
+    if not isinstance(response, HttpResponseRedirect):
+        return response
+
+    filename_format = request.GET.get("filename_format", "default")
+    if filename_format == "default":
+        return response
+
+    file_url = response.url
+
+    relative_path_str = file_url.lstrip("/")
+    if relative_path_str.startswith(MEDIA_URL.strip("/")):
+        relative_path_str = relative_path_str[
+            len(MEDIA_URL.strip("/")) :
+        ].lstrip("/")
+
+    file_path = Path(unquote(relative_path_str))
+    abs_file_path = MEDIALIB_ROOT.joinpath(file_path)
+    if not abs_file_path.exists():
+        raise Http404("Physical file not found on disk")
+
+    content = Content.objects.get(slug=content_slug)
+    representation = content.representation_set.get(
+        filepath=str(file_path)
+    )  # filepath is unique
+    file_extension = f".{representation.format}"
+
+    if filename_format == "title_slug":
+        safe_title = (
+            content.title.replace("/", "_") if content.title else "Untitled"
+        )
+        new_filename = f"mlid{content.id} {safe_title}{file_extension}"
+
+    elif filename_format == "origin_id":
+        origins = content.origin_set.all()
+        valid_origin: Optional[ContentOrigin] = None
+        for current_origin in origins:
+            if current_origin.origin_id:
+                valid_origin = current_origin
+                break
+        if valid_origin:
+            new_filename = f"{valid_origin.origin_id}{file_extension}"
+        else:
+            new_filename = f"mlid{content.id}{file_extension}"
+
+    elif filename_format == "random_string":
+        random_characters: list[str] = choices(RANDOM_STRING_POPULATION, k=16)
+        random_name = "".join(random_characters)
+        new_filename = f"{random_name}{file_extension}"
+    elif filename_format == "random_digits":
+        random_characters: list[str] = choices(string.digits, k=16)
+        random_name = "".join(random_characters)
+        new_filename = f"{random_name}{file_extension}"
+
+    response = FileResponse(
+        open(abs_file_path, "rb"),
+        content_type=representation.get_mime_type(),
+    )
+    new_filename = quote(new_filename)
+
+    response["Content-Disposition"] = f'attachment; filename="{new_filename}"'
+
+    return response
 
 
 def generate_image_srcset(

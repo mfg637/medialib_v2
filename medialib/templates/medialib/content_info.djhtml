@@ -183,6 +183,53 @@
         background-color: var(--accent-color);
     }
 
+    /*** Download form ***/
+
+    .download-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .form-group {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .form-group label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    .form-group select {
+        flex: 1;
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--border-color);
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        font-size: 0.9rem;
+        cursor: pointer;
+        min-width: 150px;
+    }
+
+    .form-group select:focus {
+        border-color: var(--accent-color);
+        outline: none;
+    }
+
+    .download-submit-btn {
+        width: 100%;
+        margin-top: 4px;
+        justify-content: center;
+        display: flex;
+        font-weight: bold;
+    }
+
     </style>
     <article class="content-page">
         <section class="viewer-section">
@@ -223,15 +270,32 @@
             </header>
             <div class="download-buttons-wrapper info-section-element">
                 <h2>Download</h2>
-                <a class="button"
-                   href="{% url 'content-representation' content.slug %}?clevel=1"
-                   download>CL 1</a>
-                <a class="button"
-                   href="{% url 'content-representation' content.slug %}?clevel=2"
-                   download>CL 2</a>
-                <a class="button"
-                   href="{% url 'content-representation' content.slug %}?clevel=3"
-                   download>CL 3</a>
+                <form action="{% url 'content-representation' content.slug %}"
+                      method="get"
+                      class="download-form">
+                    <div class="form-group">
+                        <label for="clevel">Compatibility level:</label>
+                        <select name="clevel" id="clevel">
+                            <option value="1" {% if request.session.clevel == 1 %}selected{% endif %}>CL 1</option>
+                            <option value="2"
+                                    {% if request.session.clevel == 2 or not request.session.clevel %}selected{% endif %}>
+                                CL 2
+                            </option>
+                            <option value="3" {% if request.session.clevel == 3 %}selected{% endif %}>CL 3</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="filename_format">File name:</label>
+                        <select name="filename_format" id="filename_format">
+                            <option value="default" selected>Original name</option>
+                            <option value="title_slug">ID + Content Title</option>
+                            <option value="origin_id">Origin Source ID</option>
+                            <option value="random_string">Random string</option>
+                            <option value="random_digits">Random digits</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="button download-submit-btn">Download</button>
+                </form>
             </div>
             {% if content.description %}<div class="description">{{ content.description|markdown }}</div>{% endif %}
             <section class="origin-section info-section-element">
