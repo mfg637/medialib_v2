@@ -74,6 +74,7 @@ class AlbumDetailView(DetailView):
             srcset, base_src = generate_image_srcset(content, 256, 256)
             content_list.append(
                 ContentListItem(
+                    content.id,
                     content.slug,
                     base_src,
                     content.content_type,

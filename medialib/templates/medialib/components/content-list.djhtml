@@ -2,6 +2,17 @@
 <div class="items-grid" id="items-grid">
     {% for content_item in content_list %}
         <div class="item-card">
+            {% if is_collection_detail %}
+                <div class="item-actions-overlay">
+                    <form action="{% url 'collection-remove-item' collection.id content_item.id %}"
+                          method="post">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="action-btn danger"
+                                title="Remove from collection">✕</button>
+                    </form>
+                </div>
+            {% endif %}
             <a href="{% url 'content-info' content_item.slug %}"
                data-slug="{{ content_item.slug }}"
                data-name="{{ content_item.name }}"

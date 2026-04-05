@@ -84,3 +84,45 @@
 .info-link:hover .info-icon {
   opacity: 1;
 }
+
+/*** Template extension ***/
+
+.item-actions-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5; /* Over the image */
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-accent);
+  color: var(--text-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  opacity: 0.33;
+  transition:
+    transform 0.2s,
+    background-color 0.2s,
+    opacity 0.2s;
+}
+
+button.action-btn:hover {
+  transform: scale(1.1);
+  background-color: var(--accent-color);
+  opacity: 1;
+  color: white;
+  font-weight: bold;
+}
+
+.action-btn.danger:hover {
+  background-color: #ff4444;
+  border-color: #ff4444;
+}

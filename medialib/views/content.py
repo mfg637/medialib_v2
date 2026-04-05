@@ -17,6 +17,7 @@ from django.db.models import QuerySet
 
 @dataclass(frozen=True)
 class ContentListItem:
+    id: int
     slug: str
     base_src: str
     content_type: str
@@ -45,6 +46,7 @@ def get_similar_content(content, limit=50):
         )
         similar_items.append(
             ContentListItem(
+                h.content.id,
                 h.content.slug,
                 base_src,
                 h.content.content_type,
@@ -195,6 +197,7 @@ def content_list(request: HttpRequest) -> HttpResponse:
         )
         content_list.append(
             ContentListItem(
+                content.id,
                 content.slug,
                 base_src,
                 content.content_type,

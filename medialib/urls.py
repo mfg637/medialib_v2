@@ -53,6 +53,11 @@ urlpatterns = [
         name="collection-toggle-nsfw",
     ),
     path(
+        "collections/<int:collection_id>/remove/<int:content_id>/",
+        views.collection.collection_remove_item,
+        name="collection-remove-item",
+    ),
+    path(
         "albums/list",
         views.album.AlbumListView.as_view(),
         name="album-list",

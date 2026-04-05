@@ -42,7 +42,7 @@
         <hr>
         <a href="{% url 'collection-list' %}" class="button">Back to list</a>
     </div>
-    {% include "medialib/components/content-list.djhtml" %}
+    {% include "medialib/components/content-list.djhtml" with is_collection_detail=True collection=collection %}
     {% include "medialib/components/pagination.djhtml" %}
     {% include "medialib/components/image-viewer.djhtml" %}
     <image-viewer-app>

@@ -1,12 +1,13 @@
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpResponse, HttpRequest, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from medialib.models import Collection, Content, Representation
+from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
+from django.db.models import Q, Prefetch
+from medialib.models import Collection, Content, Representation
 from .content import get_items_per_page, ContentListItem
 from .representation import generate_image_srcset
 from medialib_v2.settings import MEDIA_URL
-from django.db.models import Q, Prefetch
 from base.shared_enums.medialib_model import RepresentationTypeEnum
 
 
@@ -70,6 +71,7 @@ def collection_detail(request, pk):
         srcset, base_src = generate_image_srcset(content, 256, 256)
         content_list.append(
             ContentListItem(
+                content.id,
                 content.slug,
                 base_src,
                 content.content_type,
@@ -124,3 +126,20 @@ def collection_toggle_nsfw(request, pk):
         collection.is_nsfw = not collection.is_nsfw
         collection.save()
     return redirect("collection-detail", pk=pk)
+
+
+@login_required
+@require_POST
+def collection_remove_item(
+    request: HttpRequest, collection_id: int, content_id: int
+) -> HttpResponse:
+    collection = get_object_or_404(Collection, pk=collection_id)
+
+    if collection.user != request.user:
+        return HttpResponseForbidden(
+            "You do not have permission to modify this collection."
+        )
+
+    content = get_object_or_404(Content, pk=content_id)
+    collection.items.remove(content)
+    return redirect("collection-detail", pk=collection.id)
