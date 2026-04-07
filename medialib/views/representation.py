@@ -18,6 +18,7 @@ from base.shared_enums.medialib_model import (
     ContentTypeEnum,
     RepresentationTypeEnum,
 )
+from base.shared_knowledge.file_format import FILE_SUFFIX_TO_FORMAT
 from medialib.models import Content, Representation, ContentOrigin
 
 CONTENT_TYPE_TO_REPRESENTATION_TYPE: dict[
@@ -66,11 +67,16 @@ def get_representation(
 RANDOM_STRING_POPULATION = string.ascii_letters + string.digits
 
 
-def generate_title_slug_filename(content: Content, suffix: str) -> str:
+def generate_title_slug_filename(
+    content: Content, representation_suffix: str
+) -> str:
     safe_title = (
         content.title.replace("/", "_") if content.title else "Untitled"
     )
-    return quote(f"mlid{content.id} {safe_title}{suffix}")
+    for current_suffix in FILE_SUFFIX_TO_FORMAT:
+        if safe_title.endswith(current_suffix):
+            safe_title = safe_title.removesuffix(current_suffix)
+    return quote(f"mlid{content.id} {safe_title}{representation_suffix}")
 
 
 def generate_origin_id_filename(content: Content, suffix: str) -> str:
@@ -80,7 +86,7 @@ def generate_origin_id_filename(content: Content, suffix: str) -> str:
     if valid_origin:
         return f"{valid_origin.origin_id}{suffix}"
     else:
-        return f"mlid{content.id}{file_extension}"
+        return f"mlid{content.id}{suffix}"
 
 
 def generate_random_filename(population: str, suffix: str) -> str:
