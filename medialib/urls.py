@@ -14,7 +14,7 @@ urlpatterns = [
     ),
     path(
         "dynamic/content/<slug:content_slug>/representation",
-        views.representation.get_representation_with_custom_name,
+        views.representation.get_representation_view,
         name="content-representation",
     ),
     path(
