@@ -1,5 +1,6 @@
 import json
 import traceback
+import logging
 from pathlib import Path
 from django.http import JsonResponse
 from django.urls import reverse
@@ -14,6 +15,8 @@ from image_processing.flow.uploading import process_task_file
 from medialib import models as ml_models
 from .models import Task, AwaitingTaskMetadata, TaskStatusEnum
 from .forms import TaskUploadForm
+
+logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
@@ -92,13 +95,13 @@ def create_task_from_local_file(request):
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
     raw_path = request.POST.get("file_path", "")
-    print("raw_path", raw_path)
+    logger.debug("raw_path: %s", raw_path)
     if not raw_path:
         return JsonResponse({"error": "No file_path provided"}, status=400)
 
     full_path = Path(raw_path)
 
-    print(f"full path '{full_path}'")
+    logger.debug("full path '%s'", full_path)
     if not full_path.exists():
         return JsonResponse(
             {"error": f"File not found: {full_path}"}, status=404

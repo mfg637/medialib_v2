@@ -25,7 +25,10 @@ import enum
 import pathlib
 import imagehash
 import dataclasses
+import logging
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 
 def save_img_4096(
@@ -241,7 +244,7 @@ class BaseRepresentationStrategy(abc.ABC):
             _case = self._detect_processing_case(size, width, height, index)
             if _case is ProcessingCases.SMALL:
                 break
-            print("processing representation", size)
+            logger.info("processing representation: %s", size)
             processed_img = self.process_image(size, _case, upcasted)
             saver = self.get_saver(size, _case)
             representations.append(saver(processed_img, source_file))

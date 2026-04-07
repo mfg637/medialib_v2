@@ -1,6 +1,9 @@
 import subprocess
 import pathlib
+import logging
 from image_processing.core.libvips.definitions import Image
+
+logger = logging.getLogger(__name__)
 
 
 def is_JPEG_XL(file_path: pathlib.Path | str):
@@ -22,6 +25,6 @@ def decode(file: pathlib.Path | str) -> Image:
         return Image.new_from_buffer(stdout, "")
     else:
         stderr_text_data = stderr.decode(errors="replace")
-        print("INFO: djxl stderr dump")
-        print(stderr_text_data)
+        logger.error("INFO: djxl stderr dump")
+        logger.error(stderr_text_data)
         raise RuntimeError("djxl failed")

@@ -2,8 +2,11 @@ from .definitions import Image
 from image_processing.config import proxy_at_tmp
 from image_processing.core.transforms import color, resize
 from pathlib import Path
+import logging
 import pyvips
 import tempfile
+
+logger = logging.getLogger(__name__)
 
 
 class ProxyFile:
@@ -14,7 +17,7 @@ class ProxyFile:
         target_size: tuple[int, int],
         as_scRGB: bool = True,
     ):
-        print("generating proxy file")
+        logger.info("generating proxy file")
         file_name = source_file.with_suffix(".proxy.vips")
         if proxy_at_tmp:
             with tempfile.NamedTemporaryFile(
@@ -40,7 +43,7 @@ class ProxyFile:
         if hasattr(self, "proxy_file_path") and self.proxy_file_path.exists():
             try:
                 self.proxy_file_path.unlink(missing_ok=True)
-                print(f"cleaned up: {self.proxy_file_path.name}")
+                logger.info("cleaned up: %s", self.proxy_file_path.name)
             except OSError:
                 pass
 

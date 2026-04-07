@@ -175,3 +175,50 @@ CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
+
+LOG_DIR = BASE_DIR.joinpath("logs")
+if not LOG_DIR.is_dir():
+    LOG_DIR.mkdir()
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console_fmt": {
+            "format": "%(asctime)s::%(levelname)s::%(name)s::%(message)s",
+            "datefmt": "%M:%S",
+        },
+        "file_fmt": {
+            "format": "%(asctime)s::%(process)dx%(thread)d::%(levelname)s::%(name)s::%(message)s",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "console_fmt",
+        },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": LOG_DIR.joinpath("medialib_v2.log"),
+            "maxBytes": 1_000_000,
+            "backupCount": 5,
+            "formatter": "file_fmt",
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+        },
+        "pyvips": {
+            "level": "WARNING",
+            "propagate": True,
+        },
+        "PIL": {
+            "level": "WARNING",
+        },
+    },
+}

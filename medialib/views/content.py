@@ -97,7 +97,6 @@ def _content_info(request: HttpRequest, content: Content) -> HttpResponse:
         and request.user.is_authenticated
     ):
         similar_content = get_similar_content(content)
-    print("similar_content", similar_content)
     return render(
         request,
         "medialib/content_info.djhtml",

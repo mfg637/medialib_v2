@@ -1,3 +1,4 @@
+import logging
 from base.shared_enums.medialib_model import CategoryEnum
 from base.shared_knowledge.tags import (
     PREFIXED_CATEGORIES,
@@ -6,6 +7,8 @@ from base.shared_knowledge.tags import (
 )
 from medialib.models import Tag, TagAlias, TagImplications
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 
 def get_all_implications(
@@ -59,11 +62,11 @@ def resolve_tag(name: str, category: CategoryEnum) -> tuple[Tag, bool]:
             name = name.removeprefix(ARTIST_EMBEDED_PREFIX)
             category = CategoryEnum.ARTIST
         if category != initial_category:
-            print(
-                (
-                    "[INCIDENT] Reassigned category "
-                    f"'{category}' for tag '{name}' (was '{initial_category}')"
-                )
+            logger.warning(
+                "[INCIDENT] Reassigned category '%s' for tag '%s' (was '%s')",
+                category,
+                name,
+                initial_category,
             )
 
     if category not in PREFIXED_CATEGORIES:
@@ -74,9 +77,11 @@ def resolve_tag(name: str, category: CategoryEnum) -> tuple[Tag, bool]:
                 category != CategoryEnum.CONTENT
                 and aliased_tag.category == CategoryEnum.CONTENT
             ):
-                print(
-                    "[INCIDENT] Reassigned category "
-                    f"'{category}' for tag '{name}' (was 'content')"
+                logger.warning(
+                    "[INCIDENT] Reassigned category '%s' for tag '%s' "
+                    "(was 'content')",
+                    category,
+                    name,
                 )
                 aliased_tag.category = category
                 aliased_tag.save()

@@ -8,11 +8,10 @@ import typing
 from collections.abc import Sequence
 from fractions import Fraction
 
-
 logger = logging.getLogger(__name__)
 
 
-def debug_ndarray(**kwargs: numpy.ndarray) -> None:
+def debug_ndarray(use_print=False, **kwargs: numpy.ndarray) -> None:
     if len(kwargs) != 1:
         raise ValueError(
             "Function vips_image_debug expects exactly one named argument"
@@ -28,10 +27,23 @@ def debug_ndarray(**kwargs: numpy.ndarray) -> None:
                 f"not {type(value)}"
             )
         )
-
-    print(f"{name}: dtype: {value.dtype}, shape: {value.shape}")
-    print(f"{name}: min: {value.min()}, max: {value.max()}")
-    print(f"{name}: average: {numpy.average(value)}, deviation: {value.std()}")
+    if use_print:
+        print(f"{name}: dtype: {value.dtype}, shape: {value.shape}")
+        print(f"{name}: min: {value.min()}, max: {value.max()}")
+        print(
+            f"{name}: average: {numpy.average(value)}, deviation: {value.std()}"
+        )
+    elif logger.isEnabledFor(logging.DEBUG):
+        logger.debug(
+            "%s: dtype: %s, shape: %s", name, value.dtype, value.shape
+        )
+        logger.debug("%s: min: %d, max: %d", name, value.min(), value.max())
+        logger.debug(
+            "%s: average: %d, deviation: %d",
+            name,
+            numpy.average(value),
+            value.std(),
+        )
 
 
 def run_subprocess(
