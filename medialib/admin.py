@@ -385,3 +385,34 @@ class AlbumAdmin(admin.ModelAdmin):
         return redirect("admin:medialib_album_change", pk)
 
     change_form_template = "admin/medialib/album/change_form.html"
+
+
+@admin.register(ml_models.ImageHash)
+class ImageHashAdmin(admin.ModelAdmin):
+    list_display = ("content", "aspect_ratio", "alternate_version")
+    list_filter = ("alternate_version",)
+    search_fields = ("content__title", "content__slug")
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "duplicates/",
+                self.admin_site.admin_view(self.duplicate_groups_view),
+                name="imagehash-duplicates",
+            ),
+        ]
+        return custom_urls + urls
+
+    def duplicate_groups_view(self, request):
+        groups = ml_models.ImageHash.duplicates.get_duplicate_groups()
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Duplicate suspicious",
+            "groups": groups,
+            "opts": self.model._meta,
+        }
+        return TemplateResponse(
+            request, "admin/medialib/imagehash/duplicates.djhtml", context
+        )

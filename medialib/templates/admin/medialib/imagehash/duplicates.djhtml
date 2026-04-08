@@ -1,0 +1,112 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls %}
+{% block content %}
+    <div id="content-main">
+        <h1>{% trans "Groups with hash collisions" %}</h1>
+        {% for group in groups %}
+            <div class="module"
+                 style="margin-bottom: 30px;
+                        border: 1px solid var(--border-color);
+                        border-radius: 4px;
+                        overflow: hidden;
+                        background: var(--body-bg)">
+                <div style="background: var(--primary);
+                            color: var(--button-fg);
+                            padding: 8px 15px">
+                    <h2 style="margin: 0; color: inherit;">
+                        {% trans "Hash Group" %}: <code style="background: var(--darkened-bg); padding: 2px 5px;">{{ group.short_hash_hex }}</code>
+                        — {{ group.count }} {% trans "potential duplicates" %}
+                    </h2>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; color: var(--body-fg)">
+                    <thead>
+                        <tr style="background: var(--selected-row);
+                                   border-bottom: 1px solid var(--border-color)">
+                            <th style="padding: 10px; text-align: left;">{% trans "Group Preview" %}</th>
+                            <th style="padding: 10px; text-align: left;">{% trans "ID / Title" %}</th>
+                            <th style="padding: 10px; text-align: left;">{% trans "Info" %}</th>
+                            <th style="padding: 10px; text-align: left;">{% trans "Status" %}</th>
+                            <th style="padding: 10px; text-align: center;">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in group.items %}
+                            <tr style="border-bottom: 1px solid var(--border-color);
+                                       {% if not item.alternate_version %}background: var(--error-log-bg, rgba(255, 0, 0, 0.05));{% endif %}">
+                                {% if forloop.first %}
+                                    <td rowspan="{{ group.count }}"
+                                        style="padding: 10px;
+                                               width: 140px;
+                                               border-right: 1px solid var(--border-color);
+                                               vertical-align: top;
+                                               background: var(--body-bg)">
+                                        <img src="/medialib/dynamic/content/{{ item.content.slug }}/representation?side_size=128"
+                                             style="display: block;
+                                                    border-radius: 4px;
+                                                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                                                    max-width: 128px">
+                                    </td>
+                                {% endif %}
+                                <td style="padding: 10px;">
+                                    <strong>MLID: {{ item.content.id }}</strong>
+                                    <br>
+                                    <a href="{% url 'admin:medialib_content_change' item.content.id %}"
+                                       target="_blank"
+                                       title="{{ item.content.title }}">
+                                        {{ item.content.title|default:"Untitled"|truncatechars:40 }}
+                                    </a>
+                                </td>
+                                <td style="padding: 10px;">
+                                    <span style="font-size: 0.9em; opacity: 0.8;">Aspect: {{ item.aspect_ratio|floatformat:4 }}</span>
+                                </td>
+                                <td style="padding: 10px;">
+                                    <span class="tag"
+                                          style="padding: 3px 8px;
+                                                 border-radius: 10px;
+                                                 font-size: 0.8em;
+                                                 {% if item.alternate_version %}background: var(--success-bg, #d4edda);
+                                                 color: var(--success-fg, #155724);
+                                                 {% else %}background: var(--error-bg, #f8d7da);
+                                                 color: var(--error-fg, #721c24);
+                                                 {% endif %}">
+                                        {{ item.alternate_version|yesno:"Alternate,Duplicate" }}
+                                    </span>
+                                </td>
+                                {% if forloop.first %}
+                                    <td rowspan="{{ group.count }}"
+                                        style="padding: 10px;
+                                               text-align: center;
+                                               border-left: 1px solid var(--border-color);
+                                               vertical-align: middle;
+                                               background: var(--body-bg)">
+                                        <a class="button"
+                                           href="../compare/?ids={% for item in group.items %}{{ item.imagehash_id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                                           style="white-space: nowrap">{% trans "Compare Group" %}</a>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% empty %}
+            <div class="success"
+                 style="padding: 20px;
+                        background: var(--success-bg);
+                        color: var(--success-fg);
+                        border-radius: 4px;
+                        border: 1px solid var(--border-color)">{% trans "No unprocessed duplicates found." %}</div>
+        {% endfor %}
+    </div>
+    <style>
+    :root {
+        --darkened-bg: rgba(0, 0, 0, 0.05);
+    }
+    [data-theme="dark"] :root {
+        --darkened-bg: rgba(255, 255, 255, 0.1);
+        --error-log-bg: rgba(255, 69, 58, 0.1);
+    }
+    tr:hover { background-color: var(--selected-row) !important; opacity: 0.95; }
+    .module h2 { font-size: 14px; font-weight: 600; }
+    </style>
+{% endblock %}
