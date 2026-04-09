@@ -34,6 +34,7 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ["title", "category", "aliases_count", "content_count"]
     list_filter = ["category"]
     search_fields = ["title", "alias_set__title"]
+    ordering = ["category", "title"]
 
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("alias_set")
