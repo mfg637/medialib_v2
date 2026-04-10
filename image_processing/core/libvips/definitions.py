@@ -2,7 +2,6 @@ import typing
 from collections.abc import Sequence, Buffer
 from typing import Optional, Any
 import pyvips
-import warnings
 import numpy
 
 Interpretation = typing.Union[str, pyvips.enums.Interpretation]
@@ -126,39 +125,90 @@ class Image:
         )
 
     def __add__(self, other) -> Image:
-        return Image(
-            self._img.__add__(other)  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(other, Image):
+            return Image(
+                self._img.__add__(
+                    other._img
+                )  # pyright: ignore[reportArgumentType]
+            )
+        else:
+            return Image(
+                self._img.__add__(other)  # pyright: ignore[reportArgumentType]
+            )
 
     def __sub__(self, other) -> Image:
-        return Image(
-            self._img.__sub__(other)  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(other, Image):
+            return Image(
+                self._img.__sub__(
+                    other._img
+                )  # pyright: ignore[reportArgumentType]
+            )
+        else:
+            return Image(
+                self._img.__sub__(other)  # pyright: ignore[reportArgumentType]
+            )
 
     def __mul__(self, other) -> Image:
-        return Image(
-            self._img.__mul__(other)  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(other, Image):
+            return Image(
+                self._img.__mul__(
+                    other._img
+                )  # pyright: ignore[reportArgumentType]
+            )
+        else:
+            return Image(
+                self._img.__mul__(other)  # pyright: ignore[reportArgumentType]
+            )
 
     def __div__(self, other) -> Image:
-        return Image(
-            self._img.__div__(other)  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(other, Image):
+            return Image(
+                self._img.__div__(
+                    other._img
+                )  # pyright: ignore[reportArgumentType]
+            )
+        else:
+            return Image(
+                self._img.__div__(other)  # pyright: ignore[reportArgumentType]
+            )
 
     def __truediv__(self, other) -> Image:
-        return Image(
-            self._img.__truediv__(other)  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(other, Image):
+            return Image(
+                self._img.__truediv__(
+                    other._img
+                )  # pyright: ignore[reportArgumentType]
+            )
+        else:
+            return Image(
+                self._img.__truediv__(
+                    other
+                )  # pyright: ignore[reportArgumentType]
+            )
 
     def __mod__(self, other) -> Image:
-        return Image(
-            self._img.__mod__(other)  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(other, Image):
+            return Image(
+                self._img.__mod__(
+                    other._img
+                )  # pyright: ignore[reportArgumentType]
+            )
+        else:
+            return Image(
+                self._img.__mod__(other)  # pyright: ignore[reportArgumentType]
+            )
 
     def __pow__(self, other) -> Image:
-        return Image(
-            self._img.__pow__(other)  # pyright: ignore[reportArgumentType]
-        )
+        if isinstance(other, Image):
+            return Image(
+                self._img.__pow__(
+                    other._img
+                )  # pyright: ignore[reportArgumentType]
+            )
+        else:
+            return Image(
+                self._img.__pow__(other)  # pyright: ignore[reportArgumentType]
+            )
 
     def __abs__(self) -> Image:
         return Image(
@@ -465,3 +515,8 @@ class Image:
 
     def avg(self) -> float:
         return self._img.avg()
+
+    def abs(self) -> Image:
+        return Image(
+            self._img.abs()  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+        )
