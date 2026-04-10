@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "medialib.apps.MedialibConfig",
+    "media_receiving.apps.MediaReceivingConfig",
     "image_processing.apps.ImageProcessingConfig",
 ]
 

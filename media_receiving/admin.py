@@ -1,0 +1,24 @@
+from django.contrib import admin
+from .models import Task, AwaitingTaskMetadata, ExecutionError
+from .forms import TaskUploadForm
+from media_receiving.flow.processing import run_processing_selected_tasks
+
+
+class MetadataInline(admin.StackedInline):
+    model = AwaitingTaskMetadata
+    can_delete = False
+    verbose_name_plural = "Metadata of Task"
+    exclude = ["tags"]
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    form = TaskUploadForm
+    inlines = [MetadataInline]
+
+    list_display = ("id", "status", "created_at")
+    list_filter = ("status",)
+    actions = [run_processing_selected_tasks]
+
+
+admin.site.register(ExecutionError)

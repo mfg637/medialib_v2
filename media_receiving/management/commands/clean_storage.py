@@ -2,7 +2,7 @@ from pathlib import Path
 from django.core.management.base import BaseCommand
 from medialib_v2 import settings
 from medialib.models import Representation
-from image_processing.models import Task
+from media_receiving.models import Task
 
 
 class Command(BaseCommand):

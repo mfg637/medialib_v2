@@ -1,6 +1,6 @@
-from image_processing.services import file_processing, validation
+from media_receiving.services import file_processing, validation
 from django.core.files.uploadedfile import UploadedFile
-from image_processing.models import Task
+from media_receiving.models import Task
 
 
 def process_task_file(

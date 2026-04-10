@@ -1,15 +1,11 @@
 from . import (
-    file_processing,
     representations,
-    validation,
-    storage,
-    tags_processing,
+    analysis,
+    media_passport,
 )
 
 __all__ = [
-    "file_processing",
     "representations",
-    "validation",
-    "storage",
-    "tags_processing",
+    "analysis",
+    "media_passport",
 ]

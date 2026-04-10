@@ -8,8 +8,8 @@ from django.contrib.admin import action
 
 from base.shared_knowledge.file_format import FILE_FORMAT_DEFAULT_SUFFIX
 from image_processing.services import analysis, media_passport
-from image_processing.services.storage import move_representations
-from image_processing.services.tags_processing import process_content_tags
+from media_receiving.services.storage import move_representations
+from media_receiving.services.tags_processing import process_content_tags
 from image_processing.services.representations import (
     make_representations,
     get_image_signatures,
@@ -19,7 +19,7 @@ from image_processing.services.representations import (
 
 @shared_task
 def process_task(task_id: int):
-    from image_processing.models import (
+    from media_receiving.models import (
         Task,
         AwaitingTaskMetadata,
         TaskStatusEnum,
@@ -137,7 +137,7 @@ def process_task(task_id: int):
 
 @action()
 def run_processing_selected_tasks(modeladmin, request, queryset):
-    from image_processing.models import (
+    from media_receiving.models import (
         TaskStatusEnum,
     )
 

@@ -24,7 +24,7 @@ from django.views.generic import TemplateView
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("medialib/", include("medialib.urls")),
-    path("image-processing/", include("image_processing.urls")),
+    path("media_receiving/", include("media_receiving.urls")),
     path(
         "",
         TemplateView.as_view(template_name="medialib/home.djhtml"),

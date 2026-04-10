@@ -5,7 +5,7 @@ from image_processing.core.file_utils import (
     generate_filename,
     MediaType,
 )
-from image_processing.config import MAX_FILE_LENGTH, TASK_SAVE_DIRECTORY
+from media_receiving.config import MAX_FILE_LENGTH, TASK_SAVE_DIRECTORY
 from io import BytesIO
 from pathlib import Path
 

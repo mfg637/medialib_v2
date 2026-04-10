@@ -49,7 +49,7 @@ class CompatiblityLevelTest(SimpleTestCase):
             cl.get_image_compatibility_level(size, ff.FormatEnum.WEBP), 2
         )
         self.assertEqual(
-            cl.get_image_compatibility_level(size, ff.FormatEnum.AVIF), 2
+            cl.get_image_compatibility_level(size, ff.FormatEnum.AVIF), 3
         )
 
     def test_cl3(self):
@@ -64,7 +64,7 @@ class CompatiblityLevelTest(SimpleTestCase):
             cl.get_image_compatibility_level(size, ff.FormatEnum.WEBP), 3
         )
         self.assertEqual(
-            cl.get_image_compatibility_level(size, ff.FormatEnum.AVIF), 3
+            cl.get_image_compatibility_level(size, ff.FormatEnum.AVIF), 4
         )
 
     def test_cl4(self):
@@ -79,5 +79,5 @@ class CompatiblityLevelTest(SimpleTestCase):
             cl.get_image_compatibility_level(size, ff.FormatEnum.WEBP), 4
         )
         self.assertEqual(
-            cl.get_image_compatibility_level(size, ff.FormatEnum.AVIF), 4
+            cl.get_image_compatibility_level(size, ff.FormatEnum.AVIF), 5
         )
