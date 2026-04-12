@@ -17,6 +17,14 @@ DEBUG = True
 REPRESENATION_FILE_PATH_LIMIT = 512
 TAG_NAME_LENGTH_LIMIT = 512
 TAG_ALIAS_LENGRG_LIMIT = TAG_NAME_LENGTH_LIMIT
+SOURCE_HASH_BINARY_LENGTH = 32
+YEAR_DIGITS = 4
+MONTH_DAY_DIGITS = 2
+SOURCE_HASH_HEX_LENGTH = SOURCE_HASH_BINARY_LENGTH * 2
+HYPHEN_COUNT = 3
+SLUG_LENGTH = (
+    YEAR_DIGITS + MONTH_DAY_DIGITS * 2 + SOURCE_HASH_HEX_LENGTH + HYPHEN_COUNT
+)
 
 
 class Content(models.Model):
@@ -38,7 +46,7 @@ class Content(models.Model):
     addition_date = models.DateTimeField(auto_now_add=True, db_index=True)
     is_hidden = models.BooleanField(default=False)
     last_edit = models.DateTimeField(auto_now=True)
-    SOURCE_HASH_BINARY_LENGTH = 32
+
     source_hash = models.BinaryField(
         max_length=SOURCE_HASH_BINARY_LENGTH,
         unique=True,
@@ -48,16 +56,7 @@ class Content(models.Model):
     tags = models.ManyToManyField(
         "Tag", related_name="content_set", blank=True
     )
-    YEAR_DIGITS = 4
-    MONTH_DAY_DIGITS = 2
-    SOURCE_HASH_HEX_LENGTH = SOURCE_HASH_BINARY_LENGTH * 2
-    HYPHEN_COUNT = 3
-    SLUG_LENGTH = (
-        YEAR_DIGITS
-        + MONTH_DAY_DIGITS * 2
-        + SOURCE_HASH_HEX_LENGTH
-        + HYPHEN_COUNT
-    )
+
     slug = models.SlugField(
         max_length=SLUG_LENGTH, unique=True, blank=True, db_index=True
     )
@@ -88,6 +87,25 @@ class Content(models.Model):
     class Meta:
         verbose_name = "content"
         verbose_name_plural = "content"
+
+
+class ContentRedirect(models.Model):
+    old_slug = models.SlugField(
+        max_length=SLUG_LENGTH, unique=True, db_index=True
+    )
+    new_content = models.ForeignKey(
+        Content, on_delete=models.PROTECT, related_name="redirects"
+    )
+    created_at = models.DateTimeField(null=False)
+    source_hash = models.BinaryField(
+        max_length=SOURCE_HASH_BINARY_LENGTH,
+        unique=True,
+        db_index=True,
+        help_text="SHA-256 hash of the original file content (stored as BYTEA).",
+    )
+
+    def __str__(self):
+        return f"Redirect: {self.old_slug} -> {self.new_content.id}"
 
 
 class ContentOrigin(models.Model):

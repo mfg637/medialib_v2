@@ -2,7 +2,7 @@ from django.db.models import QuerySet
 from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render, redirect, get_object_or_404
 from medialib.models import Tag, TagAlias
-from . import representation, content, collection, album
+from . import representation, content, collection, album, image_processing
 from typing import Optional
 
 
@@ -44,4 +44,5 @@ __all__ = [
     "tag_info",
     "collection",
     "album",
+    "image_processing",
 ]

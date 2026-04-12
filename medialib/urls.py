@@ -67,4 +67,9 @@ urlpatterns = [
         views.album.AlbumDetailView.as_view(),
         name="album-detail",
     ),
+    path(
+        "dynamic/image-processing/diff",
+        views.image_processing.compare_representations_bin_view,
+        name="image-processing-compare-reprs-bin",
+    ),
 ]

@@ -1,0 +1,283 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+    :root {
+        --compare-grid-gap: 20px;
+    }
+    
+    .compare-wrapper { /* root element of content (before pairs loop */
+        display: flex;
+        flex-direction: column;
+        gap: var(--compare-grid-gap);
+        padding: 20px;
+    }
+
+    .compare-pair-container { /* main wrapper of a pair. contains both rows */
+        border: 1px solid var(--hairline-color);
+        border-radius: 8px;
+        margin-bottom: 40px;
+        background: var(--body-bg);
+        overflow: hidden;
+    }
+    
+    .pair-data-row { /* first row of a pair. contains textual columns */
+        display: grid;
+        grid-template-columns: 1fr 300px 1fr; 
+        gap: var(--compare-grid-gap);
+        padding: 15px;
+        border-bottom: 1px solid var(--hairline-color);
+    }
+
+    .info-column { /* any column in the first row */
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .status-good, .status-warning {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: 600;
+        line-height: 1;
+        text-align: center;
+    }
+
+    .status-good {
+        background-color: var(--message-success-bg, #dfd);
+        color: var(--body-fg, #333);
+        border: 1px solid #bccad6;
+    }
+    
+    .status-warning {
+        background-color: var(--message-error-bg, #ffefef);
+        color: #ba2121;
+        border: 1px solid #e9b1b1;
+    }
+    
+    .comparison-logic {
+        margin-bottom: 8px;
+    }
+    
+    .comparison-logic:last-child {
+        margin-bottom: 0;
+    }
+
+    .action-buttons { /* contained in the center column */
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .side-column { /* left or right column with content metadata */
+        background: var(--darkened-bg);
+        border: 1px solid var(--hairline-color);
+    }
+
+    .content-title {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+    }
+
+    .pair-visual-row { /* the second row in the current pair */
+
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        background: var(--darkened-bg);
+    }
+
+    .pair-visual-row .controls{
+        margin-bottom: 1em;
+    }
+    
+    .view-layers { /* container for images and heatmap canvas */
+        height: 50vh; 
+        min-height: 400px;
+        position: relative;
+        display: block;
+        overflow: scroll;
+    }
+    
+    .view-layers img, .view-layers canvas {
+        position: absolute;
+    }
+
+    .view-layers.width-fit img, .view-layers.width-fit canvas {
+        max-width: 100%;
+    }
+    
+    .base-layer { z-index: 1; }
+    .overlay-layer { z-index: 2; }
+    .heatmap-layer { z-index: 3; pointer-events: none; }
+
+    @media (prefers-color-scheme: dark) {
+        .status-good {
+            background-color: #1e3a1e;
+            color: #ace;
+            border-color: #2a4a2a;
+        }
+        .status-warning {
+            background-color: #441a1a;
+            color: #ffbaba;
+            border-color: #662a2a;
+        }
+    }
+    </style>
+{% endblock %}
+{% block content %}
+    <div id="content-main">
+        <h1>{% trans "Group Comparison" %}</h1>
+        <div class="compare-wrapper">
+            {% for pair in hash_pairs %}
+                {% with first=pair.first second=pair.second pair_id=forloop.counter0 %}
+                    <div class="compare-pair-container"
+                         data-first-id="{{ first.id }}"
+                         data-second-id="{{ second.id }}">
+                        <div class="pair-data-row">
+                            <div class="info-column side-column">
+                                <h3>{% trans "Content A" %} (ID: {{ first.content.id }})</h3>
+                                <div class="metadata-list">
+                                    <p>ID: {{ first.content.id }}</p>
+                                    <p class="content-title">
+                                        <strong>{% trans "Title" %}</strong>: {{ first.content.title|default:"Untitled"|truncatechars:40 }}
+                                    </p>
+                                    <p>
+                                        <strong>{% trans "Size" %}:</strong> {{ first.best_repr.width }}x{{ first.best_repr.height }}
+                                    </p>
+                                    <p>
+                                        <strong>{% trans "Origins" %}:</strong>
+                                        {% for origin in first.content.origin_set.all %}
+                                            <div>{{ origin.name }}: {{ origin.origin_id }}</div>
+                                        {% empty %}
+                                            Content have no origins
+                                        {% endfor %}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="info-column center-column">
+                                <div class="analysis-results">
+                                    <p class="comparison-logic">
+                                        {% if pair.is_size_equal %}
+                                            <span class="status-good">{% trans "Dimensions match" %}</span>
+                                        {% else %}
+                                            <span class="status-warning">{% trans "Different sizes" %}</span>
+                                        {% endif %}
+                                    </p>
+                                    <p class="comparison-logic">
+                                        {% if pair.same_origin %}
+                                            <span class="status-warning">{% trans "Same origin detected" %}</span>
+                                        {% else %}
+                                            <span class="status-good">{% trans "Different origins" %}</span>
+                                        {% endif %}
+                                    </p>
+                                    <p class="comparison-logic">
+                                        {% if pair.both_alternate_versions %}
+                                            <span class="status-warning">{% trans "This is alternate version" %}</span>
+                                        {% else %}
+                                            <span class="status-good">{% trans "Needs review" %}</span>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="action-buttons">
+                                    {% if not pair.both_alternate_versions %}
+                                        <a href="../mark-as-alternate/?h1={{ first.hash_obj.id }}&h2={{ second.hash_obj.id }}&ids={{ ids_str }}"
+                                           class="button clickable"
+                                           onclick="return confirm('{% trans "Mark these as alternate versions?" %}')">
+                                            {% trans "Mark as Alternate" %}
+                                        </a>
+                                        <a href="../merge/?source={{ second.content.id }}&target={{ first.content.id }}&ids={{ ids_str }}"
+                                           class="button danger"
+                                           onclick="return confirm('Merge B into A?')">{% trans "Merge into A" %}</a>
+                                        <a href="../merge/?source={{ first.content.id }}&target={{ second.content.id }}&ids={{ ids_str }}"
+                                           class="button danger"
+                                           onclick="return confirm('Merge A into B?')">{% trans "Merge into B" %}</a>
+                                    {% else %}
+                                        <a href="../unmark-as-alternate/?h1={{ first.hash_obj.id }}&h2={{ second.hash_obj.id }}&ids={{ ids_str }}"
+                                           class="button clickable"
+                                           onclick="return confirm('{% trans "Unmark these items?" %}')">
+                                            {% trans "Mark as review required" %}
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-column side-column">
+                                <h3>{% trans "Content B" %} (ID: {{ second.content.id }})</h3>
+                                <div class="metadata-list">
+                                    <p>ID: {{ second.content.id }}</p>
+                                    <p class="content-title">
+                                        <strong>{% trans "Title" %}</strong>: {{ second.content.title|default:"Untitled"|truncatechars:40 }}
+                                    </p>
+                                    <p>
+                                        <strong>{% trans "Size" %}:</strong> {{ second.best_repr.width }}x{{ second.best_repr.height }}
+                                    </p>
+                                    <p>
+                                        <strong>{% trans "Origins" %}:</strong>
+                                        {% for origin in second.content.origin_set.all %}
+                                            <div>{{ origin.name }}: {{ origin.origin_id }}</div>
+                                        {% empty %}
+                                            Content have no origins
+                                        {% endfor %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pair-visual-row">
+                            <div class="comparison-viewer">
+                                <div class="controls">
+                                    <label>Opacity Control:</label>
+                                    <input type="range"
+                                           class="opacity-slider"
+                                           min="0"
+                                           max="100"
+                                           value="0"
+                                           oninput="updateOverlay(this, '{{ pair_id }}')">
+                                    {% if pair.is_size_equal %}
+                                        <button type="button"
+                                                class="button"
+                                                onclick="toggleHeatmap('{{ first.best_repr.id }}', '{{ second.best_repr.id }}', '{{ pair_id }}')">
+                                            {% trans "Toggle Heatmap" %}
+                                        </button>
+                                        <label for="gradient-select">
+                                            {% trans "Heatmap Mode" %}:
+                                            <select class="gradient-select"
+                                                    onchange="window.changeGlobalGradient(this.value)">
+                                                <option value="0">{% trans "Heat (Black background)" %}</option>
+                                                <option value="1" selected>{% trans "Heat (Transparent)" %}</option>
+                                                <option value="2">{% trans "Show any change (Red)" %}</option>
+                                            </select>
+                                        </label>
+                                    {% endif %}
+                                    <button type="button"
+                                            class="button"
+                                            onclick="CompareTool.toggleFullSize('{{ pair_id }}')">
+                                        {% trans "Fit / Original" %}
+                                    </button>
+                                </div>
+                                <div class="view-layers width-fit" id="layers-{{ pair_id }}">
+                                    <img src="/{{ MEDIA_URL }}/{{ first.best_repr.filepath }}"
+                                         id="first-image"
+                                         class="base-layer">
+                                    <img src="/{{ MEDIA_URL }}/{{ second.best_repr.filepath }}"
+                                         id="second-image"
+                                         class="overlay-layer"
+                                         style="opacity: 0.0">
+                                    <canvas class="heatmap-layer" style="display: none;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endwith %}
+            {% empty %}
+                <p>No pairs to compare.</p>
+            {% endfor %}
+        </div>
+    </div>
+    <script src="/static/js/compare_tool.js"></script>
+{% endblock %}
