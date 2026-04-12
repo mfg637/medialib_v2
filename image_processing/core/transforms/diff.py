@@ -16,6 +16,12 @@ def generate_diff_heatmap(image_1: Image, image_2: Image) -> np.ndarray:
     image_1 = image_1.colourspace("srgb")
     image_2 = image_2.colourspace("srgb")
 
+    if image_1.hasalpha() != image_2.hasalpha():
+        if not image_1.hasalpha():
+            image_1 = image_1.addalpha()
+        else:
+            image_2 = image_2.addalpha()
+
     diff_array = (image_1 - image_2).abs().numpy()
 
     combined_diff = np.sum(diff_array, axis=-1, dtype=np.uint16)

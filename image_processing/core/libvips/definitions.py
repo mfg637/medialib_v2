@@ -371,6 +371,11 @@ class Image:
             )
         return bool(value)
 
+    def addalpha(self) -> Image:
+        return Image(
+            self._img.addalpha()  # pyright: ignore[reportCallIssue, reportArgumentType, reportOptionalCall]
+        )
+
     def bandjoin(self, other) -> Image:
         return Image(
             self._img.bandjoin(
