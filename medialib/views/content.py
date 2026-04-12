@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from django.http import HttpResponse, HttpRequest
-from django.shortcuts import render
+from django.http import HttpResponse, HttpRequest, Http404
+from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from base.shared_enums.medialib_model import (
@@ -8,11 +8,10 @@ from base.shared_enums.medialib_model import (
     RepresentationTypeEnum,
 )
 from medialib_v2.settings import MEDIA_URL
-from medialib.models import Content, ImageHash, Collection
+from medialib.models import Content, ImageHash, Collection, ContentRedirect
 from medialib.tags.dsl import TagDSLParser, DSLError
 from medialib.tags import tag_filter
 from . import representation
-from django.db.models import QuerySet
 
 
 @dataclass(frozen=True)
@@ -115,14 +114,31 @@ def _content_info(request: HttpRequest, content: Content) -> HttpResponse:
 
 
 def content_info_by_slug(request, content_slug: str) -> HttpResponse:
-    content = Content.objects.prefetch_related(
-        "representation_set",
-        "origin_set",
-        "tags",
-        "album_item",
-        "album_item__album",
-    ).get(slug=content_slug)
-    return _content_info(request, content)
+    try:
+        content = Content.objects.prefetch_related(
+            "representation_set",
+            "origin_set",
+            "tags",
+            "album_item",
+            "album_item__album",
+        ).get(slug=content_slug)
+        return _content_info(request, content)
+
+    except Content.DoesNotExist:
+        redirect_obj = (
+            ContentRedirect.objects.select_related("new_content")
+            .filter(old_slug=content_slug)
+            .first()
+        )
+
+        if redirect_obj:
+            return redirect(
+                "content-info",
+                content_slug=redirect_obj.new_content.slug,
+                permanent=True,
+            )
+
+        raise Http404(_("Content not found"))
 
 
 def content_info_by_id(request, content_id: int) -> HttpResponse:
