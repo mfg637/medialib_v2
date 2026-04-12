@@ -288,6 +288,7 @@
                         <label for="filename_format">File name:</label>
                         <select name="filename_format" id="filename_format">
                             <option value="default" selected>Original name</option>
+                            <option value="content_slug">Content slug</option>
                             <option value="title_slug">ID + Content Title</option>
                             <option value="origin_id">Origin Source ID</option>
                             <option value="random_string">Random string</option>

@@ -67,6 +67,10 @@ def get_representation(
 RANDOM_STRING_POPULATION = string.ascii_letters + string.digits
 
 
+def generate_content_slug_filename(content: Content, suffix: str) -> str:
+    return f"{content.slug}{suffix}"
+
+
 def generate_title_slug_filename(
     content: Content, representation_suffix: str
 ) -> str:
@@ -104,6 +108,7 @@ def generate_random_digits_filename(content: Content, suffix: str) -> str:
 
 
 FILE_NAME_FORMATTER: dict[str, Callable[[Content, str], str]] = {
+    "content_slug": generate_content_slug_filename,
     "title_slug": generate_title_slug_filename,
     "origin_id": generate_origin_id_filename,
     "random_string": generate_random_string_filename,

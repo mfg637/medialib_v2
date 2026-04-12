@@ -5,7 +5,7 @@ urlpatterns = [
     path(
         "static/content/mlid<int:content_id>/info",
         views.content.content_info_by_id,
-        name="content-info",
+        name="content-info-by-id",
     ),
     path(
         "static/content/<slug:content_slug>/info",
