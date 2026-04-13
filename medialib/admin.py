@@ -2,26 +2,23 @@ import requests
 from dataclasses import dataclass
 from itertools import combinations
 from django.contrib import admin, messages
-from django.shortcuts import redirect
-
+from django.shortcuts import redirect, get_object_or_404
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext
+from django.urls import reverse, path
+from django.template.response import TemplateResponse
+from django.http import HttpResponseRedirect, HttpResponseBadRequest
+from medialib_v2.settings import MEDIA_URL
+from medialib.flow import ContentMergeFlow
+from base.shared_knowledge.tags import generate_aliases
+from medialib import models as ml_models
 from base.shared_enums.medialib_model import (
     CategoryEnum,
     RepresentationTypeEnum,
 )
-from . import models as ml_models
-from base.shared_knowledge.tags import generate_aliases
+from .forms import AlbumAdminForm
 from .tags import smart_tag_search
 from .tags.tags_processing import resolve_tag, get_all_implications
-from medialib_v2.settings import MEDIA_URL
-from django.utils.safestring import mark_safe
-from django.urls import reverse, path
-from .forms import AlbumAdminForm
-from django.template.response import TemplateResponse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-from django.utils.translation import gettext as _
-from medialib.flow import ContentMergeFlow
 
 
 class TagAliasAdmin(admin.StackedInline):
@@ -161,7 +158,7 @@ class ContentAdmin(admin.ModelAdmin):
     @staticmethod
     def get_image_representation(obj, size_limit):
         repr_list = obj.representation_set.filter(
-            repr_type=ml_models.RepresentationTypeEnum.IMAGE.value
+            repr_type=RepresentationTypeEnum.IMAGE.value
         ).order_by("width")
         rep = None
         for current_repr in repr_list:
@@ -359,8 +356,8 @@ class AlbumAdmin(admin.ModelAdmin):
         if db_field.name == "album_set":
             kwargs["queryset"] = ml_models.Tag.objects.filter(
                 category__in=[
-                    ml_models.CategoryEnum.SET.value,
-                    ml_models.CategoryEnum.COMIC.value,
+                    CategoryEnum.SET.value,
+                    CategoryEnum.COMIC.value,
                 ]
             )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
@@ -552,7 +549,7 @@ class ImageHashAdmin(admin.ModelAdmin):
             ml_models.ImageHash.objects.filter(id__in=[h1_id, h2_id]).update(
                 alternate_version=True
             )
-            messages.success(request, _("Marked as alternate versions."))
+            messages.success(request, gettext("Marked as alternate versions."))
 
         return redirect(f"../compare/?ids={all_ids}")
 
@@ -565,7 +562,7 @@ class ImageHashAdmin(admin.ModelAdmin):
             ml_models.ImageHash.objects.filter(id__in=[h1_id, h2_id]).update(
                 alternate_version=False
             )
-            messages.success(request, _("Marked as review required."))
+            messages.success(request, gettext("Marked as review required."))
 
         return redirect(f"../compare/?ids={all_ids}")
 
@@ -581,7 +578,7 @@ class ImageHashAdmin(admin.ModelAdmin):
         try:
             merge_flow.execute(source_content, target_content)
             messages.success(
-                request, _("Successfully merged content into target.")
+                request, gettext("Successfully merged content into target.")
             )
         except Exception as e:
             messages.error(request, f"Merge failed: {str(e)}")

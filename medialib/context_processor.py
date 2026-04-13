@@ -1,4 +1,4 @@
-from .models import COMPATIBILITY_LEVEL_DICT
+from medialib.models.base import COMPATIBILITY_LEVEL_DICT
 import json
 
 DEFAULT_LEVEL = 2
