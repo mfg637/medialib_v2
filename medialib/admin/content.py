@@ -1,9 +1,11 @@
 import requests
+from typing import Type, Optional
 from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.utils.safestring import mark_safe
 from django.urls import reverse, path
 from django.template.response import TemplateResponse
+from django.http import HttpRequest
 from medialib_v2.settings import MEDIA_URL
 from medialib import models as ml_models
 from base.shared_enums.medialib_model import (
@@ -65,6 +67,25 @@ class ContentOriginInline(admin.StackedInline):
     model = ml_models.ContentOrigin
 
 
+class ContentRedirectInline(admin.StackedInline):
+    model = ml_models.ContentRedirect
+
+    def has_add_permission(
+        self, request: HttpRequest, obj: Optional[ml_models.Content]
+    ) -> bool:
+        return False
+
+    def has_change_permission(
+        self, request: HttpRequest, obj: Optional[ml_models.Content]
+    ) -> bool:
+        return False
+
+    def has_delete_permission(
+        self, request: HttpRequest, obj: Optional[ml_models.Content]
+    ) -> bool:
+        return False
+
+
 @admin.register(ml_models.Content)
 class ContentAdmin(admin.ModelAdmin):
     change_form_template = "admin/medialib/content/change_form.djhtml"
@@ -89,7 +110,12 @@ class ContentAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ["tags"]
 
-    inlines = [RepresentationInline, ImageHashInline, ContentOriginInline]
+    inlines = [
+        RepresentationInline,
+        ImageHashInline,
+        ContentOriginInline,
+        ContentRedirectInline,
+    ]
 
     def formatted_hash(self, obj):
         if obj.source_hash:
