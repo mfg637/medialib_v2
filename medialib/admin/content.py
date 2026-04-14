@@ -1,8 +1,10 @@
 import requests
-from typing import Type, Optional
+from typing import Optional
+from django.apps import apps
 from django.contrib import admin, messages
 from django.shortcuts import redirect
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy
 from django.urls import reverse, path
 from django.template.response import TemplateResponse
 from django.http import HttpRequest
@@ -12,6 +14,7 @@ from base.shared_enums.medialib_model import (
     CategoryEnum,
     RepresentationTypeEnum,
 )
+from base.view import format_file_size
 from medialib.tags.tags_processing import resolve_tag, get_all_implications
 
 
@@ -86,6 +89,57 @@ class ContentRedirectInline(admin.StackedInline):
         return False
 
 
+class ProcessingResultInline(admin.StackedInline):
+    model = apps.get_model("media_receiving", "TaskResult")
+    extra = 0
+    can_delete = False
+    readonly_fields = [
+        "task",
+        "formatted_source",
+        "formatted_result",
+        "compression_ratio",
+    ]
+    fields = [
+        "task",
+        ("formatted_source", "formatted_result"),
+        "compression_ratio",
+    ]
+
+    @admin.display(description=gettext_lazy("Source Size"))
+    def formatted_source(self, obj):
+        return format_file_size(obj.source_file_size)
+
+    @admin.display(description=gettext_lazy("Result Size"))
+    def formatted_result(self, obj):
+        return format_file_size(obj.result_file_size)
+
+    @admin.display(description=gettext_lazy("Compression / Change"))
+    def compression_ratio(self, obj):
+        if not obj.source_file_size:
+            return "-"
+
+        diff = obj.result_file_size - obj.source_file_size
+        percent = (obj.result_file_size / obj.source_file_size) * 100
+
+        if diff > 0:
+            color = "red"
+            status = gettext_lazy("Increased")
+        elif diff < 0:
+            color = "green"
+            status = gettext_lazy("Reduced")
+        else:
+            color = "gray"
+            status = gettext_lazy("No change")
+
+        return mark_safe(
+            f'<b style="color: {color};">{status} ({percent:.1f}%)</b> '
+            f'<small style="color: #666;">[{"+" if diff > 0 else ""}{format_file_size(diff)}]</small>'
+        )
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(ml_models.Content)
 class ContentAdmin(admin.ModelAdmin):
     change_form_template = "admin/medialib/content/change_form.djhtml"
@@ -115,6 +169,7 @@ class ContentAdmin(admin.ModelAdmin):
         ImageHashInline,
         ContentOriginInline,
         ContentRedirectInline,
+        ProcessingResultInline,
     ]
 
     def formatted_hash(self, obj):
