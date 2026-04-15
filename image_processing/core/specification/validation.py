@@ -32,33 +32,6 @@ def is_webm_compatible(
     )
 
 
-def test_video_cl(
-    compatibility_level: int,
-    video_codec: video.VideoCodecs,
-    min_size: int,
-    max_size: int,
-    fps: Fraction | float | int,
-    bit_depth: int,
-) -> bool:
-    fps60_level = video.LEVELS_60FPS[compatibility_level]
-    fps30_level = video.LEVELS_30FPS[compatibility_level]
-    if fps > 30 * 1.0125:
-        return (
-            fps <= 60
-            and video_codec.value <= fps60_level[0].value
-            and max_size <= fps60_level[1]
-            and min_size <= fps60_level[2]
-            and bit_depth <= fps60_level[3]
-        )
-    else:
-        return (
-            video_codec <= fps30_level[0].value
-            and max_size <= fps30_level[1]
-            and min_size <= fps30_level[2]
-            and bit_depth <= fps30_level[3]
-        )
-
-
 def calc_video_cl(
     video_codec: video.VideoCodecs,
     width: int,
@@ -94,7 +67,7 @@ def calc_video_cl(
         if (
             max_dim <= spec.max_size
             and min_dim <= spec.max_size
-            and float(fps) <= spec.fps * 1.0125
+            and float(fps) <= spec.fps * 1.0125  # gap to cover tiny overshoot
             and bit_depth <= spec.bit_depth
         ):
             return cl
