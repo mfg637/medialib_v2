@@ -1,6 +1,5 @@
 from django.db import models
 import enum
-
 from medialib.models import Content
 from django.core.exceptions import ValidationError
 from base.view import format_file_size
@@ -17,6 +16,8 @@ class TaskStatusEnum(enum.IntEnum):
 
 
 class Task(models.Model):
+    id: int
+    result: models.Manager["TaskResult"]
     created_at = models.DateTimeField(auto_now_add=True)
     uploaded_file = models.FileField(
         upload_to=TASK_SAVE_DIRECTORY,
