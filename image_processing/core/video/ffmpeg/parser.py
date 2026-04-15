@@ -61,7 +61,9 @@ def get_video_streams(data) -> list[dict]:
     return video_streams
 
 
-def find_video_stream(data, first_or_last=SPECIFY_VIDEO_STREAM.FIRST) -> dict:
+def find_video_stream(
+    data, first_or_last=SPECIFY_VIDEO_STREAM.FIRST
+) -> Optional[dict]:
     video = None
     for stream in data["streams"]:
         if stream["codec_type"] == "video":
@@ -155,6 +157,8 @@ def get_video_size(video_stream) -> tuple[int, int, int, int]:
 
 def test_video_cl3(src_metadata) -> bool:
     video = find_video_stream(src_metadata)
+    if video is None:
+        raise ValueError("not found video in media file")
     fps = get_fps(video)
     if video["pix_fmt"] != "yuv420p":
         return False
@@ -175,6 +179,8 @@ def get_size(src_metadata) -> tuple[int, int]:
     Returns: width, height
     """
     video = find_video_stream(src_metadata)
+    if video is None:
+        raise ValueError("not found video in media file")
     return video["width"], video["height"]
 
 
