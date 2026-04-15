@@ -1,4 +1,3 @@
-from django.test import TestCase
 from . import decoding, encoding, utils
 from .compatibility_level import CompatiblityLevelTest
 from .common import (
@@ -8,4 +7,13 @@ from .common import (
     TestTranscodingPureFunctions,
 )
 
-# Create your tests here.
+__all__ = [
+    "decoding",
+    "encoding",
+    "utils",
+    "CompatiblityLevelTest",
+    "TestBitRound",
+    "TestFitDownscale",
+    "ScaleDownTest",
+    "TestTranscodingPureFunctions",
+]

@@ -6,3 +6,12 @@ from .jpeg_xl import TestJPEG_XL
 from .svg import TestSVG
 from . import utils
 
+__all__ = [
+    "TestPNG",
+    "TestJPEG",
+    "TestWEBP",
+    "TestAVIF",
+    "TestJPEG_XL",
+    "TestSVG",
+    "utils",
+]
