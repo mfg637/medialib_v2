@@ -475,17 +475,12 @@ class ImageView extends HTMLElement {
         const imgRatio = naturalW / naturalH;
         const screenRatio = containerW / containerH;
 
-        if (mode === 'fit') {
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '100%';
-            img.style.objectFit = 'contain';
-        } 
-        else if (mode === 'fill') {
+        if (mode === 'fill') {
             if (imgRatio > screenRatio) {
                 img.style.width = 'auto';
-                img.style.height = '100%';
+                img.style.height = '100vh';
             } else {
-                img.style.width = '100%';
+                img.style.width = '100vw';
                 img.style.height = 'auto';
             }
             img.style.minWidth = '100%';
