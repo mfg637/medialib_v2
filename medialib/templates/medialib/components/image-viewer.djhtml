@@ -40,8 +40,6 @@ div#imageViewer .controls-container .button {
     pointer-events: auto;
 }
 
-
-
 #loadingTitle {
     position: relative;
     top: 0;
@@ -156,20 +154,20 @@ div#imageViewer.hideControls.hide-cursor {
 }
 
 /* --- FILL mode (with scrolling) --- */
-div#imageViewer.view-mode-fill{
+div#imageViewer.view-mode-fill, div#imageViewer.view-mode-zoom{
     overflow: auto;
 }
 
-div#imageViewer.view-mode-fill .image-container {
+div#imageViewer.view-mode-fill .image-container, div#imageViewer.view-mode-zoom .image-container{
     display: block;
     text-align: center;
 }
 
-div#imageViewer.view-mode-fill .controls-container {
+div#imageViewer.view-mode-fill .controls-container, div#imageViewer.view-mode-zoom .controls-container{
     display: none;
 }
 
-div#imageViewer.view-mode-fill .image-container img {
+div#imageViewer.view-mode-fill .image-container img, div#imageViewer.view-mode-zoom .image-container img{
     max-width: none;
     max-height: none;
 
@@ -282,7 +280,7 @@ class ImageViewerApp extends HTMLElement {
 
     toggleViewMode() {
         console.debug("toggleViewMode() was called")
-        const modes = ['fit', 'fill'];
+        const modes = ['fit', 'fill', 'zoom'];
         let idx = modes.indexOf(this.viewMode);
         this.viewMode = modes[(idx + 1) % modes.length];
         this.updateView();
@@ -302,7 +300,7 @@ class ImageViewerApp extends HTMLElement {
         this.innerHTML = '';
         const tpl = document.getElementById('tpl-image-viewer').content.cloneNode(true);
         this.appendChild(tpl);
-        
+        this.viewMode = "fit";
         this.applySideEffects();
         this.updateView();
         this.setupEventListeners();
@@ -329,6 +327,11 @@ class ImageViewerApp extends HTMLElement {
         } else {
             viewer.classList.remove('view-mode-fill');
         }
+        if (this.viewMode === 'zoom' && data.contentType !== 'video' && data.contentType !== 'video-loop') {
+            viewer.classList.add('view-mode-zoom');
+        } else {
+            viewer.classList.remove('view-mode-zoom');
+        }
         
         if (this.currentIndex === 0)
             this.querySelector('#previous-image-button').classList.add("hidden");
@@ -343,6 +346,7 @@ class ImageViewerApp extends HTMLElement {
     prev() {
         if (this.currentIndex > 0) {
             this.currentIndex--;
+            this.viewMode = "fit";
             this.updateView();
         }
     }
@@ -350,6 +354,7 @@ class ImageViewerApp extends HTMLElement {
     next() {
         if (this.currentIndex < this.items.length - 1) {
             this.currentIndex++;
+            this.viewMode = "fit";
             this.updateView();
         }
     }
@@ -415,31 +420,85 @@ class ImageViewController extends HTMLElement {
 customElements.define('image-view-controller', ImageViewController);
 
 class ImageView extends HTMLElement {
+    static get observedAttributes() {
+        return ['view-mode'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name === 'view-mode' && oldValue !== newValue && oldValue !== null) {
+            this.render();
+        }
+    }
+
     connectedCallback() {
+        this.render();
+    }
+
+    render() {
         const slug = this.getAttribute('slug');
         const name = this.getAttribute('name');
         const mode = this.getAttribute('view-mode') || 'fit';
         
         const dpr = window.devicePixelRatio || 1;
-        const real_width = Math.round(window.innerWidth * dpr);
-        const real_height = Math.round(window.innerHeight * dpr);
-        let w = real_width;
-        let h = real_height;
-        if (mode === "fill"){
-            const max_side = Math.max(w, h);
-            w = max_side;
-            h = max_side;
+        const screenW = window.innerWidth;
+        const screenH = window.innerHeight;
+
+        let targetW = Math.round(screenW * dpr);
+        let targetH = Math.round(screenH * dpr);
+
+        if (mode === "fill" || mode === "zoom") {
+            const maxSide = Math.max(targetW, targetH);
+            targetW = maxSide;
+            targetH = maxSide;
         }
 
-        const src = `/medialib/dynamic/content/${slug}/representation?type=image&target_width=${w}&target_height=${h}`;
+        const src = `/medialib/dynamic/content/${slug}/representation?type=image&target_width=${targetW}&target_height=${targetH}`;
 
-        this.innerHTML = `<img class="content mode-${mode}" src="${src}" alt="${name}" style="visibility: hidden;">`;
+        this.innerHTML = `<img class="content mode-${mode}" src="${src}" alt="${name}" style="visibility: hidden; display: block; margin: 0 auto;">`;
 
         const img = this.querySelector('img');
         img.onload = () => {
+            this.applyGeometry(img, mode, screenW, screenH);
             img.style.visibility = 'visible';
             this.dispatchEvent(new CustomEvent('content-loaded', { bubbles: true }));
         };
+    }
+
+    applyGeometry(img, mode, containerW, containerH) {
+        img.style.width = '';
+        img.style.height = '';
+        img.style.maxWidth = '';
+        img.style.maxHeight = '';
+
+        const naturalW = img.naturalWidth;
+        const naturalH = img.naturalHeight;
+        const imgRatio = naturalW / naturalH;
+        const screenRatio = containerW / containerH;
+
+        if (mode === 'fit') {
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            img.style.objectFit = 'contain';
+        } 
+        else if (mode === 'fill') {
+            if (imgRatio > screenRatio) {
+                img.style.width = 'auto';
+                img.style.height = '100%';
+            } else {
+                img.style.width = '100%';
+                img.style.height = 'auto';
+            }
+            img.style.minWidth = '100%';
+            img.style.minHeight = '100%';
+            img.style.objectFit = 'cover';
+        } 
+        else if (mode === 'zoom') {
+            const dpr = window.devicePixelRatio || 1;
+            img.style.width = `${naturalW / dpr}px`;
+            img.style.height = `${naturalH / dpr}px`;
+            img.style.maxWidth = 'none';
+            img.style.maxHeight = 'none';
+        }
     }
 }
 customElements.define('image-view', ImageView);
@@ -450,8 +509,7 @@ class VideoLoopView extends HTMLElement {
         const src = `/medialib/dynamic/content/${slug}/representation?type=video_loop`;
 
         this.innerHTML = `
-            <video class="loop content" autoplay muted loop playsinline style="visibility: hidden;">
-                <source src="${src}" type="video/mp4">
+            <video src="${src}" class="loop content" autoplay muted loop playsinline style="visibility: hidden;">
                 Your browser is not support HTML5 video.
             </video>
         `;
