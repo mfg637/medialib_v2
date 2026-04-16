@@ -47,6 +47,12 @@ class TaskResultAdmin(admin.ModelAdmin):
         "result_file_size",
     ]
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
     def get_task_link(self, obj):
         return format_html(
             '<a href="../task/{0}/change/">Task #{0}</a>', obj.task.id
