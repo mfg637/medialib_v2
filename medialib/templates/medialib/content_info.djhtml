@@ -229,6 +229,60 @@
         font-weight: bold;
     }
 
+    /*** video-quality selectors ***/
+
+    .quality-selector {
+        border: none;
+        padding: 0;
+        margin: 10px 0;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+    
+    .sr-only { display: none; }
+    
+    .quality-option input[type="radio"] {
+        display: none;
+    }
+    
+    .quality-option label {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: var(--bg-accent);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    
+    .quality-option label:hover {
+        border-color: var(--border-hover);
+        background-color: var(--bg-wrapper);
+    }
+    
+    .quality-option input[type="radio"]:checked + label {
+        background-color: var(--accent-color);
+        color: var(--text-on-accent);
+        border-color: var(--accent-hover);
+        font-weight: bold;
+    }
+    .quality-option input[type="radio"]:disabled + label {
+        background-color: var(--bg-wrapper);
+        color: var(--text-muted);
+        border-color: var(--border-color);
+        cursor: not-allowed;
+        opacity: 0.6;
+        text-decoration: line-through;
+    }
+    
+    .quality-option input[type="radio"]:disabled + label:hover {
+        background-color: var(--bg-wrapper);
+        border-color: var(--border-color);
+    }
     </style>
     <article class="content-page">
         <section class="viewer-section">
@@ -236,11 +290,15 @@
                 {% with c_type=content.content_type %}
                     {% if video_representations %}
                         <video class="main-content-video"
+                               id="main-video"
                                {% if c_type == "video-loop" %}autoplay loop muted playsinline{% else %}controls{% endif %}
                                poster="/{{ MEDIA_URL }}{{ base_src }}">
                             {% for repr in video_representations %}
-                                <source src="/{{ MEDIA_URL }}{{ repr.filepath }}"
-                                        type="{{ repr.get_mime_type }}; {{ repr.codec_string }}">
+                                {% if repr.compatibility_level <= CURRENT_CL %}
+                                    <source src="/{{ MEDIA_URL }}{{ repr.filepath }}"
+                                            type="{{ repr.get_mime_type }}; {{ repr.codec_string }}"
+                                            data-clevel="{{ repr.compatibility_level }}" />
+                                {% endif %}
                             {% endfor %}
                             Your browser does not support the video tag.
                         </video>
@@ -262,6 +320,23 @@
                     {% endif %}
                 {% endwith %}
             </div>
+            {% if video_representations %}
+                <div class="video-controls">
+                    <fieldset id="cl-switcher" class="quality-selector">
+                        <legend class="sr-only">Quality Level</legend>
+                        {% for repr in video_representations %}
+                            <div class="quality-option">
+                                <input type="radio"
+                                       name="cl-level"
+                                       id="cl-{{ repr.compatibility_level }}"
+                                       value="{{ repr.compatibility_level }}"
+                                       {% if repr.compatibility_level > CURRENT_CL %}disabled{% endif %} />
+                                <label for="cl-{{ repr.compatibility_level }}">CL{{ repr.compatibility_level }}</label>
+                            </div>
+                        {% endfor %}
+                    </fieldset>
+                </div>
+            {% endif %}
         </section>
         <section class="info-section">
             <header class="content-header">
@@ -426,4 +501,57 @@
             </div>
         </section>
     {% endif %}
+    <script>
+    const sourcesMap = {};
+    const urlToClMap = {};
+    document.addEventListener('DOMContentLoaded', () => {
+        const video = document.getElementById('main-video');
+        const switcher = document.getElementById('cl-switcher');
+        
+        if (!video || !switcher) return;
+    
+
+        video.querySelectorAll('source').forEach(srcTag => {
+            const cl = srcTag.getAttribute('data-clevel');
+            sourcesMap[cl] = srcTag.getAttribute('src');
+            const fullUrl = new URL(srcTag.getAttribute('src'), window.location.origin).href;
+            urlToClMap[fullUrl] = cl;
+
+        });
+    
+        switcher.addEventListener('change', (event) => {
+            const selectedCL = event.target.value;
+            const newSrc = sourcesMap[selectedCL];
+    
+            if (newSrc && video.src !== newSrc) {
+                const currentTime = video.currentTime;
+                const isPaused = video.paused;
+    
+                video.src = newSrc;
+                
+                video.load(); 
+    
+                video.onloadedmetadata = () => {
+                    video.currentTime = currentTime;
+                    if (!isPaused) video.play();
+                    video.onloadedmetadata = null;
+                };
+            }
+        });
+
+        const updateActiveRadio = () => {
+            const currentSrc = video.currentSrc;
+            const currentCL = urlToClMap[currentSrc];
+
+            if (currentCL) {
+                const radio = document.querySelector(`.quality-option input[value="${currentCL}"]`);
+                if (radio) radio.checked = true;
+            }
+        };
+
+        video.addEventListener('loadedmetadata', updateActiveRadio);
+
+        if (video.currentSrc) updateActiveRadio();
+    });
+    </script>
 {% endblock %}
