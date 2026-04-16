@@ -488,9 +488,8 @@ class ImageView extends HTMLElement {
             img.style.objectFit = 'cover';
         } 
         else if (mode === 'zoom') {
-            const dpr = window.devicePixelRatio || 1;
-            img.style.width = `${naturalW / dpr}px`;
-            img.style.height = `${naturalH / dpr}px`;
+            img.style.width = `${naturalW}px`;
+            img.style.height = `${naturalH}px`;
             img.style.maxWidth = 'none';
             img.style.maxHeight = 'none';
         }
