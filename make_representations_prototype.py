@@ -1,14 +1,14 @@
 import os
 import django
+import pathlib
+import argparse
 
-# Укажи путь к твоим настройкам (проверь имя проекта)
+# Django set up must be exactly there
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "medialib_v2.settings")
 django.setup()
 
-import argparse
-import pathlib
-from image_processing.services import analysis, media_passport
-from image_processing.services.representations import (
+from image_processing.services import analysis, media_passport  # noqa: E402
+from image_processing.services.representations import (  # noqa: E402
     make_representations,
     get_image_signatures,
 )
