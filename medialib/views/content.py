@@ -237,4 +237,4 @@ def content_list(request: HttpRequest) -> HttpResponse:
     )
 
 
-__all__ = ["content_info", "content_list"]
+__all__ = ["content_info_by_slug", "content_info_by_id", "content_list"]
