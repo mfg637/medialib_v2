@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from base.view import format_file_size
 from base.shared_knowledge.origin import get_origin_type
 from base.shared_enums.image_processing_model import MediaType
-from image_processing.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
+from media_receiving.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
 
 
 class TaskStatusEnum(enum.IntEnum):
