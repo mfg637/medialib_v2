@@ -42,10 +42,6 @@ def finalize_representation_storage(
     current_file_path: Path,
     rel_path: Path,
 ) -> Path:
-    """
-    Перемещает файл в постоянное хранилище и возвращает путь для поля 'file'.
-    """
-
     final_abs_path = Path(settings.MEDIALIB_COLLECTION_ROOT) / rel_path
 
     final_abs_path.parent.mkdir(parents=True, exist_ok=True)

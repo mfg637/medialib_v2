@@ -36,7 +36,6 @@ def generate_filename(
 
 
 def extract_filename(file_path: pathlib.Path | str):
-    # return str(pathlib.Path(file_path).stem[: definitions.MAX_TITLE_LENGTH])
     return str(pathlib.Path(file_path).stem)
 
 

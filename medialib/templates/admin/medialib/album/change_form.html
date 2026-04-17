@@ -1,15 +1,11 @@
 {% extends "admin/change_form.html" %}
 {% load i18n %}
-
 {% block object-tools-items %}
-    {# djlint:off #}
     {% if original.pk and original.album_set %}
-    <li>
-        <a href="{% url 'admin:medialib_album_sync' original.pk %}" class="historylink">
-            Sync from Tag
-        </a>
-    </li>
+        <li>
+            <a href="{% url 'admin:medialib_album_sync' original.pk %}"
+               class="historylink">Sync from Tag</a>
+        </li>
     {% endif %}
-    {# djlint:on #}
     {{ block.super }}
 {% endblock %}

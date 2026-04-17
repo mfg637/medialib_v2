@@ -8,7 +8,6 @@ from image_processing.core.libvips.definitions import Image
 from image_processing.core.transforms.compositing import alpha_compose_vips
 from image_processing.core.transforms.color import upcast_and_linearise
 
-
 DATA_RANGES: dict[numpy.dtype, float] = {
     numpy.dtype(numpy.uint8): 255,
     numpy.dtype(numpy.uint16): float(2**16 - 1),
@@ -55,7 +54,7 @@ def calc_ssim(image_true: numpy.ndarray, image_test: numpy.ndarray) -> float:
         image_test,
         data_range=DATA_RANGES[image_true.dtype],
         channel_axis=-1,
-        win_size=7,  # Явно задаем размер окна
+        win_size=7,
         gaussian_weights=True,
         sigma=1.5,
         use_sample_covariance=True,

@@ -1,6 +1,6 @@
 from django import forms
 from base.shared_enums.medialib_model import CategoryEnum
-from .models import Album, Tag
+from .models import Album
 
 
 class AlbumAdminForm(forms.ModelForm):

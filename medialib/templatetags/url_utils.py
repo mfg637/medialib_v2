@@ -5,9 +5,6 @@ register = template.Library()
 
 @register.simple_tag(takes_context=True)
 def replace_param(context, **kwargs):
-    """
-    Заменяет или добавляет параметры в текущий URL.
-    """
     request = context.get("request")
     if not request:
         return ""
