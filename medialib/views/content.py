@@ -11,7 +11,7 @@ from medialib_v2.settings import MEDIA_URL
 from medialib.models import Content, ImageHash, Collection, ContentRedirect
 from medialib.tags.dsl import TagDSLParser, DSLError
 from medialib.tags import tag_filter
-from . import representation
+from . import base, representation
 
 
 @dataclass(frozen=True)
@@ -59,7 +59,7 @@ def get_similar_content(content, limit=50):
 def _content_info(request: HttpRequest, content: Content) -> HttpResponse:
     all_tags = content.tags.all()
     user_collections = Collection.objects.none()
-    if request.user.is_authenticated:
+    if base.check_user_nsfw_member(request):
         user_collections = (
             Collection.objects.filter(user=request.user)
             .exclude(items=content)
@@ -93,7 +93,7 @@ def _content_info(request: HttpRequest, content: Content) -> HttpResponse:
     similar_content = None
     if (
         content.get_content_type() is ContentTypeEnum.IMAGE
-        and request.user.is_authenticated
+        and base.check_user_nsfw_member(request)
     ):
         similar_content = get_similar_content(content)
     return render(
@@ -175,8 +175,9 @@ def get_items_per_page(request: HttpRequest) -> int:
 def content_list(request: HttpRequest) -> HttpResponse:
     query_string = request.GET.get("q", "")
     items_per_page = get_items_per_page(request)
+    is_nsfw_member = base.check_user_nsfw_member(request)
     filter_name = tag_filter.validate_filter(
-        request.GET.get("filter", "safe"), request
+        request.GET.get("filter", "safe"), is_nsfw_member
     )
     sort_mode_name = request.GET.get("sort", "date decreasing")
     if query_string:
@@ -229,7 +230,7 @@ def content_list(request: HttpRequest) -> HttpResponse:
             "query_string": query_string,
             "per_page": items_per_page,
             "filter_name": filter_name,
-            "available_filters": tag_filter.get_filters_list(request),
+            "available_filters": tag_filter.get_filters_list(is_nsfw_member),
             "sorting_mode": sort_mode_name,
             "sorting_modes_available": SORTING_ORDER.keys(),
             "MEDIA_URL": MEDIA_URL,

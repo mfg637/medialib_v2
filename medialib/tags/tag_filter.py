@@ -54,15 +54,15 @@ FILTERS: dict[
 UNAUTHENTICATED_FILTERS = {"safe", "aesthetic"}
 
 
-def get_filters_list(request: HttpRequest):
-    if request.user.is_authenticated:
+def get_filters_list(is_nsfw_member: bool):
+    if is_nsfw_member:
         return FILTERS.keys()
     else:
         return list(UNAUTHENTICATED_FILTERS)
 
 
-def validate_filter(filter_name: str, request: HttpRequest):
-    if request.user.is_authenticated:
+def validate_filter(filter_name: str, is_nsfw_member: bool):
+    if is_nsfw_member:
         if filter_name in FILTERS:
             return filter_name
     else:

@@ -1,11 +1,12 @@
 from django.views.generic import ListView, DetailView
-from medialib.models import Album, AlbumOrder, Representation
-from .content import get_items_per_page, ContentListItem
-from .representation import generate_image_srcset
 from django.core.paginator import Paginator
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q, Prefetch
 from base.shared_enums.medialib_model import RepresentationTypeEnum
+from medialib.models import Album, AlbumOrder, Representation
+from . import base
+from .content import get_items_per_page, ContentListItem
+from .representation import generate_image_srcset
 
 
 class AlbumListView(ListView):
@@ -41,10 +42,15 @@ class AlbumListView(ListView):
         except ValueError, TypeError:
             show_nsfw = False
 
-        if not show_nsfw or not self.request.user.is_authenticated:
+        if not show_nsfw or not base.check_user_nsfw_member(self.request):
             queryset = queryset.filter(is_nsfw=False)
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["is_nsfw_member"] = base.check_user_nsfw_member(self.request)
+        return context
 
 
 class AlbumDetailView(DetailView):
@@ -57,7 +63,7 @@ class AlbumDetailView(DetailView):
         album = self.object
         request = self.request
 
-        if album.is_nsfw and not request.user.is_authenticated:
+        if album.is_nsfw and not base.check_user_nsfw_member(request):
             raise PermissionDenied("Unable to show this album")
 
         queryset = album.contents.filter(album_item__album=album).order_by(

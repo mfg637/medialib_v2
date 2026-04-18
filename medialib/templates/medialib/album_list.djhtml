@@ -83,7 +83,7 @@
     </style>
     <div class="wrapper">
         <h1>Albums</h1>
-        {% if request.user.is_authenticated %}
+        {% if is_nsfw_member %}
             <a href="{% url 'album-list' %}?nsfw=1">Show NSFW</a>
         {% endif %}
     </div>
