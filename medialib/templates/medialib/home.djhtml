@@ -54,22 +54,30 @@
                 <li>
                     <a href="{% url 'content-list' %}">Gallery</a>
                 </li>
-                <li>
-                    <a href="{% url 'collection-list' %}">Collections</a>
-                </li>
+                {% if user.is_authenticated %}
+                    <li>
+                        <a href="{% url 'collection-list' %}">Collections</a>
+                    </li>
+                {% endif %}
                 <li>
                     <a href="{% url 'album-list' %}">Albums</a>
                 </li>
+                {% if user.is_superuser %}
+                    <li>
+                        <a href="{% url 'admin:index' %}" class="admin-link">Admin Panel</a>
+                    </li>
+                {% endif %}
             </menu>
         </nav>
-        <section class="portrait-specific">
-            <h2>Configuration</h2>
-            <div class="field-wrapper">
-                <theme-selector></theme-selector>
-            </div>
-            <div class="field-wrapper">
-                <cl-selector current="{{ CURRENT_CL }}"></cl-selector>
-            </div>
-        </section>
-    </div>
+    </nav>
+    <section class="portrait-specific">
+        <h2>Configuration</h2>
+        <div class="field-wrapper">
+            <theme-selector></theme-selector>
+        </div>
+        <div class="field-wrapper">
+            <cl-selector current="{{ CURRENT_CL }}"></cl-selector>
+        </div>
+    </section>
+</div>
 {% endblock %}
