@@ -18,7 +18,7 @@ html.rarity {
   --accent-hover: #4a1767;
 
   --bg-header-item: #7dd1f5;
-  --home-icon: url("../resources/rarity_theme_icon.min.svg");
+  --home-icon: url("/static/resources/rarity_theme_icon.min.svg");
 
   --similar-item-shadow: rgba(32, 71, 107, 0.15);
 

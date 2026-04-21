@@ -17,7 +17,7 @@ html.princess-luna {
   --accent-hover: #844fde;
 
   --bg-header-item: #0c6182;
-  --home-icon: url("../resources/luna-theme-icon.svg");
+  --home-icon: url("/static/resources/luna-theme-icon.svg");
 
   --similar-item-shadow: rgba(0, 182, 163, 0.2);
 }

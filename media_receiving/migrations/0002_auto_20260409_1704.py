@@ -4,7 +4,10 @@ from django.db import migrations, connection
 
 
 def copy_tasks_data(apps, schema_editor):
-    OldTask = apps.get_model("image_processing", "Task")
+    try:
+        OldTask = apps.get_model("image_processing", "Task")
+    except LookupError, ValueError:
+        return
     NewTask = apps.get_model("media_receiving", "Task")
 
     OldMetadata = apps.get_model("image_processing", "AwaitingTaskMetadata")

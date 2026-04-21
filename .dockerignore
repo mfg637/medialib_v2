@@ -1,0 +1,16 @@
+logs/
+*.log
+__pycache__/
+*.pyc
+
+.env
+medialib_v2.code-workspace
+.vscode/
+.idea/
+.git
+.gitignore
+
+media/
+static_collected/
+
+*_prototype.py

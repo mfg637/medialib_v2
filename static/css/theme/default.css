@@ -48,5 +48,5 @@
 
   --bg-viewer: black;
 
-  --home-icon: url("../resources/home_page_icon.min.svg");
+  --home-icon: url("/static/resources/home_page_icon.min.svg");
 }
