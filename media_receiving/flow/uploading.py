@@ -1,11 +1,15 @@
 from media_receiving.services import file_processing, validation
+from media_receiving.core.file import LocalFile
 from django.core.files.uploadedfile import UploadedFile
 from media_receiving.models import Task
 
 
 def process_task_file(
-    uploaded_file: UploadedFile, instance: Task, origin_name="", origin_id=""
-) -> UploadedFile:
+    uploaded_file: UploadedFile | LocalFile,
+    instance: Task,
+    origin_name="",
+    origin_id="",
+) -> UploadedFile | LocalFile:
     mime, media_type = file_processing.get_file_type(uploaded_file)
     validation.validate_media_format(mime)
     instance.source_hash = validation.prevent_file_duplication(

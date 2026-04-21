@@ -4,7 +4,7 @@ import string
 import pathlib
 import magic
 import io
-from django.core.files.uploadedfile import UploadedFile
+from django.core.files import File
 from base.shared_enums.image_processing_model import MediaType
 from base.shared_knowledge.file_format import (
     EXTENSIONS_BY_MIME,
@@ -72,11 +72,11 @@ def detect_file_type(
     return mime, file_type
 
 
-def calc_sha256(source: pathlib.Path | UploadedFile) -> bytes:
+def calc_sha256(source: pathlib.Path | File) -> bytes:
     BLOCK_SIZE = 64 * 1024
     hasher = sha256()
 
-    if isinstance(source, UploadedFile):
+    if isinstance(source, File):
         for chunk in source.chunks(BLOCK_SIZE):
             hasher.update(chunk)
     else:

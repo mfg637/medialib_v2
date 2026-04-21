@@ -6,17 +6,45 @@ from django.http import JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction, models
-from django.core.files import File
 
-from base.shared_knowledge.file_format import GENERIC_BINARY_FILE_MIME
 from base.shared_enums.medialib_model import CategoryEnum
 from media_receiving.flow.uploading import process_task_file
+from media_receiving.core.file import LocalFile
 from medialib import models as ml_models
 from .models import Task, AwaitingTaskMetadata, TaskStatusEnum
-from .forms import TaskUploadForm
 
 logger = logging.getLogger(__name__)
+
+
+def handle_task_creation(
+    file_obj: LocalFile | UploadedFile, metadata, origin_name="", origin_id=""
+):
+    temp_task = Task(status=TaskStatusEnum.AWAITING)
+
+    processed_file = process_task_file(
+        file_obj, temp_task, origin_name, origin_id
+    )
+
+    with transaction.atomic():
+        task = Task.objects.create(
+            status=TaskStatusEnum.AWAITING,
+            uploaded_file=processed_file,
+            source_hash=temp_task.source_hash,
+            mime_type=temp_task.mime_type,
+            media_type=temp_task.media_type,
+        )
+
+        AwaitingTaskMetadata.objects.create(
+            task=task,
+            title=metadata.get("title", ""),
+            description=metadata.get("description", ""),
+            origin_name=origin_name,
+            origin_id=origin_id,
+            tags=metadata.get("tags"),
+        )
+    return task
 
 
 @csrf_exempt
@@ -27,13 +55,13 @@ def create_task_api(request):
     metadata_raw = request.POST.get("metadata")
     if metadata_raw:
         try:
-            metadata_payload = json.loads(metadata_raw)
+            metadata = json.loads(metadata_raw)
         except json.JSONDecodeError:
             return JsonResponse(
                 {"error": "Invalid JSON in metadata field"}, status=400
             )
     else:
-        metadata_payload = {
+        metadata = {
             "title": request.POST.get("title", ""),
             "description": request.POST.get("description", ""),
             "origin_name": request.POST.get("origin_name", ""),
@@ -41,52 +69,38 @@ def create_task_api(request):
             "tags": request.POST.get("tags"),
         }
 
-    form = TaskUploadForm(request.POST, request.FILES)
+    if isinstance(metadata.get("tags"), str):
+        try:
+            metadata["tags"] = json.loads(metadata["tags"])
+        except json.JSONDecodeError:
+            metadata["tags"] = []
 
-    if not form.is_valid():
-        return JsonResponse({"errors": form.errors}, status=400)
+    uploaded_file: UploadedFile = request.FILES.get("file")
+    if not uploaded_file:
+        return JsonResponse({"error": "No file uploaded"}, status=400)
 
     try:
-        with transaction.atomic():
-            task = form.save()
-
-            tags_data = metadata_payload.get("tags")
-            if isinstance(tags_data, str):
-                try:
-                    tags_data = json.loads(tags_data)
-                except json.JSONDecodeError:
-                    pass
-
-            AwaitingTaskMetadata.objects.create(
-                task=task,
-                title=metadata_payload.get("title", ""),
-                description=metadata_payload.get("description", ""),
-                origin_name=metadata_payload.get("origin_name", ""),
-                origin_id=metadata_payload.get("origin_id", ""),
-                tags=tags_data,
-            )
-
-            return JsonResponse(
-                {
-                    "task_id": task.id,
-                    "status": task.get_status_display(),
-                    "source_hash": (
-                        task.source_hash.hex() if task.source_hash else None
-                    ),
-                    "mime_type": task.mime_type,
-                },
-                status=201,
-            )
-
-    except ValidationError as e:
-        return JsonResponse(
-            {"error": str(e.message if hasattr(e, "message") else e)},
-            status=400,
+        task = handle_task_creation(
+            uploaded_file,
+            metadata,
+            origin_name=request.POST.get("origin_name", ""),
+            origin_id=request.POST.get("origin_id", ""),
         )
+
+        return JsonResponse(
+            {
+                "task_id": task.id,
+                "status": "success",
+                "source_hash": (
+                    task.source_hash.hex() if task.source_hash else None
+                ),
+            },
+            status=201,
+        )
+
     except Exception as e:
-        return JsonResponse(
-            {"error": "Internal server error", "details": str(e)}, status=500
-        )
+        logger.exception("API Task creation failed")
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 @csrf_exempt
@@ -112,37 +126,21 @@ def create_task_from_local_file(request):
         origin_name = request.POST.get("origin_name", "")
         origin_id = request.POST.get("origin_id", "")
 
+        metadata = {
+            "title": request.POST.get("title", ""),
+            "description": request.POST.get("description", ""),
+            "tags": tags,
+        }
+
         with open(full_path, "rb") as f:
-            django_file = File(
+            django_file = LocalFile(
                 f,
                 name=full_path.name,
+                content_type=request.POST.get("mime_type", None),
             )
-            temp_task = Task(status=TaskStatusEnum.AWAITING)
-            django_file.content_type = request.POST.get(
-                "mime_type", GENERIC_BINARY_FILE_MIME
+            task = handle_task_creation(
+                django_file, metadata, origin_name, origin_id
             )
-            django_file.path = full_path
-
-            processed_file = process_task_file(
-                django_file, temp_task, origin_name, origin_id
-            )
-
-            with transaction.atomic():
-                task = Task.objects.create(
-                    status=TaskStatusEnum.AWAITING,
-                    uploaded_file=processed_file,
-                    source_hash=temp_task.source_hash,
-                    mime_type=temp_task.mime_type,
-                    media_type=temp_task.media_type,
-                )
-                AwaitingTaskMetadata.objects.create(
-                    task=task,
-                    title=request.POST.get("title", ""),
-                    description=request.POST.get("description", ""),
-                    origin_name=origin_name,
-                    origin_id=origin_id,
-                    tags=tags,
-                )
 
             return JsonResponse(
                 {"task_id": task.id, "status": "success"}, status=201

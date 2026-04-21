@@ -1,3 +1,4 @@
+from media_receiving.core.file import LocalFile
 from django.core.files.uploadedfile import UploadedFile
 from base.shared_knowledge.file_format import EXTENSIONS_BY_MIME
 from image_processing.core.file_utils import (
@@ -14,7 +15,7 @@ DIRECTORY_NAME_LENGTH = len(str(TASK_SAVE_DIRECTORY)) + 1
 DJANGO_UNIQUENESS_RESERVE = 8
 
 
-def get_file_type(file: UploadedFile) -> tuple[str, MediaType]:
+def get_file_type(file: UploadedFile | LocalFile) -> tuple[str, MediaType]:
     header = file.read(2048)
     file.seek(0)
     return detect_file_type(BytesIO(header), file.content_type)
