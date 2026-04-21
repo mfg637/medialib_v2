@@ -32,7 +32,9 @@ class ProxyFile:
             and as_scRGB
         ):
             img = color.upcast_and_linearise(source_image)
-        proxy_image = resize.downscale(img, target_size)
+        proxy_image = resize.downscale(
+            img, target_size, kernel=pyvips.enums.Kernel.MITCHELL
+        )
         proxy_image.vipssave(str(self.proxy_file_path))
         self.image = Image.new_from_file(str(self.proxy_file_path))
 

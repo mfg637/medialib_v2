@@ -2,7 +2,11 @@ from image_processing.core.libvips.definitions import Image
 import pyvips
 
 
-def downscale(img: Image, target_size: tuple[int, int]) -> Image:
+def downscale(
+    img: Image,
+    target_size: tuple[int, int],
+    kernel=pyvips.enums.Kernel.LANCZOS3,
+) -> Image:
     target_width, target_height = target_size
     source_width = img.width
     source_height = img.height
@@ -22,11 +26,5 @@ def downscale(img: Image, target_size: tuple[int, int]) -> Image:
 
     if scale_ratio == 1.0:
         return img
-
-    kernel = (
-        pyvips.enums.Kernel.MKS2021
-        if hasattr(pyvips.enums.Kernel, "MKS2021")
-        else pyvips.enums.Kernel.LANCZOS3
-    )
 
     return img.resize(scale_ratio, kernel=kernel)
