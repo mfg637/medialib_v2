@@ -18,9 +18,10 @@ services:
     restart: always
     command: gunicorn --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-4} medialib_v2.wsgi:application
     volumes:
-      - ${MEDIALIB_STORAGE_PATH:-./media}:${MEDIALIB_ROOT:-/app/media}${VOLUME_FLAGS:-}
+      - ${MEDIALIB_STORAGE_PATH:-./media}:/app/media${VOLUME_FLAGS:-}
     env_file:
       - .env
+      - .env.docker
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -33,11 +34,9 @@ services:
     restart: always
     ports:
       - "${HOST_PORT:-8829}:80"
-    environment:
-      - MEDIALIB_ROOT=${MEDIALIB_ROOT:-/app/media}
     volumes:
       - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - ${MEDIALIB_STORAGE_PATH:-./media}:${MEDIALIB_ROOT:-/app/media}:ro
+      - ${MEDIALIB_STORAGE_PATH:-./media}:/app/media:ro
     depends_on:
       - web
 
@@ -46,9 +45,10 @@ services:
     restart: always
     command: celery -A medialib_v2 worker --loglevel=info
     volumes:
-      - ${MEDIALIB_STORAGE_PATH:-./media}:${MEDIALIB_ROOT:-/app/media}${VOLUME_FLAGS:-}
+      - ${MEDIALIB_STORAGE_PATH:-./media}:/app/media${VOLUME_FLAGS:-}
     env_file:
       - .env
+      - .env.docker
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0

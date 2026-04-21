@@ -2,7 +2,7 @@ server {
     listen 80;
 
     location /media/ {
-        alias ${MEDIALIB_ROOT}/;
+        alias /app/media/;
         expires 30d;
         add_header Cache-Control "public";
         

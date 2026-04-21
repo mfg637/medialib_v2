@@ -1,4 +1,5 @@
 .env
+.env.docker
 __pycache__
 .python-version
 medialib_v2.code-workspace

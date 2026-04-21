@@ -4,6 +4,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     libmagic1 \
+    libheif-plugin-dav1d \
+    libheif-plugin-aomenc \
     libvips-dev \
     libjxl-tools \
     ffmpeg \

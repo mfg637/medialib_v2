@@ -31,6 +31,10 @@ DEBUG = bool(int(getenv("DEBUG", 0)))
 
 ALLOWED_HOSTS = getenv("ALLOWED_HOSTS", "127.0.0.1").split(",")
 
+if not DEBUG:
+    port = getenv("HOST_PORT", "8000")
+    CSRF_TRUSTED_ORIGINS = [f"http://{host}:{port}" for host in ALLOWED_HOSTS]
+
 
 # Application definition
 
