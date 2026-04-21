@@ -19,8 +19,6 @@ services:
     command: gunicorn --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-4} medialib_v2.wsgi:application
     volumes:
       - ${MEDIALIB_STORAGE_PATH:-./media}:${MEDIALIB_ROOT:-/app/media}${VOLUME_FLAGS:-}
-    ports:
-      - "${HOST_PORT:-8000}:8000"
     env_file:
       - .env
     environment:
@@ -29,6 +27,19 @@ services:
     depends_on:
       - db
       - redis
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "${HOST_PORT:-8829}:80"
+    environment:
+      - MEDIALIB_ROOT=${MEDIALIB_ROOT:-/app/media}
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ${MEDIALIB_STORAGE_PATH:-./media}:${MEDIALIB_ROOT:-/app/media}:ro
+    depends_on:
+      - web
 
   celery:
     build: .
