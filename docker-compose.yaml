@@ -28,6 +28,8 @@ services:
     depends_on:
       - db
       - redis
+    security_opt:
+      - label:disable
 
   nginx:
     image: nginx:latest
@@ -55,6 +57,8 @@ services:
     depends_on:
       - db
       - redis
+    security_opt:
+      - label:disable
 
 volumes:
   postgres_data:
