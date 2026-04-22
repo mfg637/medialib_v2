@@ -369,6 +369,7 @@
                             <option value="random_digits">Random digits</option>
                         </select>
                     </div>
+                    <input type="hidden" name="download" value="1" />
                     <button type="submit" class="button download-submit-btn">Download</button>
                 </form>
             </div>

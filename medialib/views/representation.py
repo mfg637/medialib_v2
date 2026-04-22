@@ -1,3 +1,4 @@
+from os import getenv
 from pathlib import Path
 from urllib.parse import quote
 from typing import Optional, Callable
@@ -29,6 +30,9 @@ CONTENT_TYPE_TO_REPRESENTATION_TYPE: dict[
     ContentTypeEnum.VIDEO: RepresentationTypeEnum.VIDEO,
     ContentTypeEnum.VIDEO_LOOP: RepresentationTypeEnum.VIDEO,
 }
+
+
+USE_X_ACCEL = bool(int(getenv("USE_X_ACCEL", 0)))
 
 
 def get_representation(
@@ -124,6 +128,7 @@ class RepresentationRequestParams:
     target_width: Optional[int]
     target_height: Optional[int]
     filename_format: str = "default"
+    download: bool = False
 
 
 def error_response(error_message) -> HttpResponse:
@@ -164,6 +169,7 @@ def parse_validate_representation_view_params(
     if filename_format != "default":
         if filename_format not in FILE_NAME_FORMATTER:
             return error_response("Unknown value of filename_format parmeter")
+    download = bool(int(request.GET.get("download", 0)))
     return RepresentationRequestParams(
         content,
         clevel,
@@ -171,6 +177,7 @@ def parse_validate_representation_view_params(
         target_width,
         target_height,
         filename_format,
+        download,
     )
 
 
@@ -200,22 +207,47 @@ def get_representation_view(
     if not abs_file_path.exists():
         raise Http404("Physical file not found on disk")
 
+    rel_path = str(representation.filepath)
     if request_params_or_response.filename_format == "default":
-        return redirect(f"/{MEDIA_URL}{representation.filepath}")
+        if USE_X_ACCEL:
+            response = HttpResponse()
+            response["X-Accel-Redirect"] = f"/internal_media/{rel_path}"
+            if request_params_or_response.download:
+                repr_file_name = abs_file_path.name
+                response["Content-Disposition"] = (
+                    f'attachment; filename="{repr_file_name}"'
+                )
+                response["Content-Type"] = representation.get_mime_type()
+            return response
+        else:
+            return redirect(f"/{MEDIA_URL}{rel_path}")
 
     file_extension = f".{representation.format}"
-
-    response = FileResponse(
-        open(abs_file_path, "rb"),
-        content_type=representation.get_mime_type(),
-    )
     new_filename = FILE_NAME_FORMATTER[
         request_params_or_response.filename_format
     ](request_params_or_response.content, file_extension)
 
-    response["Content-Disposition"] = f'attachment; filename="{new_filename}"'
+    if USE_X_ACCEL:
+        response = HttpResponse()
+        response["X-Accel-Redirect"] = f"/internal_media/{rel_path}"
+        response["Content-Disposition"] = (
+            f'attachment; filename="{new_filename}"'
+        )
+        response["Content-Type"] = representation.get_mime_type()
+        return response
+    else:
+        abs_file_path = Path(representation.filepath.path)
+        if not abs_file_path.exists():
+            raise Http404("Physical file not found on disk")
 
-    return response
+        response = FileResponse(
+            open(abs_file_path, "rb"),
+            content_type=representation.get_mime_type(),
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="{new_filename}"'
+        )
+        return response
 
 
 def generate_image_srcset(
