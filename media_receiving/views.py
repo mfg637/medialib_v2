@@ -41,7 +41,7 @@ def handle_task_creation(
             title=metadata.get("title", ""),
             description=metadata.get("description", ""),
             origin_name=origin_name,
-            origin_id=origin_id,
+            origin_id=str(origin_id),
             tags=metadata.get("tags"),
         )
     return task
@@ -83,8 +83,8 @@ def create_task_api(request):
         task = handle_task_creation(
             uploaded_file,
             metadata,
-            origin_name=request.POST.get("origin_name", ""),
-            origin_id=request.POST.get("origin_id", ""),
+            origin_name=metadata.get("origin_name", ""),
+            origin_id=metadata.get("origin_id", ""),
         )
 
         return JsonResponse(
