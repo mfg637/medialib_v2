@@ -37,13 +37,8 @@ def process_task(task_id: int):
     try:
         with transaction.atomic():
             task = Task.objects.select_for_update().get(id=task_id)
-            if task.status in (
-                TaskStatusEnum.DONE.value,
-                TaskStatusEnum.PROCESSING.value,
-            ):
+            if task.status == TaskStatusEnum.DONE.value:
                 return
-            task.status = TaskStatusEnum.PROCESSING
-            task.save()
             source_size = task.uploaded_file.size
 
             passport, comp_level = analysis.do_analysis(
@@ -146,6 +141,8 @@ def run_processing_selected_tasks(modeladmin, request, queryset):
     )
     for task in pending_tasks:
         process_task.delay(task.id)
+        task.status = TaskStatusEnum.PROCESSING
+        task.save()
     modeladmin.message_user(
         request, f"Launched tasks: {pending_tasks.count()}"
     )
