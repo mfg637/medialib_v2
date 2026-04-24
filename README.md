@@ -174,3 +174,8 @@ And the Celery worker:
 | `GUNICORN_WORKERS` | `4`           | Worker count in Gunicorn.                                                |
 | `CELERY_WORKERS`   | `2`           | Parralel processes count in Celery worker.                               |
 | `HOST_PORT`        | `8829`        | Port numner which Nginx will be accesible outside of Docker environment. |
+  
+
+## License  
+  
+This project is licensed under the [MIT License](LICENSE).
