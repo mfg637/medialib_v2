@@ -41,11 +41,13 @@ services:
       - ${MEDIALIB_STORAGE_PATH:-./media}:/app/media:ro
     depends_on:
       - web
+    security_opt:
+      - label:disable
 
   celery:
     build: .
     restart: always
-    command: celery -A medialib_v2 worker --loglevel=info
+    command: celery -A medialib_v2 worker --loglevel=info --concurrency=${CELERY_WORKERS:-2}
     volumes:
       - ${MEDIALIB_STORAGE_PATH:-./media}:/app/media${VOLUME_FLAGS:-}
     env_file:
