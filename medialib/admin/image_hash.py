@@ -34,9 +34,34 @@ class ComparePair:
 
 @admin.register(ml_models.ImageHash)
 class ImageHashAdmin(admin.ModelAdmin):
-    list_display = ("content", "aspect_ratio", "alternate_version")
+    readonly_fields = [
+        "content",
+        "aspect_ratio",
+        "display_L_hash",
+        "display_a_hash",
+        "display_b_hash",
+        "aspect_ratio",
+    ]
     list_filter = ("alternate_version",)
     search_fields = ("content__title", "content__slug")
+
+    def display_L_hash(self, obj):
+        return obj.L_hash.tobytes().hex() if obj.L_hash else "-"
+
+    display_L_hash.short_description = "L Hash"
+
+    def display_a_hash(self, obj):
+        return obj.a_hash.tobytes().hex() if obj.a_hash else "-"
+
+    display_a_hash.short_description = "a Hash"
+
+    def display_b_hash(self, obj):
+        return obj.b_hash.tobytes().hex() if obj.b_hash else "-"
+
+    display_b_hash.short_description = "b Hash"
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
     def get_urls(self):
         urls = super().get_urls()
