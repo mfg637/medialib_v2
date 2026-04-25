@@ -62,6 +62,7 @@
         border-radius: 8px;
         border-left: 4px solid var(--accent-color);
         overflow-wrap: anywhere;
+        overflow-x: scroll;
     }
 
     .description img{
@@ -80,6 +81,12 @@
         padding: 2px 4px;
         border-radius: 4px;
         font-family: monospace;
+        overflow-x: scroll;
+        max-width: 100%;
+        display: block;
+        background-color: var(--bg-header-item, var(--bg-input));
+        padding: 1em;
+        border: 1px solid var(--border-color);
     }
     
     .description ul, .description ol {
