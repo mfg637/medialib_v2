@@ -26,7 +26,13 @@ class TaskAdmin(admin.ModelAdmin):
     actions = [run_processing_selected_tasks]
 
 
-admin.site.register(ExecutionError)
+@admin.register(ExecutionError)
+class ExecutionErrorAdmon(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
 
 
 @admin.register(TaskResult)
