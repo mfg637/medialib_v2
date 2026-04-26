@@ -19,6 +19,8 @@ html.dark-purple {
   --bg-header-item: #191122;
   --home-icon: url("/static/resources/dark_pupple_theme_icon.min.svg");
   --similar-item-shadow: rgba(0, 0, 0, 0.6);
+
+  --bg-viewer: #191122;
 }
 
 body.dark-purple .home-page-link:hover {

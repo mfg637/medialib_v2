@@ -20,6 +20,8 @@ html.princess-luna {
   --home-icon: url("/static/resources/luna-theme-icon.svg");
 
   --similar-item-shadow: rgba(0, 182, 163, 0.2);
+
+  --bg-viewer: #12162c;
 }
 
 /* star glow effect for active elements */
