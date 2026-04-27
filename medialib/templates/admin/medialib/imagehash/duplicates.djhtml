@@ -1,8 +1,48 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_urls %}
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+    .groups-count {
+        background: var(--darkened-bg, #f8f8f8); 
+        color: var(--body-fg, #333);
+        
+        border: 1px solid var(--border-color, #ccc);
+        border-left: 4px solid var(--primary, #79aec8);
+        
+        margin: 1rem 0 2rem 0;
+        padding: 12px 16px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .groups-count svg {
+        fill: var(--primary, #79aec8);
+        flex-shrink: 0;
+    }
+
+    .groups-count strong {
+        color: var(--primary, #79aec8);
+        font-weight: 600;
+        font-size: 2rem;
+        position: relative;
+        top: -0.125em;
+    }
+    </style>
+{% endblock %}
 {% block content %}
     <div id="content-main">
         <h1>{% trans "Groups with hash collisions" %}</h1>
+        <section class="groups-count">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+            </svg>
+            <span>{% trans "Suspicious groups found:" %}</span>
+            <strong>{{ groups|length }}</strong>
+        </section>
         {% for group in groups %}
             <div class="module"
                  style="margin-bottom: 30px;
