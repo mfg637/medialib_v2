@@ -13,4 +13,5 @@ class Representation:
     height: Optional[int]
     repr_type: RepresentationTypeEnum
     _format: FormatEnum
+    repr_hash: int
     codec_string: Optional[str] = None

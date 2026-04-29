@@ -25,6 +25,9 @@ class TaskAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     actions = [run_processing_selected_tasks]
 
+    def has_change_permission(self, request, obj=None) -> bool:
+        return False
+
 
 @admin.register(ExecutionError)
 class ExecutionErrorAdmon(admin.ModelAdmin):

@@ -4,6 +4,7 @@ import string
 import pathlib
 import magic
 import io
+import struct
 from django.core.files import File
 from base.shared_enums.image_processing_model import MediaType
 from base.shared_knowledge.file_format import (
@@ -14,6 +15,7 @@ from base.shared_knowledge.file_format import (
     is_png,
 )
 from hashlib import sha256
+from xxhash import xxh3_64
 
 logger = logging.getLogger(__name__)
 
@@ -72,11 +74,11 @@ def detect_file_type(
     return mime, file_type
 
 
-def calc_sha256(source: pathlib.Path | File) -> bytes:
+def calc_some_hash(source: pathlib.Path | File, hasher) -> bytes:
     BLOCK_SIZE = 64 * 1024
-    hasher = sha256()
 
     if isinstance(source, File):
+        source.seek(0)
         for chunk in source.chunks(BLOCK_SIZE):
             hasher.update(chunk)
     else:
@@ -85,3 +87,12 @@ def calc_sha256(source: pathlib.Path | File) -> bytes:
                 hasher.update(byte_block)
 
     return hasher.digest()
+
+
+def calc_sha256(source: pathlib.Path | File) -> bytes:
+    return calc_some_hash(source, sha256())
+
+
+def calc_xxh3_64(source: pathlib.Path | File) -> int:
+    digest = calc_some_hash(source, xxh3_64())
+    return struct.unpack(">q", digest)[0]

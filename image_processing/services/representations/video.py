@@ -63,6 +63,7 @@ def make_cl1_webm_representation(
         tmp_passport.height,
         RepresentationTypeEnum.VIDEO,
         tmp_passport.file_format,
+        tmp_passport.calc_xxh3_64(),
         tmp_passport.codec_string,
     )
 
@@ -109,6 +110,7 @@ def make_webm_representation(
         tmp_passport.height,
         RepresentationTypeEnum.VIDEO,
         tmp_passport.file_format,
+        tmp_passport.calc_xxh3_64(),
         tmp_passport.codec_string,
     )
 
@@ -159,6 +161,7 @@ def copy_video_mp4(passport: VideoPassport, compatibility_level):
             tmp_passport.height,
             RepresentationTypeEnum.VIDEO,
             tmp_passport.file_format,
+            tmp_passport.calc_xxh3_64(),
             tmp_passport.codec_string,
         )
     ]
@@ -201,6 +204,7 @@ def transcode_animation_loop(
                 tmp_passport.height,
                 RepresentationTypeEnum.VIDEO,
                 tmp_passport.file_format,
+                tmp_passport.calc_xxh3_64(),
                 tmp_passport.codec_string,
             )
         ]
@@ -235,6 +239,7 @@ def transcode_webm_source(
         passport.height,
         RepresentationTypeEnum.VIDEO,
         passport.file_format,
+        passport.calc_xxh3_64(),
         passport.codec_string,
     )
     if compatibility_level == 2:

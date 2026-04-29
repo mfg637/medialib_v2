@@ -14,3 +14,4 @@ Markdown
 requests
 gunicorn
 whitenoise
+xxhash

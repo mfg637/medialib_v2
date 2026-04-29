@@ -102,6 +102,7 @@ def process_task(task_id: int):
                     compatibility_level=r.compatibility_level,
                     codec_string=codec_string,
                     repr_type=r.repr_type,
+                    hash=r.repr_hash,
                 )
 
             TaskResult.objects.create(

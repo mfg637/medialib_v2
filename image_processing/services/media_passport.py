@@ -2,7 +2,7 @@ from typing import Optional
 from pathlib import Path
 from base.shared_enums.medialib_model import ContentTypeEnum
 from base.shared_knowledge.file_format import MIME_TYPE_TO_FORMAT, FormatEnum
-from image_processing.core.file_utils import calc_sha256
+from image_processing.core.file_utils import calc_sha256, calc_xxh3_64
 from image_processing.core.decoders import open_image
 from image_processing.core.libvips.definitions import Image
 from image_processing.core.video.ffmpeg import probe, parser
@@ -20,6 +20,9 @@ class BaseMediaPassport:
 
     def calc_sha256(self) -> bytes:
         return calc_sha256(self.source_file)
+
+    def calc_xxh3_64(self) -> int:
+        return calc_xxh3_64(self.source_file)
 
 
 class StaticImagePassport(BaseMediaPassport):

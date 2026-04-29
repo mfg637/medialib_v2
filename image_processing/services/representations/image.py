@@ -13,6 +13,7 @@ from image_processing.core.specification.image import (
     FORMAT_LEVEL,
 )
 from base.shared_knowledge.file_format import FormatEnum
+from image_processing.core.file_utils import calc_xxh3_64
 from image_processing.core.matrix_scan import zigzag_scan
 from image_processing.core.utils import bit_round
 from .common import Representation
@@ -40,6 +41,7 @@ def save_img_4096(
     avif.encode(csRGB_image, output_file, quality=85)
     width = csRGB_image.width
     height = csRGB_image.height
+    repr_hash = calc_xxh3_64(output_file)
     return Representation(
         get_image_compatibility_level((width, height), FormatEnum.AVIF),
         output_file,
@@ -47,6 +49,7 @@ def save_img_4096(
         height,
         RepresentationTypeEnum.IMAGE,
         FormatEnum.AVIF,
+        repr_hash,
     )
 
 
@@ -59,6 +62,7 @@ def save_img_2048(
     avif.encode(csRGB_image, output_file, quality=90, effort=3)
     width = csRGB_image.width
     height = csRGB_image.height
+    repr_hash = calc_xxh3_64(output_file)
     return Representation(
         get_image_compatibility_level((width, height), FormatEnum.AVIF),
         output_file,
@@ -66,6 +70,7 @@ def save_img_2048(
         height,
         RepresentationTypeEnum.IMAGE,
         FormatEnum.AVIF,
+        repr_hash,
     )
 
 
@@ -85,6 +90,7 @@ def save_img_1024(
     )
     width = csRGB_image.width
     height = csRGB_image.height
+    repr_hash = calc_xxh3_64(output_file)
     return Representation(
         get_image_compatibility_level((width, height), FormatEnum.WEBP),
         output_file,
@@ -92,6 +98,7 @@ def save_img_1024(
         height,
         RepresentationTypeEnum.IMAGE,
         FormatEnum.WEBP,
+        repr_hash,
     )
 
 
@@ -104,6 +111,7 @@ def save_img_512(
     webp.encode(csRGB_image, output_file, quality=90, smart_deblock=True)
     width = csRGB_image.width
     height = csRGB_image.height
+    repr_hash = calc_xxh3_64(output_file)
     return Representation(
         get_image_compatibility_level((width, height), FormatEnum.WEBP),
         output_file,
@@ -111,6 +119,7 @@ def save_img_512(
         height,
         RepresentationTypeEnum.IMAGE,
         FormatEnum.WEBP,
+        repr_hash,
     )
 
 
@@ -123,6 +132,7 @@ def save_img_256(
     webp.encode(csRGB_image, output_file, quality=85, alpha_q=95)
     width = csRGB_image.width
     height = csRGB_image.height
+    repr_hash = calc_xxh3_64(output_file)
     return Representation(
         get_image_compatibility_level((width, height), FormatEnum.WEBP),
         output_file,
@@ -130,6 +140,7 @@ def save_img_256(
         height,
         RepresentationTypeEnum.IMAGE,
         FormatEnum.WEBP,
+        repr_hash,
     )
 
 
@@ -142,6 +153,7 @@ def save_img_128(
     webp.encode(csRGB_image, output_file, quality=80, alpha_q=90)
     width = csRGB_image.width
     height = csRGB_image.height
+    repr_hash = calc_xxh3_64(output_file)
     return Representation(
         get_image_compatibility_level((width, height), FormatEnum.WEBP),
         output_file,
@@ -149,6 +161,7 @@ def save_img_128(
         height,
         RepresentationTypeEnum.IMAGE,
         FormatEnum.WEBP,
+        repr_hash,
     )
 
 
@@ -170,6 +183,7 @@ def save_img_original(
 ) -> Representation:
     width = img.width
     height = img.height
+    repr_hash = calc_xxh3_64(source_file)
     return Representation(
         get_image_compatibility_level((width, height), file_format),
         source_file,
@@ -177,6 +191,7 @@ def save_img_original(
         height,
         RepresentationTypeEnum.IMAGE,
         file_format,
+        repr_hash,
     )
 
 
@@ -189,6 +204,7 @@ def save_img_webp(img: Image, source_file: pathlib.Path) -> Representation:
 
 
 def save_img_svg(img: Image, source_file: pathlib.Path) -> Representation:
+    repr_hash = calc_xxh3_64(source_file)
     return Representation(
         FORMAT_LEVEL[FormatEnum.SVG],
         source_file,
@@ -196,6 +212,7 @@ def save_img_svg(img: Image, source_file: pathlib.Path) -> Representation:
         img.height,
         RepresentationTypeEnum.IMAGE,
         FormatEnum.SVG,
+        repr_hash,
     )
 
 

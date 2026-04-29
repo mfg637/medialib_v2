@@ -86,6 +86,7 @@ def move_representations(
                 ml_repr.height,
                 ml_repr.repr_type,
                 ml_repr._format,
+                ml_repr.repr_hash,
                 ml_repr.codec_string,
             )
         )

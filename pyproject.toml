@@ -37,6 +37,7 @@ dependencies = [
     "requests",
     "gunicorn",
     "whitenoise",
+    "xxhash",
 ]
 
 #[project.urls] # project is not published yet

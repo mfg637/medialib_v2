@@ -41,6 +41,7 @@ class Representation(models.Model):
         choices=REPRESENTATION_TYPE_MAPPING, null=False
     )
     codec_string = models.CharField(max_length=255, blank=True, default="")
+    hash = models.BigIntegerField(null=False, default=None)
 
     def get_type(self) -> RepresentationTypeEnum:
         return RepresentationTypeEnum(self.repr_type)

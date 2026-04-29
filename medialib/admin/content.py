@@ -29,6 +29,7 @@ class RepresentationInline(admin.TabularInline):
         "repr_type",
         "compatibility_level",
         "codec_string",
+        "hash",
     ]
     can_delete = False
 
