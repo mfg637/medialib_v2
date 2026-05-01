@@ -1,4 +1,5 @@
 import requests
+from os import getenv
 from typing import Optional
 from django.apps import apps
 from django.contrib import admin, messages
@@ -312,6 +313,13 @@ class ContentAdmin(admin.ModelAdmin):
             self.message_user(request, f"Added {len(selected_tags)} tags.")
             return redirect("admin:medialib_content_change", content_id)
 
+        host = getenv("TAGGER_HOST", "")
+        port = getenv("TAGGER_PORT", "")
+        if not host or not port:
+            missing = "TAGGER_HOST" if not host else "TAGGER_PORT"
+            raise ValueError(
+                f"{missing} environment variable is empty or not set"
+            )
         try:
             cl1_image_representation = (
                 content_obj.representation_set.filter(
@@ -323,7 +331,7 @@ class ContentAdmin(admin.ModelAdmin):
             )
             with cl1_image_representation.filepath.open("rb") as f:
                 response = requests.post(
-                    "http://127.0.0.1:10877/tagging",
+                    f"http://{host}:{port}/tagging",
                     files={"image-file": f},
                     data={"threshold": 0.2},
                 )
