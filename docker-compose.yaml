@@ -30,6 +30,8 @@ services:
       - redis
     security_opt:
       - label:disable
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   nginx:
     image: nginx:latest
