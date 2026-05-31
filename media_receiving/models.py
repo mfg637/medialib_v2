@@ -36,15 +36,21 @@ class Task(models.Model):
     mime_type = models.CharField(max_length=128, null=True, blank=True)
     source_hash = models.BinaryField(
         max_length=32,
-        unique=True,
         db_index=True,
         help_text="SHA-256 hash of the original file content (stored as BYTEA).",
     )
     status = models.IntegerField(
         choices=STATUS_LIST, default=TaskStatusEnum.AWAITING
     )
+    rewrite = models.BooleanField(
+        default=False,
+        null=False,
+        verbose_name="Rewrite existing content",
+        help_text="If enabled, skips deduplication validation and updates existing content",
+    )
 
     def clean(self) -> None:
+        super().clean()
         if (
             self.status is not TaskStatusEnum.DONE
             and self.uploaded_file is None
@@ -52,7 +58,24 @@ class Task(models.Model):
             raise ValidationError(
                 "Temporary file can not be None until process is done"
             )
-        return super().clean()
+        if self.source_hash:
+            duplicate_task = Task.objects.filter(source_hash=self.source_hash)
+
+            if self.pk:
+                duplicate_task = duplicate_task.exclude(pk=self.pk)
+
+            if not self.rewrite:
+                if duplicate_task.exists():
+                    raise ValidationError(
+                        {"source_hash": "Found task with same source_hash."}
+                    )
+            else:
+                if duplicate_task.exclude(status=TaskStatusEnum.DONE).exists():
+                    raise ValidationError(
+                        {
+                            "source_hash": "Cannot rewrite: active task with same source_hash exists."
+                        }
+                    )
 
     def get_status_display(self) -> str:
         return self.STATUS_LIST[self.status][1]
