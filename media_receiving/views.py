@@ -8,7 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction, models
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import serializers
@@ -20,6 +21,24 @@ from medialib import models as ml_models
 from .models import Task, AwaitingTaskMetadata, TaskStatusEnum
 
 logger = logging.getLogger(__name__)
+
+
+class TaskMetadataSerializer(serializers.Serializer):
+    title = serializers.CharField(required=False, allow_blank=True, default="")
+    description = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    origin_name = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    origin_id = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    tags = serializers.DictField(
+        child=serializers.ListField(child=serializers.CharField()),
+        required=False,
+        default=dict,
+    )
 
 
 def handle_task_creation(
@@ -51,47 +70,43 @@ def handle_task_creation(
     return task
 
 
-@csrf_exempt
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
 def create_task_api(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return Response(
+            {"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
-    metadata_raw = request.POST.get("metadata")
-    if metadata_raw:
+    metadata_raw = request.data.get("metadata")
+    if metadata_raw and isinstance(metadata_raw, str):
         try:
-            metadata = json.loads(metadata_raw)
+            data = json.loads(metadata_raw)
         except json.JSONDecodeError:
-            return JsonResponse(
+            return Response(
                 {"error": "Invalid JSON in metadata field"}, status=400
             )
     else:
-        metadata = {
-            "title": request.POST.get("title", ""),
-            "description": request.POST.get("description", ""),
-            "origin_name": request.POST.get("origin_name", ""),
-            "origin_id": request.POST.get("origin_id", ""),
-            "tags": request.POST.get("tags"),
-        }
+        data = request.data
 
-    if isinstance(metadata.get("tags"), str):
-        try:
-            metadata["tags"] = json.loads(metadata["tags"])
-        except json.JSONDecodeError:
-            metadata["tags"] = []
-
-    uploaded_file: UploadedFile = request.FILES.get("file")
-    if not uploaded_file:
-        return JsonResponse({"error": "No file uploaded"}, status=400)
+    serializer = TaskMetadataSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    clean_data = serializer.validated_data
 
     try:
         task = handle_task_creation(
             uploaded_file,
-            metadata,
-            origin_name=metadata.get("origin_name", ""),
-            origin_id=metadata.get("origin_id", ""),
+            clean_data,
+            origin_name=clean_data[  # pyright: ignore[reportIndexIssue, reportOptionalSubscript]
+                "origin_name"
+            ],
+            origin_id=clean_data[  # pyright: ignore[reportIndexIssue, reportOptionalSubscript]
+                "origin_id"
+            ],
         )
 
-        return JsonResponse(
+        return Response(
             {
                 "task_id": task.id,
                 "status": "success",
@@ -99,12 +114,13 @@ def create_task_api(request):
                     task.source_hash.hex() if task.source_hash else None
                 ),
             },
-            status=201,
+            status=status.HTTP_201_CREATED,
         )
-
     except Exception as e:
         logger.exception("API Task creation failed")
-        return JsonResponse({"error": str(e)}, status=500)
+        return Response(
+            {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 @csrf_exempt
