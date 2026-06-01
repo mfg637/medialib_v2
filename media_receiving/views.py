@@ -8,6 +8,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction, models
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework import serializers
 
 from base.shared_enums.medialib_model import CategoryEnum
 from media_receiving.flow.uploading import process_task_file
@@ -158,17 +162,29 @@ def create_task_from_local_file(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
-@csrf_exempt
+class OriginInfoSerializer(serializers.Serializer):
+    status = serializers.CharField(default="found")
+    mlid = serializers.IntegerField(source="content.id")
+    url = serializers.SerializerMethodField()
+    slug = serializers.CharField(source="content.slug")
+
+    def get_url(self, obj):
+        return reverse(
+            "content-info", kwargs={"content_slug": obj.content.slug}
+        )
+
+
+@api_view(["GET"])
 def origin_info(request):
-    origin_name = request.GET.get("name")
-    origin_content_id = request.GET.get("id")
+    origin_name = request.query_params.get("name")
+    origin_content_id = request.query_params.get("id")
     if not origin_name or not origin_content_id:
-        return JsonResponse(
+        return Response(
             {
                 "status": "error",
                 "message": "Missing 'name' or 'id' parameters",
             },
-            status=400,
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     origin_query = (
@@ -179,20 +195,12 @@ def origin_info(request):
         .first()
     )
     if origin_query:
-        content: ml_models.Content = origin_query.content
-        content_url = reverse(
-            "content-info", kwargs={"content_slug": content.slug}
-        )
-        return JsonResponse(
-            {
-                "status": "found",
-                "mlid": content.id,
-                "url": content_url,
-                "slug": content.slug,
-            }
-        )
+        serializer = OriginInfoSerializer(origin_query)
+        return Response(serializer.data)
     else:
-        return JsonResponse({"status": "not found"}, status=404)
+        return Response(
+            {"status": "not found"}, status=status.HTTP_404_NOT_FOUND
+        )
 
 
 @csrf_exempt

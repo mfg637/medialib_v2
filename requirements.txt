@@ -1,4 +1,5 @@
 Django
+djangorestframework
 ImageHash
 psycopg2-binary
 python-magic
@@ -15,3 +16,4 @@ requests
 gunicorn
 whitenoise
 xxhash
+Pygments

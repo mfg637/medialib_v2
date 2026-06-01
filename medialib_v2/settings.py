@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "medialib.apps.MedialibConfig",
     "media_receiving.apps.MediaReceivingConfig",
     "image_processing.apps.ImageProcessingConfig",
@@ -237,4 +238,15 @@ LOGGING = {
             "level": "WARNING",
         },
     },
+}
+
+
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
 }
