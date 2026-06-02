@@ -1,10 +1,7 @@
 import json
-import traceback
 import logging
 from pathlib import Path
-from django.http import JsonResponse
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction, models
