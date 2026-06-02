@@ -240,42 +240,50 @@ def origin_info(request):
         )
 
 
-@csrf_exempt
+class RegisterAlbumSerializer(serializers.Serializer):
+    origin_name = serializers.CharField(required=True)
+    album_title = serializers.CharField(required=True)
+    content_sequence = serializers.ListField(
+        child=serializers.CharField(), required=False, default=None
+    )
+    ordered_content = serializers.DictField(
+        child=serializers.CharField(), required=False, default=None
+    )
+
+    def validate(self, data):
+        content_seq = data.get("content_sequence")
+        ordered_cnt = data.get("ordered_content")
+
+        if content_seq is not None and ordered_cnt is not None:
+            raise serializers.ValidationError(
+                "Provide either content_sequence or ordered_content, not both"
+            )
+
+        if content_seq is None and ordered_cnt is None:
+            raise serializers.ValidationError("No content data provided")
+
+        return data
+
+
+@api_view(["POST"])
 def register_album_api(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST allowed"}, status=405)
+    serializer = RegisterAlbumSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    clean_data = serializer.validated_data
+
+    origin_name = clean_data["origin_name"]
+    album_title = clean_data["album_title"]
+    content_sequence = clean_data["content_sequence"]
+    ordered_content = clean_data["ordered_content"]
+
+    final_order = {}
+    if content_sequence is not None:
+        for list_index, origin_content_id in enumerate(content_sequence):
+            final_order[list_index + 1] = origin_content_id
+    else:
+        final_order = {int(k): v for k, v in ordered_content.items()}
 
     try:
-        data = json.loads(request.body)
-        origin_name = data.get("origin_name")
-        album_title = data.get("album_title")
-        content_sequence = data.get("content_sequence")
-        ordered_content = data.get("ordered_content")
-
-        if not origin_name or not album_title:
-            return JsonResponse(
-                {"error": "Missing origin_name or album_title"}, status=400
-            )
-
-        if content_sequence is not None and ordered_content is not None:
-            return JsonResponse(
-                {
-                    "error": "Provide either content_sequence or ordered_content, not both"
-                },
-                status=400,
-            )
-
-        final_order = {}
-        if content_sequence is not None:
-            for idx, oid in enumerate(content_sequence):
-                final_order[idx + 1] = oid
-        elif ordered_content is not None:
-            final_order = {int(k): v for k, v in ordered_content.items()}
-        else:
-            return JsonResponse(
-                {"error": "No content data provided"}, status=400
-            )
-
         with transaction.atomic():
             album, created = ml_models.Album.objects.get_or_create(
                 album_name=album_title, defaults={"is_nsfw": False}
@@ -306,8 +314,8 @@ def register_album_api(request):
             creators_unique = set()
             new_orders = []
 
-            for order_val, oid in final_order.items():
-                content_obj = origin_map.get(str(oid))
+            for order_val, origin_content_id in final_order.items():
+                content_obj = origin_map.get(str(origin_content_id))
                 if content_obj:
                     for creator in content_obj.prefetched_creators:
                         creators_unique.add(creator)
@@ -336,7 +344,7 @@ def register_album_api(request):
                     album.album_set = tag
                     album.save()
 
-        return JsonResponse(
+        return Response(
             {
                 "status": "success",
                 "album_id": album.id,
@@ -344,8 +352,12 @@ def register_album_api(request):
                 "items_registered": len(new_orders),
                 "items_total": len(final_order),
                 "creators_found": len(creators_unique),
-            }
+            },
+            status=status.HTTP_200_OK,
         )
 
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("Album registration failed")
+        return Response(
+            {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
