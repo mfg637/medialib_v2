@@ -123,59 +123,80 @@ def create_task_api(request):
         )
 
 
-@csrf_exempt
+@api_view(["POST"])
 def create_task_from_local_file(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
-    raw_path = request.POST.get("file_path", "")
+    raw_path = request.data.get("file_path", "")
     logger.debug("raw_path: %s", raw_path)
     if not raw_path:
-        return JsonResponse({"error": "No file_path provided"}, status=400)
-
-    full_path = Path(raw_path)
-
-    logger.debug("full path '%s'", full_path)
-    if not full_path.exists():
-        return JsonResponse(
-            {"error": f"File not found: {full_path}"}, status=404
+        return Response(
+            {"error": "No file_path provided"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-    try:
-        tags = json.loads(request.POST.get("tags"))
-        origin_name = request.POST.get("origin_name", "")
-        origin_id = request.POST.get("origin_id", "")
+    full_path = Path(raw_path)
+    logger.debug("full path '%s'", full_path)
+    if not full_path.exists():
+        return Response(
+            {"error": f"File not found: {full_path}"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
+    data = (
+        request.data.copy()
+        if hasattr(request.data, "copy")
+        else dict(request.data)
+    )
+
+    tags_raw = data.get("tags")
+    if tags_raw and isinstance(tags_raw, str):
+        try:
+            data["tags"] = json.loads(tags_raw)
+        except json.JSONDecodeError:
+            return Response(
+                {"error": "Invalid tags data (JSON expected)"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    serializer = TaskMetadataSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    clean_data = serializer.validated_data
+
+    try:
         metadata = {
-            "title": request.POST.get("title", ""),
-            "description": request.POST.get("description", ""),
-            "tags": tags,
+            "title": clean_data["title"],
+            "description": clean_data["description"],
+            "tags": clean_data["tags"],
         }
 
         with open(full_path, "rb") as f:
             django_file = LocalFile(
                 f,
                 name=full_path.name,
-                content_type=request.POST.get("mime_type", None),
-            )
-            task = handle_task_creation(
-                django_file, metadata, origin_name, origin_id
+                content_type=request.data.get("mime_type", None),
             )
 
-            return JsonResponse(
-                {"task_id": task.id, "status": "success"}, status=201
+            task = handle_task_creation(
+                django_file,
+                metadata,
+                origin_name=clean_data["origin_name"],
+                origin_id=clean_data["origin_id"],
             )
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "Invalid tags data (JSON expected)"}, status=400
-        )
+
+            return Response(
+                {"task_id": task.id, "status": "success"},
+                status=status.HTTP_201_CREATED,
+            )
+
     except ValidationError as e:
-        return JsonResponse(
-            {"error": f"Validation Error: {str(e)}"}, status=400
+        return Response(
+            {"error": f"Validation Error: {str(e)}"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
     except Exception as e:
-        traceback.print_exc()
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API Task creation from local file failed")
+        return Response(
+            {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class OriginInfoSerializer(serializers.Serializer):
