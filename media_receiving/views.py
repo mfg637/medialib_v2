@@ -55,6 +55,7 @@ def handle_task_creation(
             source_hash=temp_task.source_hash,
             mime_type=temp_task.mime_type,
             media_type=temp_task.media_type,
+            rewrite=metadata["rewrite"],
         )
 
         AwaitingTaskMetadata.objects.create(
@@ -64,7 +65,6 @@ def handle_task_creation(
             origin_name=origin_name,
             origin_id=str(origin_id),
             tags=metadata.get("tags"),
-            rewrite=metadata["rewrite"],
         )
     return task
 
