@@ -36,6 +36,7 @@ class TaskMetadataSerializer(serializers.Serializer):
         required=False,
         default=dict,
     )
+    rewrite = serializers.BooleanField(required=False, default=False)
 
 
 def handle_task_creation(
@@ -63,6 +64,7 @@ def handle_task_creation(
             origin_name=origin_name,
             origin_id=str(origin_id),
             tags=metadata.get("tags"),
+            rewrite=metadata["rewrite"],
         )
     return task
 
@@ -159,12 +161,6 @@ def create_task_from_local_file(request):
     clean_data = serializer.validated_data
 
     try:
-        metadata = {
-            "title": clean_data["title"],
-            "description": clean_data["description"],
-            "tags": clean_data["tags"],
-        }
-
         with open(full_path, "rb") as f:
             django_file = LocalFile(
                 f,
@@ -174,7 +170,7 @@ def create_task_from_local_file(request):
 
             task = handle_task_creation(
                 django_file,
-                metadata,
+                clean_data,
                 origin_name=clean_data["origin_name"],
                 origin_id=clean_data["origin_id"],
             )
