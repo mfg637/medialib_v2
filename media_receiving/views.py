@@ -1,13 +1,15 @@
 import json
-import traceback
 import logging
 from pathlib import Path
-from django.http import JsonResponse
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction, models
+from rest_framework.decorators import api_view, parser_classes
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework import serializers
 
 from base.shared_enums.medialib_model import CategoryEnum
 from media_receiving.flow.uploading import process_task_file
@@ -16,6 +18,24 @@ from medialib import models as ml_models
 from .models import Task, AwaitingTaskMetadata, TaskStatusEnum
 
 logger = logging.getLogger(__name__)
+
+
+class TaskMetadataSerializer(serializers.Serializer):
+    title = serializers.CharField(required=False, allow_blank=True, default="")
+    description = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    origin_name = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    origin_id = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    tags = serializers.DictField(
+        child=serializers.ListField(child=serializers.CharField()),
+        required=False,
+        default=dict,
+    )
 
 
 def handle_task_creation(
@@ -47,47 +67,43 @@ def handle_task_creation(
     return task
 
 
-@csrf_exempt
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
 def create_task_api(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
+    uploaded_file = request.FILES.get("file")
+    if not uploaded_file:
+        return Response(
+            {"error": "No file uploaded"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
-    metadata_raw = request.POST.get("metadata")
-    if metadata_raw:
+    metadata_raw = request.data.get("metadata")
+    if metadata_raw and isinstance(metadata_raw, str):
         try:
-            metadata = json.loads(metadata_raw)
+            data = json.loads(metadata_raw)
         except json.JSONDecodeError:
-            return JsonResponse(
+            return Response(
                 {"error": "Invalid JSON in metadata field"}, status=400
             )
     else:
-        metadata = {
-            "title": request.POST.get("title", ""),
-            "description": request.POST.get("description", ""),
-            "origin_name": request.POST.get("origin_name", ""),
-            "origin_id": request.POST.get("origin_id", ""),
-            "tags": request.POST.get("tags"),
-        }
+        data = request.data
 
-    if isinstance(metadata.get("tags"), str):
-        try:
-            metadata["tags"] = json.loads(metadata["tags"])
-        except json.JSONDecodeError:
-            metadata["tags"] = []
-
-    uploaded_file: UploadedFile = request.FILES.get("file")
-    if not uploaded_file:
-        return JsonResponse({"error": "No file uploaded"}, status=400)
+    serializer = TaskMetadataSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    clean_data = serializer.validated_data
 
     try:
         task = handle_task_creation(
             uploaded_file,
-            metadata,
-            origin_name=metadata.get("origin_name", ""),
-            origin_id=metadata.get("origin_id", ""),
+            clean_data,
+            origin_name=clean_data[  # pyright: ignore[reportIndexIssue, reportOptionalSubscript]
+                "origin_name"
+            ],
+            origin_id=clean_data[  # pyright: ignore[reportIndexIssue, reportOptionalSubscript]
+                "origin_id"
+            ],
         )
 
-        return JsonResponse(
+        return Response(
             {
                 "task_id": task.id,
                 "status": "success",
@@ -95,80 +111,114 @@ def create_task_api(request):
                     task.source_hash.hex() if task.source_hash else None
                 ),
             },
-            status=201,
+            status=status.HTTP_201_CREATED,
         )
-
     except Exception as e:
         logger.exception("API Task creation failed")
-        return JsonResponse({"error": str(e)}, status=500)
-
-
-@csrf_exempt
-def create_task_from_local_file(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
-    raw_path = request.POST.get("file_path", "")
-    logger.debug("raw_path: %s", raw_path)
-    if not raw_path:
-        return JsonResponse({"error": "No file_path provided"}, status=400)
-
-    full_path = Path(raw_path)
-
-    logger.debug("full path '%s'", full_path)
-    if not full_path.exists():
-        return JsonResponse(
-            {"error": f"File not found: {full_path}"}, status=404
+        return Response(
+            {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
-    try:
-        tags = json.loads(request.POST.get("tags"))
-        origin_name = request.POST.get("origin_name", "")
-        origin_id = request.POST.get("origin_id", "")
 
+@api_view(["POST"])
+def create_task_from_local_file(request):
+    raw_path = request.data.get("file_path", "")
+    logger.debug("raw_path: %s", raw_path)
+    if not raw_path:
+        return Response(
+            {"error": "No file_path provided"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    full_path = Path(raw_path)
+    logger.debug("full path '%s'", full_path)
+    if not full_path.exists():
+        return Response(
+            {"error": f"File not found: {full_path}"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    data = (
+        request.data.copy()
+        if hasattr(request.data, "copy")
+        else dict(request.data)
+    )
+
+    tags_raw = data.get("tags")
+    if tags_raw and isinstance(tags_raw, str):
+        try:
+            data["tags"] = json.loads(tags_raw)
+        except json.JSONDecodeError:
+            return Response(
+                {"error": "Invalid tags data (JSON expected)"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    serializer = TaskMetadataSerializer(data=data)
+    serializer.is_valid(raise_exception=True)
+    clean_data = serializer.validated_data
+
+    try:
         metadata = {
-            "title": request.POST.get("title", ""),
-            "description": request.POST.get("description", ""),
-            "tags": tags,
+            "title": clean_data["title"],
+            "description": clean_data["description"],
+            "tags": clean_data["tags"],
         }
 
         with open(full_path, "rb") as f:
             django_file = LocalFile(
                 f,
                 name=full_path.name,
-                content_type=request.POST.get("mime_type", None),
-            )
-            task = handle_task_creation(
-                django_file, metadata, origin_name, origin_id
+                content_type=request.data.get("mime_type", None),
             )
 
-            return JsonResponse(
-                {"task_id": task.id, "status": "success"}, status=201
+            task = handle_task_creation(
+                django_file,
+                metadata,
+                origin_name=clean_data["origin_name"],
+                origin_id=clean_data["origin_id"],
             )
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "Invalid tags data (JSON expected)"}, status=400
-        )
+
+            return Response(
+                {"task_id": task.id, "status": "success"},
+                status=status.HTTP_201_CREATED,
+            )
+
     except ValidationError as e:
-        return JsonResponse(
-            {"error": f"Validation Error: {str(e)}"}, status=400
+        return Response(
+            {"error": f"Validation Error: {str(e)}"},
+            status=status.HTTP_400_BAD_REQUEST,
         )
     except Exception as e:
-        traceback.print_exc()
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("API Task creation from local file failed")
+        return Response(
+            {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
-@csrf_exempt
+class OriginInfoSerializer(serializers.Serializer):
+    status = serializers.CharField(default="found")
+    mlid = serializers.IntegerField(source="content.id")
+    url = serializers.SerializerMethodField()
+    slug = serializers.CharField(source="content.slug")
+
+    def get_url(self, obj):
+        return reverse(
+            "content-info", kwargs={"content_slug": obj.content.slug}
+        )
+
+
+@api_view(["GET"])
 def origin_info(request):
-    origin_name = request.GET.get("name")
-    origin_content_id = request.GET.get("id")
+    origin_name = request.query_params.get("name")
+    origin_content_id = request.query_params.get("id")
     if not origin_name or not origin_content_id:
-        return JsonResponse(
+        return Response(
             {
                 "status": "error",
                 "message": "Missing 'name' or 'id' parameters",
             },
-            status=400,
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
     origin_query = (
@@ -179,58 +229,58 @@ def origin_info(request):
         .first()
     )
     if origin_query:
-        content: ml_models.Content = origin_query.content
-        content_url = reverse(
-            "content-info", kwargs={"content_slug": content.slug}
-        )
-        return JsonResponse(
-            {
-                "status": "found",
-                "mlid": content.id,
-                "url": content_url,
-                "slug": content.slug,
-            }
-        )
+        serializer = OriginInfoSerializer(origin_query)
+        return Response(serializer.data)
     else:
-        return JsonResponse({"status": "not found"}, status=404)
+        return Response(
+            {"status": "not found"}, status=status.HTTP_404_NOT_FOUND
+        )
 
 
-@csrf_exempt
+class RegisterAlbumSerializer(serializers.Serializer):
+    origin_name = serializers.CharField(required=True)
+    album_title = serializers.CharField(required=True)
+    content_sequence = serializers.ListField(
+        child=serializers.CharField(), required=False, default=None
+    )
+    ordered_content = serializers.DictField(
+        child=serializers.CharField(), required=False, default=None
+    )
+
+    def validate(self, data):
+        content_seq = data.get("content_sequence")
+        ordered_cnt = data.get("ordered_content")
+
+        if content_seq is not None and ordered_cnt is not None:
+            raise serializers.ValidationError(
+                "Provide either content_sequence or ordered_content, not both"
+            )
+
+        if content_seq is None and ordered_cnt is None:
+            raise serializers.ValidationError("No content data provided")
+
+        return data
+
+
+@api_view(["POST"])
 def register_album_api(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST allowed"}, status=405)
+    serializer = RegisterAlbumSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    clean_data = serializer.validated_data
+
+    origin_name = clean_data["origin_name"]
+    album_title = clean_data["album_title"]
+    content_sequence = clean_data["content_sequence"]
+    ordered_content = clean_data["ordered_content"]
+
+    final_order = {}
+    if content_sequence is not None:
+        for list_index, origin_content_id in enumerate(content_sequence):
+            final_order[list_index + 1] = origin_content_id
+    else:
+        final_order = {int(k): v for k, v in ordered_content.items()}
 
     try:
-        data = json.loads(request.body)
-        origin_name = data.get("origin_name")
-        album_title = data.get("album_title")
-        content_sequence = data.get("content_sequence")
-        ordered_content = data.get("ordered_content")
-
-        if not origin_name or not album_title:
-            return JsonResponse(
-                {"error": "Missing origin_name or album_title"}, status=400
-            )
-
-        if content_sequence is not None and ordered_content is not None:
-            return JsonResponse(
-                {
-                    "error": "Provide either content_sequence or ordered_content, not both"
-                },
-                status=400,
-            )
-
-        final_order = {}
-        if content_sequence is not None:
-            for idx, oid in enumerate(content_sequence):
-                final_order[idx + 1] = oid
-        elif ordered_content is not None:
-            final_order = {int(k): v for k, v in ordered_content.items()}
-        else:
-            return JsonResponse(
-                {"error": "No content data provided"}, status=400
-            )
-
         with transaction.atomic():
             album, created = ml_models.Album.objects.get_or_create(
                 album_name=album_title, defaults={"is_nsfw": False}
@@ -261,8 +311,8 @@ def register_album_api(request):
             creators_unique = set()
             new_orders = []
 
-            for order_val, oid in final_order.items():
-                content_obj = origin_map.get(str(oid))
+            for order_val, origin_content_id in final_order.items():
+                content_obj = origin_map.get(str(origin_content_id))
                 if content_obj:
                     for creator in content_obj.prefetched_creators:
                         creators_unique.add(creator)
@@ -291,7 +341,7 @@ def register_album_api(request):
                     album.album_set = tag
                     album.save()
 
-        return JsonResponse(
+        return Response(
             {
                 "status": "success",
                 "album_id": album.id,
@@ -299,8 +349,12 @@ def register_album_api(request):
                 "items_registered": len(new_orders),
                 "items_total": len(final_order),
                 "creators_found": len(creators_unique),
-            }
+            },
+            status=status.HTTP_200_OK,
         )
 
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.exception("Album registration failed")
+        return Response(
+            {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
