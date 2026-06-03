@@ -45,7 +45,11 @@ def handle_task_creation(
     temp_task = Task(status=TaskStatusEnum.AWAITING)
 
     processed_file = process_task_file(
-        file_obj, temp_task, origin_name, origin_id
+        file_obj,
+        temp_task,
+        origin_name,
+        origin_id,
+        rewrite=metadata["rewrite"],
     )
 
     with transaction.atomic():

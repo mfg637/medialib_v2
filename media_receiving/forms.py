@@ -18,4 +18,4 @@ class TaskUploadForm(forms.ModelForm):
         if file is None:
             raise ValidationError("Uploaded file must not be None")
 
-        return process_task_file(file, instance)
+        return process_task_file(file, instance, instance.rewrite)
