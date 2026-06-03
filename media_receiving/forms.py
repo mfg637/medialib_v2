@@ -9,7 +9,7 @@ from .models import Task
 class TaskUploadForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ["uploaded_file"]
+        fields = ["uploaded_file", "rewrite"]
 
     def clean_uploaded_file(self) -> UploadedFile:
         file: Optional[UploadedFile] = self.cleaned_data.get("uploaded_file")
