@@ -127,12 +127,19 @@ def check_variable_frame_rate_and_estimate_duration(
     return duration_sum, vfr, len(json_data["frames"])
 
 
-def test_videoloop(src_metadata) -> bool:
+def test_videoloop(
+    src_metadata, estimated_duration: Optional[float] = None
+) -> bool:
     audio_streams = find_audio_streams(src_metadata)
     if len(audio_streams) > 0:
         return False
     else:
-        duration = get_duration(src_metadata)
+        try:
+            duration = get_duration(src_metadata)
+        except KeyError:
+            duration = estimated_duration
+        if duration is None:
+            raise ValueError("Invalid duration")
         if duration <= 30.0:
             return True
         else:

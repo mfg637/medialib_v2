@@ -99,7 +99,12 @@ class VideoPassport(BaseMediaPassport):
                 self.pixel_format, None
             )
         )
-        self.is_video_loop = parser.test_videoloop(self.ffprobe_raw_data)
+        if vfr_test_data is not None:
+            self.is_video_loop = parser.test_videoloop(
+                self.ffprobe_raw_data, vfr_test_data[0]
+            )
+        else:
+            self.is_video_loop = parser.test_videoloop(self.ffprobe_raw_data)
         content_type = (
             ContentTypeEnum.VIDEO_LOOP
             if self.is_video_loop

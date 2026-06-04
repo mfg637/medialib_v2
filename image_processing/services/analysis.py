@@ -8,12 +8,14 @@ from image_processing.core import specification
 from . import media_passport
 from pathlib import Path
 
+ANIMATED_IMAGES = {FormatEnum.GIF, FormatEnum.PNG}
+
 
 def create_media_passport(
     source_file: Path, mime_type: str, media_type: MediaType
 ) -> media_passport.BaseMediaPassport:
     if media_type is MediaType.IMAGE:
-        if MIME_TYPE_TO_FORMAT[mime_type] is FormatEnum.GIF:
+        if MIME_TYPE_TO_FORMAT[mime_type] in ANIMATED_IMAGES:
             vfr_test_data = check_variable_frame_rate_and_estimate_duration(
                 source_file
             )

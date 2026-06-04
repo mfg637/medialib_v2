@@ -49,6 +49,8 @@ def detect_file_type(
         mime = magic.from_buffer(file_related.getvalue(), mime=True)
     elif isinstance(file_related, pathlib.Path):
         mime = magic.from_file(file_related, mime=True)
+    else:
+        raise TypeError("file_related expected to be BytesIO or pathlib.Path")
     if (
         mime is MIME_TYPE_BY_FORMAT[FormatEnum.MOV]
         and request_header_mimetype is MIME_TYPE_BY_FORMAT[FormatEnum.MPEG_4]
