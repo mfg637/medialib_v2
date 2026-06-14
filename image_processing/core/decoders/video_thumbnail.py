@@ -6,7 +6,6 @@ import random
 import pyvips
 from typing import Optional
 
-
 front_cover_filenames = {"cover.jpg", "front.jpg"}
 
 
@@ -33,7 +32,9 @@ def find_video_stream(data) -> tuple[dict, bool]:
 
 
 def decode(
-    filepath: pathlib.Path | str, parsed_data: Optional[dict] = None
+    filepath: pathlib.Path | str,
+    parsed_data: Optional[dict] = None,
+    estimated_duration: Optional[float] = None,
 ) -> Image:
     """
     Extract a representative static preview frame from a video file.
@@ -74,7 +75,14 @@ def decode(
         ]
         proc_data = run_subprocess(commandline)
     else:
-        duration = float(data["format"]["duration"])
+        raw_duration = data["format"].get("duration", None)
+        if raw_duration is None and estimated_duration is not None:
+            raw_duration = estimated_duration
+        else:
+            raise ValueError(
+                "Video must have duration or at least estimated duration"
+            )
+        duration = float(raw_duration)
         start_duration = duration * 0.1
         duration_range = duration * 0.8
         seek_timestamp = duration_range * random.random() + start_duration

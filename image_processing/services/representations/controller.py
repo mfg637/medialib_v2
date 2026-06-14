@@ -1,3 +1,4 @@
+from re import escape
 from base.shared_knowledge.file_format import FormatEnum, MIME_TYPE_TO_FORMAT
 from image_processing.core.decoders import video_thumbnail
 from .common import Representation
@@ -51,7 +52,9 @@ def make_representations(
         representations = []
         try:
             thumbnail = video_thumbnail.decode(
-                passport.source_file, parsed_data=passport.ffprobe_raw_data
+                passport.source_file,
+                parsed_data=passport.ffprobe_raw_data,
+                estimated_duration=passport.estimated_duration,
             )
         except ValueError as e:
             if passport.mime == "image/gif":
