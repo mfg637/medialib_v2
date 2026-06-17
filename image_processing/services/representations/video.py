@@ -1,3 +1,4 @@
+from base.shared_knowledge.file_format import FormatEnum
 from ..media_passport import VideoPassport
 from base.shared_enums.medialib_model import RepresentationTypeEnum
 from image_processing.core.video import ffmpeg
@@ -184,11 +185,15 @@ def transcode_animation_loop(
             ]
         )
         is_vfr = passport.is_vfr if passport.is_vfr is not None else False
+        quality = 24
+        if passport.file_format is FormatEnum.PNG:
+            quality = 18
         mpeg4_video.encode(
             passport.source_file,
             output_file,
             is_vfr,
             data=passport.ffprobe_raw_data,
+            quality=quality,
         )
         tmp_passport = VideoPassport(
             output_file,
