@@ -1,18 +1,11 @@
 from django.db import models
-import enum
 from medialib.models import Content
 from django.core.exceptions import ValidationError
 from base.view import format_file_size
 from base.shared_knowledge.origin import get_origin_type
 from base.shared_enums.image_processing_model import MediaType
+from base.shared_enums.media_receiving_model import TaskStatusEnum
 from media_receiving.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
-
-
-class TaskStatusEnum(enum.IntEnum):
-    AWAITING = 0
-    DONE = 1
-    ERROR = 2
-    PROCESSING = 3
 
 
 class Task(models.Model):
