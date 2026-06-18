@@ -78,7 +78,7 @@ def decode(
         raw_duration = data["format"].get("duration", None)
         if raw_duration is None and estimated_duration is not None:
             raw_duration = estimated_duration
-        else:
+        elif raw_duration is None:
             raise ValueError(
                 "Video must have duration or at least estimated duration"
             )
