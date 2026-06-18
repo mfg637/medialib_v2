@@ -17,6 +17,40 @@ def validate_media_format(mime: str) -> None:
         raise ValidationError(f"File type {mime} not allowed")
 
 
+def validate_file_not_empty(value: Path | UploadedFile | str):
+    """
+    Validates that an uploaded file or file path is not empty using pathlib.
+    """
+    if hasattr(value, "size"):
+        if value.size == 0:
+            raise ValidationError(
+                _("The file '%(name)s' cannot be empty."),
+                params={"name": file_path.name},
+            )
+    else:
+        file_path: Path = (
+            Path(value.path) if hasattr(value, "path") else Path(value)
+        )
+
+        if not file_path.exists():
+            raise ValidationError(
+                _("The file at '%(path)s' does not exist."),
+                params={"path": file_path},
+            )
+
+        if not file_path.is_file():
+            raise ValidationError(
+                _("'%(path)s' is not a valid file."),
+                params={"path": file_path},
+            )
+
+        if file_path.stat().st_size == 0:
+            raise ValidationError(
+                _("The file '%(name)s' cannot be empty."),
+                params={"name": file_path.name},
+            )
+
+
 def calc_hash_and_find(
     source_file: Path | UploadedFile | LocalFile,
 ) -> tuple[

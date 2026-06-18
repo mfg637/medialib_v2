@@ -1,6 +1,7 @@
 from .file import validate_media_format
 from .file import calc_hash_and_find as check_is_file_unique
 from .file import prevent_duplication as prevent_file_duplication
+from .file import validate_file_not_empty
 from . import file
 
 __all__ = [
@@ -8,4 +9,5 @@ __all__ = [
     "validate_media_format",
     "check_is_file_unique",
     "prevent_file_duplication",
+    "validate_file_not_empty",
 ]

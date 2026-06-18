@@ -13,6 +13,7 @@ def process_task_file(
     rewrite: bool = False,
 ) -> UploadedFile | LocalFile:
     mime, media_type = file_processing.get_file_type(uploaded_file)
+    validation.validate_file_not_empty(uploaded_file)
     validation.validate_media_format(mime)
     if rewrite:
         _, _, source_hash = calc_hash_and_find(uploaded_file)
