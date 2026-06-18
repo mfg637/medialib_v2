@@ -22,6 +22,7 @@ class Task(models.Model):
         (TaskStatusEnum.DONE, "Done!"),
         (TaskStatusEnum.ERROR, "ERROR!!!"),
         (TaskStatusEnum.PROCESSING, "Processing…"),
+        (TaskStatusEnum.DISCARDED, "Discarded"),
     ]
     media_type = models.CharField(
         max_length=10, choices=MediaType, null=True, blank=True

@@ -6,3 +6,4 @@ class TaskStatusEnum(enum.IntEnum):
     DONE = 1
     ERROR = 2
     PROCESSING = 3
+    DISCARDED = 4

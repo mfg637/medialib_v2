@@ -1,4 +1,5 @@
 import traceback
+import logging
 from pathlib import Path
 from typing import Optional, List, Type, TYPE_CHECKING
 from abc import ABC, abstractmethod
@@ -36,6 +37,12 @@ if TYPE_CHECKING:
         ContentOrigin,
         ContentRedirect,
     )
+
+logger = logging.getLogger(__name__)
+
+
+class DiscardedProcessing(Exception):
+    pass
 
 
 class BaseTaskProcessor(ABC):
@@ -167,12 +174,23 @@ class InitialTaskProcessor(BaseTaskProcessor):
 
         if not task.source_hash:
             raise ValueError(f"invalid source_hash in task {task.id}")
-        return ContentModel.objects.create(
-            title=title,
-            description=description,
-            content_type=passport.content_type,
-            source_hash=task.source_hash,
+        existing_content = ContentModel.objects.filter(
+            source_hash=task.source_hash
         )
+        if existing_content.exists():
+            task_file.unlink(missing_ok=True)
+            task.uploaded_file = None
+            task.save()
+            if t_meta is not None:
+                t_meta.delete()
+            raise DiscardedProcessing("Content already exists")
+        else:
+            return ContentModel.objects.create(
+                title=title,
+                description=description,
+                content_type=passport.content_type,
+                source_hash=task.source_hash,
+            )
 
     def manage_origins(self, content, t_meta):
         ContentOriginModel: Type[ContentOrigin] = apps.get_model(
@@ -268,7 +286,12 @@ def process_task(task_id: int):
                 initial_processor.process_task()
         else:
             initial_processor.process_task()
+    except DiscardedProcessing as e:
+        TaskModel.objects.filter(id=task_id).update(
+            status=TaskStatusEnum.DISCARDED
+        )
 
+        logger.warning("Discarded processing with exception: %s", e)
     except Exception as e:
         TaskModel.objects.filter(id=task_id).update(
             status=TaskStatusEnum.ERROR
