@@ -57,7 +57,7 @@ def make_representations(
                 estimated_duration=passport.estimated_duration,
             )
         except ValueError as e:
-            if passport.mime == "image/gif":
+            if passport.file_format in {FormatEnum.GIF, FormatEnum.PNG}:
                 video_thumbnail_strategy = DefaultRepresentationStrategy()
             else:
                 raise e
