@@ -241,10 +241,16 @@ class RegisterAlbumSerializer(serializers.Serializer):
     origin_name = serializers.CharField(required=True)
     album_title = serializers.CharField(required=True)
     content_sequence = serializers.ListField(
-        child=serializers.CharField(), required=False, default=None
+        child=serializers.CharField(),
+        required=False,
+        default=None,
+        allow_null=True,
     )
     ordered_content = serializers.DictField(
-        child=serializers.CharField(), required=False, default=None
+        child=serializers.CharField(),
+        required=False,
+        default=None,
+        allow_null=True,
     )
 
     def validate(self, data):
