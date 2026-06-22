@@ -64,7 +64,9 @@ class Task(models.Model):
                         {"source_hash": "Found task with same source_hash."}
                     )
             else:
-                if duplicate_task.exclude(status=TaskStatusEnum.DONE).exists():
+                if duplicate_task.exclude(
+                    status__in=[TaskStatusEnum.DONE, TaskStatusEnum.DISCARDED]
+                ).exists():
                     raise ValidationError(
                         {
                             "source_hash": "Cannot rewrite: active task with same source_hash exists."
