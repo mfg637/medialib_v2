@@ -217,7 +217,7 @@ def get_representation_view(
                 response["Content-Disposition"] = (
                     f'attachment; filename="{repr_file_name}"'
                 )
-                response["Content-Type"] = representation.get_mime_type()
+            response["Content-Type"] = representation.get_mime_type()
             return response
         else:
             return redirect(f"/{MEDIA_URL}{rel_path}")
