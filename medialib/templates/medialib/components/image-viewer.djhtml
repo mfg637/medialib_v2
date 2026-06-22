@@ -461,6 +461,9 @@ class ImageView extends HTMLElement {
             img.style.visibility = 'visible';
             this.dispatchEvent(new CustomEvent('content-loaded', { bubbles: true }));
         };
+        img.addEventListener('error', (event) => {
+          console.error('Image failed to load:', event);
+        });
     }
 
     applyGeometry(img, mode, containerW, containerH) {
