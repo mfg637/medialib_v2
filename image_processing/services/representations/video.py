@@ -97,6 +97,7 @@ def make_webm_representation(
         max_video_bitrate=vp9_levels[1].bitrate_limit_kbps,
         copy_audio=is_audio_compatible,
         data=passport.ffprobe_raw_data,
+        quality=24,
     )
     tmp_passport = VideoPassport(
         output_file,
