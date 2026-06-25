@@ -41,6 +41,7 @@ AUDIO_CODEC_BY_VIDEO_CONTAINER: dict[VideoContainers, AudioCodecs] = {
 VIDEO_CONTAINER_COMPATIBLE_CODECS: dict[VideoContainers, set[AudioCodecs]] = {
     VideoContainers.MPEG_4: {
         AudioCodecs.AAC,
+        AudioCodecs.Opus,
     },
     VideoContainers.WEBM: {
         AudioCodecs.Vorbis,

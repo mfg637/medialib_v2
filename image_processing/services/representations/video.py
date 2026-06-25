@@ -10,6 +10,7 @@ import functools
 import logging
 
 vp9_levels = specification.video.LEVELS_VP9
+av1_levels = specification.video.LEVELS_AV1
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +25,8 @@ def safe_media_representation(
             logger.error(
                 f"Failed to create representation in {func.__name__}: {e}"
             )
-            return None
+            # return None
+            raise e
 
     return wrapper
 
@@ -94,7 +96,6 @@ def make_webm_representation(
         vp9_levels[compatibility_level].min_size,
         vp9_levels[compatibility_level].max_size,
         vp9_levels[compatibility_level].fps,
-        max_video_bitrate=vp9_levels[1].bitrate_limit_kbps,
         copy_audio=is_audio_compatible,
         data=passport.ffprobe_raw_data,
         quality=24,
@@ -105,6 +106,65 @@ def make_webm_representation(
             specification.containers.VideoContainers.WEBM
         ],
     )
+    return common.Representation(
+        compatibility_level,
+        output_file,
+        tmp_passport.width,
+        tmp_passport.height,
+        RepresentationTypeEnum.VIDEO,
+        tmp_passport.file_format,
+        tmp_passport.calc_xxh3_64(),
+        tmp_passport.codec_string,
+    )
+
+
+@safe_media_representation
+def make_mp4_av1_representation(
+    passport: VideoPassport,
+    compatibility_level: int,
+    max_video_bitrate: int | None = None,
+) -> common.Representation:
+    output_file = passport.source_file.with_stem(
+        "{}_cl{}".format(passport.source_file.stem, compatibility_level)
+    ).with_suffix(
+        specification.containers.VIDEO_CONTAINDER_FILE_SUFFIX[
+            specification.containers.VideoContainers.MPEG_4
+        ]
+    )
+
+    is_audio_compatible = False
+    if passport.audio_codec is not None:
+        is_audio_compatible = (
+            passport.audio_codec in ["opus", "aac"]
+            or passport.audio_codec
+            in specification.audio.VIDEO_CONTAINER_COMPATIBLE_CODECS[
+                specification.containers.VideoContainers.MPEG_4
+            ]
+        )
+    preset = 4
+    if passport.min_size > 1080:
+        preset = 5
+
+    mpeg4_video.encode_av1(
+        passport.source_file,
+        output_file,
+        av1_levels[compatibility_level].min_size,
+        av1_levels[compatibility_level].max_size,
+        av1_levels[compatibility_level].fps,
+        copy_audio=is_audio_compatible,
+        data=passport.ffprobe_raw_data,
+        quality=24,
+        preset=preset,
+        max_video_bitrate=max_video_bitrate,
+    )
+
+    tmp_passport = VideoPassport(
+        output_file,
+        specification.containers.VIDEO_CONTAINER_TO_MIME_TYPE[
+            specification.containers.VideoContainers.MPEG_4
+        ],
+    )
+
     return common.Representation(
         compatibility_level,
         output_file,
@@ -130,13 +190,19 @@ def transcode_source_default(
         if cl2_representation is not None:
             representation_list.append(cl2_representation)
     if (
-        passport.min_size > vp9_levels[2].min_size
-        or passport.max_size > vp9_levels[2].max_size
-        or passport.fps > vp9_levels[2].fps
+        passport.min_size > av1_levels[2].min_size
+        or passport.max_size > av1_levels[2].max_size
     ):
-        cl3_representation = make_webm_representation(passport, 3)
+        cl3_representation = make_mp4_av1_representation(passport, 3, 20_000)
         if cl3_representation is not None:
             representation_list.append(cl3_representation)
+    if (
+        passport.min_size > av1_levels[3].min_size
+        or passport.max_size > av1_levels[3].max_size
+    ):
+        cl4_representation = make_mp4_av1_representation(passport, 4)
+        if cl4_representation is not None:
+            representation_list.append(cl4_representation)
     return representation_list
 
 
@@ -267,7 +333,10 @@ def transcode_webm_source(
         or passport.max_size > vp9_levels[2].max_size
         or passport.fps > vp9_levels[2].fps
     ):
-        cl3_representation = make_webm_representation(passport, 3)
+        cl3_representation = make_mp4_av1_representation(passport, 3, 20_000)
         if cl3_representation is not None:
             representation_list.append(cl3_representation)
+        cl4_representation = make_mp4_av1_representation(passport, 4)
+        if cl4_representation is not None:
+            representation_list.append(cl4_representation)
     return representation_list

@@ -75,7 +75,7 @@ def build_x264_commandline(
     quality: str | int,
     gop_size: int | str,
     vfilters: str,
-    rewrite: bool = False,
+    rewrite: bool = True,
 ) -> list[str]:
     commandline = [
         "ffmpeg",
@@ -155,6 +155,7 @@ def build_vpx_vp9_commandline(
     quality: str | int,
     gop_size: int | str,
     tile_columns: int | str,
+    tile_rows: int | str,
     pass_log_prefix: Path | str,
     vfilters: Optional[str],
     *,
@@ -166,7 +167,7 @@ def build_vpx_vp9_commandline(
     max_video_bitrate: int | str | None = None,
     cpu_used: int | str = 4,
     level: str | float | None = None,
-    rewrite: bool = False,
+    rewrite: bool = True,
 ) -> list[str]:
     commandline = ["ffmpeg"]
     if rewrite or pass_index == 1:
@@ -211,6 +212,8 @@ def build_vpx_vp9_commandline(
         str(encoding_threads),
         "-tile-columns",
         str(tile_columns),
+        "-tile-rows",
+        str(tile_rows),
         "-g",
         str(gop_size),
         "-passlogfile",
@@ -247,4 +250,77 @@ def build_vpx_vp9_commandline(
             "webm",
             str(output_file),
         ]
+    return commandline
+
+
+def build_svt_av1_commandline(
+    input_file: Path | str,
+    output_file: Path | str,
+    quality: str | int,
+    gop_size: int | str,
+    vfilters: Optional[str],
+    *,
+    tile_columns: int = 1,
+    tile_rows: int = 0,
+    pixel_format: str = "yuv420p10le",
+    audio_codec: str | None = "libopus",
+    audio_bitrate: int | str = 128,
+    max_video_bitrate_kbps: int | None = None,
+    preset: int | str = 4,
+    rewrite: bool = True,
+) -> list[str]:
+    commandline = ["ffmpeg"]
+    if rewrite:
+        commandline += ["-y"]
+
+    commandline += [
+        "-loglevel",
+        "warning",
+        "-i",
+        str(input_file),
+    ]
+
+    if vfilters is not None:
+        commandline += [
+            "-vf",
+            vfilters,
+        ]
+
+    svt_params = [
+        "tune=0",
+        f"preset={preset}",
+    ]
+
+    svt_params.append(f"tile-columns={tile_columns}")
+    svt_params.append(f"tile-rows={tile_rows}")
+
+    if max_video_bitrate_kbps is not None:
+        svt_params.append(f"mbr={max_video_bitrate_kbps}")
+
+    commandline += [
+        "-pix_fmt",
+        pixel_format,
+        "-c:v",
+        "libsvtav1",
+        "-crf",
+        str(quality),
+        "-g",
+        str(gop_size),
+        "-svtav1-params",
+        ":".join(svt_params),
+    ]
+
+    if audio_codec is None:
+        commandline += ["-an"]
+    elif audio_codec == "copy":
+        commandline += ["-c:a", "copy"]
+    else:
+        commandline += ["-c:a", audio_codec, "-b:a", f"{audio_bitrate}k"]
+
+    commandline += [
+        "-f",
+        "mp4",
+        str(output_file),
+    ]
+
     return commandline

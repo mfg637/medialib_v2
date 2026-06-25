@@ -24,7 +24,7 @@ def encode(
     max_video_bitrate: int | None = None,
     video_level: str | float | None = None,
     audio_bitrate: int = 96,
-    rewrite: bool = False,
+    rewrite: bool = True,
     data: dict | None = None,
 ):
     video_bitrate_limit = None
@@ -45,6 +45,12 @@ def encode(
             video_stream
         )
         tile_columns_log2 = transcoding.get_vp9_tile_columns(width)
+        tile_rows_log2 = 0
+        if height > width:
+            tile_rows_log2, tile_columns_log2 = (
+                tile_columns_log2,
+                tile_rows_log2,
+            )
         fps = parser.get_fps(video_stream)
         gop_size = round(fps * 10)
         vfilters = transcoding.build_vfilters(
@@ -60,6 +66,7 @@ def encode(
             quality,
             gop_size,
             tile_columns_log2,
+            tile_rows_log2,
             log_prefix,
             vfilters,
             pass_index=1,
@@ -73,9 +80,10 @@ def encode(
             proc_1 = run_subprocess(pass_1_commandline)
             proc_1.check_returncode()
         except subprocess.CalledProcessError as e:
-            logger.error(
-                f"FFmpeg Pass 1 failed. Command: {' '.join(pass_1_commandline)}"
+            command_line_str = " ".join(
+                [str(item) for item in pass_1_commandline]
             )
+            logger.error(f"FFmpeg Pass 1 failed. Command: {command_line_str}")
             print_stderr(proc_1)
             raise e
         pass_2_commandline = transcoding.build_vpx_vp9_commandline(
@@ -84,6 +92,7 @@ def encode(
             quality,
             gop_size,
             tile_columns_log2,
+            tile_rows_log2,
             log_prefix,
             vfilters,
             pass_index=2,
@@ -102,8 +111,9 @@ def encode(
                 output_file.unlink(missing_ok=True)
             else:
                 Path(output_file).unlink(missing_ok=True)
-            logger.error(
-                f"FFmpeg Pass 2 failed. Command: {' '.join(pass_2_commandline)}"
+            command_line_str = " ".join(
+                [str(item) for item in pass_2_commandline]
             )
+            logger.error(f"FFmpeg Pass 2 failed. Command: {command_line_str}")
             print_stderr(proc_2)
             raise e
