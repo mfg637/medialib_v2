@@ -44,7 +44,7 @@ def encode(
         width, height, src_min_size, src_max_size = parser.get_video_size(
             video_stream
         )
-        tile_columns_log2 = transcoding.get_vp9_tile_columns(width)
+        tile_columns_log2 = transcoding.get_vp9_tile_columns(src_max_size)
         tile_rows_log2 = 0
         if height > width:
             tile_rows_log2, tile_columns_log2 = (

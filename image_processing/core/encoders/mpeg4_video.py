@@ -74,9 +74,9 @@ def encode_av1(
     if data is None:
         data = probe(source_file)
     video_stream = parser.find_video_stream(data)
-    width, height, _, _ = parser.get_video_size(video_stream)
+    width, height, _, src_max_size = parser.get_video_size(video_stream)
 
-    cols = transcoding.get_vp9_tile_columns(width)
+    cols = transcoding.get_vp9_tile_columns(src_max_size)
     rows = 0
     if height > width:
         cols, rows = rows, cols
