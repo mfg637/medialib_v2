@@ -5,11 +5,16 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction, models
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import (
+    api_view,
+    parser_classes,
+    permission_classes,
+)
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import serializers
+from rest_framework.permissions import BasePermission
 
 from base.shared_enums.medialib_model import CategoryEnum
 from media_receiving.flow.uploading import process_task_file
@@ -18,6 +23,14 @@ from medialib import models as ml_models
 from .models import Task, AwaitingTaskMetadata, TaskStatusEnum
 
 logger = logging.getLogger(__name__)
+
+
+class IsContentProvider(BasePermission):
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        return request.user.groups.filter(name="Content Providers").exists()
 
 
 class TaskMetadataSerializer(serializers.Serializer):
@@ -75,6 +88,7 @@ def handle_task_creation(
 
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
+@permission_classes([IsContentProvider])
 def create_task_api(request):
     uploaded_file = request.FILES.get("file")
     if not uploaded_file:
@@ -127,6 +141,7 @@ def create_task_api(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsContentProvider])
 def create_task_from_local_file(request):
     raw_path = request.data.get("file_path", "")
     logger.debug("raw_path: %s", raw_path)
@@ -209,6 +224,7 @@ class OriginInfoSerializer(serializers.Serializer):
 
 
 @api_view(["GET"])
+@permission_classes([IsContentProvider])
 def origin_info(request):
     origin_name = request.query_params.get("name")
     origin_content_id = request.query_params.get("id")
@@ -269,6 +285,7 @@ class RegisterAlbumSerializer(serializers.Serializer):
 
 
 @api_view(["POST"])
+@permission_classes([IsContentProvider])
 def register_album_api(request):
     serializer = RegisterAlbumSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
