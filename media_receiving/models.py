@@ -11,6 +11,7 @@ from media_receiving.config import TASK_SAVE_DIRECTORY, MAX_FILE_LENGTH
 class Task(models.Model):
     id: int
     result: models.Manager["TaskResult"]
+    metadata: "AwaitingTaskMetadata"
     created_at = models.DateTimeField(auto_now_add=True)
     uploaded_file = models.FileField(
         upload_to=TASK_SAVE_DIRECTORY,

@@ -1,5 +1,6 @@
 import traceback
 import logging
+import dataclasses
 from pathlib import Path
 from typing import Optional, List, Type, TYPE_CHECKING
 from abc import ABC, abstractmethod
@@ -165,6 +166,15 @@ class BaseTaskProcessor(ABC):
                 t_meta.delete()
 
 
+def discard_task(task: Task):
+    task_file = Path(task.uploaded_file.path)
+    task_file.unlink(missing_ok=True)
+    task.uploaded_file = None
+    task.save()
+    if task.metadata is not None:
+        task.metadata.delete()
+
+
 class InitialTaskProcessor(BaseTaskProcessor):
     def get_or_create_content(self, task, passport, t_meta, task_file):
         ContentModel: Type[Content] = apps.get_model("medialib", "Content")
@@ -305,6 +315,12 @@ def process_task(task_id: int):
         raise e
 
 
+@dataclasses.dataclass(frozen=True)
+class TaskOrigin:
+    name: str
+    origin_id: str
+
+
 @action()
 def run_processing_selected_tasks(modeladmin, request, queryset):
     from media_receiving.models import (
@@ -314,10 +330,24 @@ def run_processing_selected_tasks(modeladmin, request, queryset):
     pending_tasks = queryset.filter(
         status__in=[TaskStatusEnum.AWAITING, TaskStatusEnum.ERROR]
     )
+    task_origins: set[TaskOrigin] = set()
     for task in pending_tasks:
-        process_task.delay(task.id)
-        task.status = TaskStatusEnum.PROCESSING
-        task.save()
+        current_task_origin = None
+        discarded = False
+        if task.metadata.origin_name and task.metadata.origin_id:
+            current_task_origin = TaskOrigin(
+                task.metadata.origin_name, task.metadata.origin_id
+            )
+            if current_task_origin in task_origins:
+                discarded = True
+                task.status = TaskStatusEnum.DISCARDED
+                discard_task(task)
+            else:
+                task_origins.add(current_task_origin)
+        if not discarded:
+            process_task.delay(task.id)
+            task.status = TaskStatusEnum.PROCESSING
+            task.save()
     modeladmin.message_user(
         request, f"Launched tasks: {pending_tasks.count()}"
     )
