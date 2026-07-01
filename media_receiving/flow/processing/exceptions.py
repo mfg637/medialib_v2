@@ -1,0 +1,2 @@
+class DiscardedProcessing(Exception):
+    pass
