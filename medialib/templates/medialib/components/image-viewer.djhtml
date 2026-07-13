@@ -474,10 +474,30 @@ class ImageView extends HTMLElement {
 
         const naturalW = img.naturalWidth;
         const naturalH = img.naturalHeight;
+
+        if (!naturalW || !naturalH) {
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            return;
+        }
+
         const imgRatio = naturalW / naturalH;
         const screenRatio = containerW / containerH;
 
-        if (mode === 'fill') {
+        if (mode === 'fit') {
+            if ((naturalW < containerW) && (naturalH < containerH)){
+                img.style.width = `${naturalW}px`;
+                img.style.height = `${naturalH}px`;
+            } else if (imgRatio > screenRatio) {
+                img.style.width = '100vw';
+                img.style.height = 'auto';
+            } else {
+                img.style.width = 'auto';
+                img.style.height = '100vh';
+            }
+        } 
+        else if (mode === 'fill') {
             if (imgRatio > screenRatio) {
                 img.style.width = 'auto';
                 img.style.height = '100vh';
