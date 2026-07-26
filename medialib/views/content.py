@@ -70,10 +70,13 @@ def _content_info(request: HttpRequest, content: Content) -> HttpResponse:
         if not is_safe:
             raise PermissionDenied("This content is unavailable.")
     grouped_tags: dict[str, list[tuple[int, str]]] = {}
+    plain_tags_list = []
     for tag in all_tags:
         if tag.category not in grouped_tags:
             grouped_tags[tag.category] = []
         grouped_tags[tag.category].append((tag.id, tag.title))
+        plain_tags_list.append(tag.title)
+    plain_tags = ", ".join(plain_tags_list)
     all_reprs = content.representation_set.all()
     has_image = any(
         r.repr_type == RepresentationTypeEnum.IMAGE.value for r in all_reprs
@@ -107,6 +110,7 @@ def _content_info(request: HttpRequest, content: Content) -> HttpResponse:
             "base_src": base_src,
             "video_representations": video_representations,
             "grouped_tags": grouped_tags,
+            "plain_tags": plain_tags,
             "similar_content": similar_content,
             "user_collections": user_collections,
         },

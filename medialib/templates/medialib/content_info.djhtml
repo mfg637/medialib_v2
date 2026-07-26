@@ -446,6 +446,12 @@
                 {% empty %}
                     <p class="no-tags">No tags assigned.</p>
                 {% endfor %}
+                {% if plain_tags %}
+                    <details>
+                        <summary>Click for plain tags list</summary>
+                        <p>{{ plain_tags }}</p>
+                    </details>
+                {% endif %}
             </section>
             {% if content.album_item.exists %}
                 <section class="info-section-element">
