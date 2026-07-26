@@ -81,9 +81,20 @@ def generate_title_slug_filename(
     safe_title = (
         content.title.replace("/", "_") if content.title else "Untitled"
     )
+    valid_origin: Optional[ContentOrigin] = (
+        content.origin_set.exclude(origin_id="")
+        .filter(alternate=False)
+        .first()
+    )
     for current_suffix in FILE_SUFFIX_TO_FORMAT:
         if safe_title.endswith(current_suffix):
             safe_title = safe_title.removesuffix(current_suffix)
+    if valid_origin:
+        origin_info = valid_origin.get_origin_info()
+        if origin_info.origin_id is not None:
+            return quote(
+                f"{origin_info.get_prefix()}{origin_info.origin_id} {safe_title}{representation_suffix}"
+            )
     return quote(f"mlid{content.id} {safe_title}{representation_suffix}")
 
 

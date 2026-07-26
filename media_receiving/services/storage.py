@@ -28,7 +28,7 @@ def generate_representation_path(
 
     base_name = f"mlid{content.id} {src_hash_b64}"
     if origin_class and origin_id:
-        safe_id = origin_class.filesystem_safe_content_id(origin_id)
+        safe_id = origin_class.filesystem_safe_content_id_s(origin_id)
         base_name += f" {origin_class().get_prefix()}{safe_id}"
 
     size_str = f"_{width}x{height}" if width and height else ""

@@ -26,6 +26,10 @@ class ContentOrigin(models.Model):
         origin_class: origin.AbstractOriginType = origin_type()
         return origin_class.generate_url(self.origin_id)
 
+    def get_origin_info(self) -> origin.AbstractOriginType:
+        origin_id = self.origin_id if self.origin_id else None
+        return origin.ORIGIN_TYPE[self.name](origin_id, self.alternate)
+
     class Meta:
         constraints = [
             models.UniqueConstraint(
