@@ -1,11 +1,18 @@
 import typing
+from typing import Optional
 import abc
 import re
 
 
 class AbstractOriginType(abc.ABC):
+    def __init__(
+        self, origin_id: Optional[str] = None, alternate: bool = False
+    ) -> None:
+        self.origin_id = origin_id
+        self.alternate = alternate
+
     @abc.abstractmethod
-    def generate_url(self, origin_content_id: str) -> str:
+    def generate_url(self, origin_content_id: Optional[str] = None) -> str:
         pass
 
     @abc.abstractmethod
@@ -19,9 +26,29 @@ class AbstractOriginType(abc.ABC):
         """
         pass
 
+    @abc.abstractmethod
+    def get_name(self) -> str:
+        pass
+
     @staticmethod
-    def filesystem_safe_content_id(origin_content_id: str):
+    def filesystem_safe_content_id_s(origin_content_id: str):
         return origin_content_id.replace("#", "_")
+
+    def _validate_origin_id(
+        self, origin_content_id: Optional[str] = None
+    ) -> str:
+        if origin_content_id is None:
+            if self.origin_id is not None:
+                origin_content_id = self.origin_id
+            else:
+                raise ValueError("origin_id is unset")
+        return origin_content_id
+
+    def filesystem_safe_content_id(
+        self, origin_content_id: Optional[str] = None
+    ):
+        origin_content_id = self._validate_origin_id(origin_content_id)
+        return self.filesystem_safe_content_id_s(origin_content_id)
 
 
 class SimpleOriginType(AbstractOriginType):
@@ -29,7 +56,8 @@ class SimpleOriginType(AbstractOriginType):
     def _get_template_string(self) -> str:
         pass
 
-    def generate_url(self, origin_content_id):
+    def generate_url(self, origin_content_id: Optional[str] = None):
+        origin_content_id = self._validate_origin_id(origin_content_id)
         return self._get_template_string().format(origin_content_id)
 
 
@@ -39,6 +67,9 @@ class DerpibooruOrigin(SimpleOriginType):
 
     def get_prefix(self):
         return "db"
+
+    def get_name(self) -> str:
+        return "derpibooru"
 
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://derpibooru.org/images/"):
@@ -52,6 +83,9 @@ class PonybooruOrigin(SimpleOriginType):
     def get_prefix(self):
         return "pb"
 
+    def get_name(self) -> str:
+        return "ponybooru"
+
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://ponybooru.org/images/"):
             return url.split("?", maxsplit=1)[0].split("/")[-1]
@@ -63,6 +97,9 @@ class TwibooruOrigin(SimpleOriginType):
 
     def get_prefix(self):
         return "tb"
+
+    def get_name(self) -> str:
+        return "twibooru"
 
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://twibooru.org/"):
@@ -79,8 +116,26 @@ class E621Origin(SimpleOriginType):
     def get_prefix(self):
         return "ef"
 
+    def get_name(self) -> str:
+        return "e621"
+
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://e621.net/posts/"):
+            return url.split("?", maxsplit=1)[0].split("/")[-1]
+
+
+class E6AIOrigin(SimpleOriginType):
+    def _get_template_string(self):
+        return "https://e6ai.net/posts/{}"
+
+    def get_prefix(self):
+        return "ea"
+
+    def get_name(self) -> str:
+        return "e6ai"
+
+    def parse_url(self, url: str) -> typing.Optional[str]:
+        if url.startswith("https://e6ai.net/posts/"):
             return url.split("?", maxsplit=1)[0].split("/")[-1]
 
 
@@ -90,6 +145,9 @@ class FurbooruOrigin(SimpleOriginType):
 
     def get_prefix(self):
         return "fb"
+
+    def get_name(self) -> str:
+        return "furbooru"
 
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://furbooru.org/images/"):
@@ -103,6 +161,9 @@ class TantabusAIOrigin(SimpleOriginType):
     def get_prefix(self):
         return "ta"
 
+    def get_name(self) -> str:
+        return "tantabus"
+
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://tantabus.ai/images/"):
             return url.split("?", maxsplit=1)[0].split("/")[-1]
@@ -114,6 +175,9 @@ class CivitAIOrigin(SimpleOriginType):
 
     def get_prefix(self):
         return "ca"
+
+    def get_name(self) -> str:
+        return "civit-ai"
 
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://civitai.com/images/"):
@@ -127,6 +191,9 @@ class FurAffinityOrigin(SimpleOriginType):
     def get_prefix(self):
         return "fa"
 
+    def get_name(self) -> str:
+        return "furaffinity"
+
     def parse_url(self, url: str) -> typing.Optional[str]:
         if url.startswith("https://www.furaffinity.net/view/"):
             return url.split("?", maxsplit=1)[0].split("/")[-1]
@@ -137,7 +204,8 @@ class TwitterXOrigin(AbstractOriginType):
         r"https?://(?:x|twitter)\.com/(?P<user>[^/]+)/status/(?P<status_id>\d+)(?:/photo/(?P<photo_id>\d+))?"
     )
 
-    def generate_url(self, origin_content_id):
+    def generate_url(self, origin_content_id: Optional[str] = None):
+        origin_content_id = self._validate_origin_id(origin_content_id)
         id_parts: list[str] = origin_content_id.split("#")
         if len(id_parts) == 3:
             return (
@@ -151,6 +219,9 @@ class TwitterXOrigin(AbstractOriginType):
 
     def get_prefix(self):
         return "tx-"
+
+    def get_name(self) -> str:
+        return "twitter"
 
     def parse_url(self, url: str) -> typing.Optional[str]:
         match = self._URL_PATTERN.search(url)
@@ -172,7 +243,8 @@ class DeviantArtOrigin(AbstractOriginType):
         r"https?://(?:www\.)?deviantart\.com/(?P<user>[^/]+)/art/.*-(?P<content_id>\d+)/?$"
     )
 
-    def generate_url(self, origin_content_id):
+    def generate_url(self, origin_content_id: Optional[str] = None):
+        origin_content_id = self._validate_origin_id(origin_content_id)
         id_parts: list[str] = origin_content_id.split("#")
         if len(id_parts) == 2:
             return (
@@ -194,12 +266,16 @@ class DeviantArtOrigin(AbstractOriginType):
     def get_prefix(self):
         return "da-"
 
+    def get_name(self) -> str:
+        return "deviantart"
+
 
 ORIGIN_TYPE: dict[str, typing.Type[AbstractOriginType]] = {
     "derpibooru": DerpibooruOrigin,
     "ponybooru": PonybooruOrigin,
     "twibooru": TwibooruOrigin,
     "e621": E621Origin,
+    "e6ai": E6AIOrigin,
     "furbooru": FurbooruOrigin,
     "tantabus": TantabusAIOrigin,
     "furaffinity": FurAffinityOrigin,
