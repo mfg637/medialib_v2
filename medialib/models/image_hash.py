@@ -1,4 +1,6 @@
 import dataclasses
+import enum
+from typing import Optional
 from collections import defaultdict
 from django.db import models
 from django.core.exceptions import ValidationError
@@ -32,11 +34,11 @@ class ImageHashGroupItem:
 @dataclasses.dataclass(frozen=True)
 class ImageHashGroup:
     short_hash_hex: str
-    L_hash: bytes
-    a_hash: bytes
-    b_hash: bytes
     items: list[ImageHashGroupItem]
     count: int
+    L_hash: Optional[bytes] = None
+    a_hash: Optional[bytes] = None
+    b_hash: Optional[bytes] = None
 
     def __str__(self) -> str:
         return f"ImageHashGroup {self.short_hash_hex} ({self.count} items)"
@@ -48,8 +50,14 @@ class ImageHashGroup:
         return result_str
 
 
+class HashPrecision(enum.Enum):
+    EXACT = enum.auto()
+    MEDIUM = enum.auto()
+    LOW = enum.auto()
+
+
 class ImageHashManager(models.Manager):
-    def get_duplicate_groups(self) -> list[ImageHashGroup]:
+    def _get_duplicate_groups_exact_precision(self) -> list[ImageHashGroup]:
         duplicate_hashes = (
             self.values("L_hash", "a_hash", "b_hash", "search_similar")
             .annotate(num_duplicates=models.Count("id"))
@@ -61,7 +69,9 @@ class ImageHashManager(models.Manager):
 
         all_items_qs = self.select_related("content").filter(
             L_hash__in=[h["L_hash"] for h in duplicate_hashes],
-            search_similar__in=[h["search_similar"] for h in duplicate_hashes],
+            a_hash__in=[h["a_hash"] for h in duplicate_hashes],
+            b_hash__in=[h["b_hash"] for h in duplicate_hashes],
+            # search_similar__in=[h["search_similar"] for h in duplicate_hashes],
         )
 
         temp_map = defaultdict(list)
@@ -85,14 +95,77 @@ class ImageHashManager(models.Manager):
                 groups.append(
                     ImageHashGroup(
                         short_hash_hex=h["search_similar"].hex(),
+                        items=group_items,
+                        count=len(group_items),
                         L_hash=h["L_hash"].tobytes(),
                         a_hash=h["a_hash"].tobytes(),
                         b_hash=h["b_hash"].tobytes(),
+                    )
+                )
+        return groups
+
+    def _get_duplicate_groups_medium_low_precision(
+        self, search_field
+    ) -> list[ImageHashGroup]:
+        duplicate_hashes = (
+            self.values(search_field)
+            .annotate(num_duplicates=models.Count("id"))
+            .filter(num_duplicates__gt=1)
+        )
+
+        if not duplicate_hashes:
+            return []
+
+        all_items_qs = self.select_related("content").filter(
+            **{
+                f"{search_field}__in": [
+                    h[search_field] for h in duplicate_hashes
+                ],
+            }
+        )
+
+        temp_map = defaultdict(list)
+        for obj in all_items_qs:
+            key = getattr(obj, search_field)
+            temp_map[key].append(
+                ImageHashGroupItem(
+                    imagehash_id=obj.pk,
+                    content=obj.content,
+                    aspect_ratio=obj.aspect_ratio,
+                    alternate_version=obj.alternate_version,
+                )
+            )
+
+        groups = []
+        for h in duplicate_hashes:
+            key = h[search_field]
+            group_items = temp_map.get(key, [])
+
+            if any(not item.alternate_version for item in group_items):
+                groups.append(
+                    ImageHashGroup(
+                        short_hash_hex=h[search_field].hex(),
                         items=group_items,
                         count=len(group_items),
                     )
                 )
         return groups
+
+    def get_duplicate_groups(
+        self, precision: HashPrecision = HashPrecision.EXACT
+    ) -> list[ImageHashGroup]:
+        if precision is HashPrecision.EXACT:
+            return self._get_duplicate_groups_exact_precision()
+        elif precision is HashPrecision.MEDIUM:
+            return self._get_duplicate_groups_medium_low_precision(
+                "search_similar"
+            )
+        elif precision is HashPrecision.LOW:
+            return self._get_duplicate_groups_medium_low_precision(
+                "far_similarity"
+            )
+        else:
+            raise ValueError(f"Unknown precision: {precision}")
 
 
 class ImageHash(models.Model):
