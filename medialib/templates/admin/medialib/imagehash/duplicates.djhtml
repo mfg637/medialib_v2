@@ -31,11 +31,86 @@
         position: relative;
         top: -0.125em;
     }
+
+
+    /*
+        Styles for the Hash Precision Selector in Django Admin
+    */
+    
+    /* --- Form Container Styling --- */
+    .precision_selector {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        background-color: var(--body-bg);
+    }
+    
+    /* --- Main Label Styling --- */
+    .selector_main_label {
+        font-weight: bold;
+        color: var(--body-fg);
+    }
+    
+    /* --- Radio Element and Label Group Styling --- */
+    .selector_element,
+    .selector_label {
+    }
+    
+    .selector_label {
+        cursor: pointer;
+        color: var(--body-fg);
+        transition: color 0.2s ease;
+    }
+    
+    /* Style applied when a radio button is selected (the input itself) */
+    .selector_element:checked + .selector_label {
+        color: var(--secondary);
+        font-weight: 600;
+    }
+    
+    /* Optional: Style the state of the selected radio button directly if needed, though styling the label is often sufficient. */
+    .selector_element[type="radio"]:checked {
+    }
+    
+    
+    /* --- Submit Button Styling --- */
+    .selector_submit_button {
+        background-color: var(--primary);
+        color: var(--primary-fg);
+        border: 1px solid var(--secondary);
+        padding: 8px 15px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    
+    .selector_submit_button:hover {
+        background-color: var(--secondary);
+        border-color: var(--primary);
+    }
     </style>
 {% endblock %}
 {% block content %}
     <div id="content-main">
-        <h1>{% trans "Groups with hash collisions" %}</h1>
+        <form method="GET"
+              class="precision_selector"
+              action="{% url 'admin:imagehash-duplicates' %}">
+            <span class="selector_main_label">Select Hash Precision:</span>
+            {% for key, value in PRECISION_MAPPING.items %}
+                <input type="radio"
+                       id="precision_{{ key }}"
+                       name="precision"
+                       class="selector_element"
+                       value="{{ key }}"
+                       {% if key == current_precision %}checked{% endif %}>
+                <label for="precision_{{ key }}" class="selector_label">{{ key|capfirst }}</label>
+            {% endfor %}
+            <button type="submit" class="selector_submit_button">Filter Duplicates</button>
+        </form>
+        <h2>{% trans "Groups with hash collisions" %}</h2>
         <section class="groups-count">
             <svg width="20" height="20" viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />

@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from medialib_v2.settings import MEDIA_URL
 from medialib.flow import ContentMergeFlow
 from medialib import models as ml_models
+from medialib.models.image_hash import HashPrecision
 from base.shared_enums.medialib_model import (
     RepresentationTypeEnum,
 )
@@ -95,13 +96,27 @@ class ImageHashAdmin(admin.ModelAdmin):
         return custom_urls + urls
 
     def duplicate_groups_view(self, request):
-        groups = ml_models.ImageHash.duplicates.get_duplicate_groups()
+        PRECISION_MAPPING = {
+            "exact": HashPrecision.EXACT,
+            "medium": HashPrecision.MEDIUM,
+            "low": HashPrecision.LOW,
+        }
+        precision_raw = request.GET.get("precision", "exact")
+        precision_raw = (
+            precision_raw
+            if precision_raw in PRECISION_MAPPING.keys()
+            else "exact"
+        )
+        precision = PRECISION_MAPPING[precision_raw]
+        groups = ml_models.ImageHash.duplicates.get_duplicate_groups(precision)
 
         context = {
             **self.admin_site.each_context(request),
             "title": "Duplicate suspicious",
             "groups": groups,
             "opts": self.model._meta,
+            "PRECISION_MAPPING": PRECISION_MAPPING,
+            "current_precision": precision_raw,
         }
         return TemplateResponse(
             request, "admin/medialib/imagehash/duplicates.djhtml", context
