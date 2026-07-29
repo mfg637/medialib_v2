@@ -7,12 +7,33 @@ WORKDIR /build
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    meson \
+    ninja-build \
+    pkg-config \
+    wget \
     libpq-dev \
-    libvips-dev \
     libopus-dev \
     libdav1d-dev \
-    pkg-config \
+    libgsl-dev \
+    libglib2.0-dev \
+    libexpat1-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    libwebp-dev \
+    libheif-dev \
+    libexif-dev \
+    liblcms2-dev \
     && rm -rf /var/lib/apt/lists/*
+
+ARG VIPS_VERSION=8.18.4
+RUN wget https://github.com/libvips/libvips/releases/download/v${VIPS_VERSION}/vips-${VIPS_VERSION}.tar.xz \
+    && tar xf vips-${VIPS_VERSION}.tar.xz \
+    && cd vips-${VIPS_VERSION} \
+    && meson setup build --buildtype=release \
+    && cd build \
+    && ninja \
+    && ninja install \
+    && cd ../.. && rm -rf vips-*
 
 COPY requirements.txt .
 
@@ -32,12 +53,25 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libmagic1 \
-    libvips42t64 \
     ffmpeg \
     libheif-plugin-dav1d \
     libheif-plugin-aomenc \
     libjxl-tools \
+    libgsl28 \
+    libglib2.0-0 \
+    libexpat1 \
+    libjpeg62-turbo \
+    libpng16-16t64 \
+    libwebp7 \
+    libwebpmux3 \
+    libwebpdemux2 \
+    libheif1 \
+    libexif12 \
+    liblcms2-2 \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local /usr/local
+RUN ldconfig
 
 WORKDIR /app
 

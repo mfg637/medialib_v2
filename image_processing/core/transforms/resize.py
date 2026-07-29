@@ -5,7 +5,7 @@ import pyvips
 def downscale(
     img: Image,
     target_size: tuple[int, int],
-    kernel=pyvips.enums.Kernel.LANCZOS3,
+    kernel=pyvips.enums.Kernel.MKS2021,
 ) -> Image:
     target_width, target_height = target_size
     source_width = img.width
