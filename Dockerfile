@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libheif-dev \
     libexif-dev \
     liblcms2-dev \
+    librsvg2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 ARG VIPS_VERSION=8.18.4
@@ -68,6 +69,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libheif1 \
     libexif12 \
     liblcms2-2 \
+librsvg2-2 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local /usr/local
