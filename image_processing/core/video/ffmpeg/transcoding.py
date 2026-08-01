@@ -306,6 +306,8 @@ def build_svt_av1_commandline(
         str(quality),
         "-g",
         str(gop_size),
+        "-threads",
+        str(encoding_threads),
         "-svtav1-params",
         ":".join(svt_params),
     ]
