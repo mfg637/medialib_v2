@@ -270,6 +270,36 @@ class DeviantArtOrigin(AbstractOriginType):
         return "deviantart"
 
 
+class TelegramMessenger(AbstractOriginType):
+    _URL_PATTERN = re.compile(
+        r"https://t\.me/(?P<user>[^/]+)/(?P<content_id>\d+)$"
+    )
+
+    def generate_url(self, origin_content_id: Optional[str] = None):
+        origin_content_id = self._validate_origin_id(origin_content_id)
+        id_parts: list[str] = origin_content_id.split("#")
+        if len(id_parts) == 2:
+            return f"https://t.me/{id_parts[0]}/{id_parts[1]}"
+        else:
+            raise ValueError("Incorrect Telegram post ID!")
+
+    def parse_url(self, url: str) -> typing.Optional[str]:
+        clean_url = url.split("?")[0]
+        match = self._URL_PATTERN.search(clean_url)
+
+        if not match:
+            return None
+
+        groups = match.groupdict()
+        return f"{groups['user']}#{groups['content_id']}"
+
+    def get_prefix(self):
+        return "te-"
+
+    def get_name(self) -> str:
+        return "telegram"
+
+
 ORIGIN_TYPE: dict[str, typing.Type[AbstractOriginType]] = {
     "derpibooru": DerpibooruOrigin,
     "ponybooru": PonybooruOrigin,
@@ -283,6 +313,7 @@ ORIGIN_TYPE: dict[str, typing.Type[AbstractOriginType]] = {
     "civit-ai": CivitAIOrigin,
     "deviantart": DeviantArtOrigin,
     "deviant-art": DeviantArtOrigin,
+    "telegram": TelegramMessenger,
 }
 
 
