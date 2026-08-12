@@ -49,7 +49,7 @@ services:
   celery:
     build: .
     restart: always
-    command: celery -A medialib_v2 worker --loglevel=info --concurrency=${CELERY_WORKERS:-2}
+    command: /app/celery_entrypoint.sh
     volumes:
       - ${MEDIALIB_STORAGE_PATH:-./media}:/app/media${VOLUME_FLAGS:-}
     env_file:
