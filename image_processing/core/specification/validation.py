@@ -1,5 +1,9 @@
+import logging
+from pathlib import Path
 from fractions import Fraction
 from . import containers, video, audio
+
+logger = logging.getLogger(__name__)
 
 
 def is_container_compatible(
@@ -73,3 +77,53 @@ def calc_video_cl(
             return cl
 
     return MAX_POSSIBLE_LEVEL
+
+
+def is_webm_unfinalized(file_path: Path) -> bool:
+    SEGMENT_ID = b"\x18\x53\x80\x67"
+    logger.debug("is_webm_unfinalized started")
+
+    with open(file_path, "rb") as f:
+        header = f.read(4096)
+
+        pos = header.find(SEGMENT_ID)
+        if pos == -1:
+            logger.debug("segment not found")
+            return True
+
+        offset = pos + len(SEGMENT_ID)
+        if offset >= len(header):
+            logger.debug("invalid size position")
+            return True
+
+        first_byte = header[offset]
+        if first_byte == 0:
+            logger.debug("invalid VINT first byte")
+            return True
+
+        vint_len = 1
+        mask = 0x80
+        while not (first_byte & mask):
+            mask >>= 1
+            vint_len += 1
+
+        if offset + vint_len > len(header):
+            logger.debug("header too short for VINT")
+            return True
+
+        vint_bytes = header[offset : offset + vint_len]
+
+        first_byte_data = first_byte & (mask - 1)
+
+        is_unknown_length = (first_byte_data == (mask - 1)) and all(
+            b == 0xFF for b in vint_bytes[1:]
+        )
+
+        if is_unknown_length:
+            logger.debug(
+                "Segment length is UNKNOWN (VINT length: %d bytes)", vint_len
+            )
+            return True
+
+    logger.debug("webm is finalized")
+    return False

@@ -1,3 +1,4 @@
+from pathlib import Path
 from base.shared_knowledge.file_format import FormatEnum
 from ..media_passport import VideoPassport
 from base.shared_enums.medialib_model import RepresentationTypeEnum
@@ -8,6 +9,8 @@ from . import common
 from typing import Optional, Callable
 import functools
 import logging
+import tempfile
+from image_processing.config import proxy_at_tmp
 
 vp9_levels = specification.video.LEVELS_VP9
 av1_levels = specification.video.LEVELS_AV1
@@ -340,3 +343,37 @@ def transcode_webm_source(
         if cl4_representation is not None:
             representation_list.append(cl4_representation)
     return representation_list
+
+
+def create_proxy_copy(source_passport: VideoPassport) -> VideoPassport:
+    proxy_file: Optional[Path] = None
+    if proxy_at_tmp:
+        proxy_suffix = ".proxy"
+        if source_passport.file_format is FormatEnum.WEBM:
+            proxy_suffix = ".proxy.webm"
+        elif source_passport.file_format is FormatEnum.MPEG_4:
+            proxy_suffix = ".proxy.mp4"
+        with tempfile.NamedTemporaryFile(
+            suffix=proxy_suffix, delete=False
+        ) as tmp:
+            proxy_file = Path(tmp.name)
+    else:
+        source_filepath = source_passport.source_file
+        proxy_file = source_filepath.with_stem(f"{source_filepath.stem}-proxy")
+    if proxy_file is None:
+        raise Exception("Execution Error: proxy_file is None")
+
+    if source_passport.file_format is FormatEnum.WEBM:
+        ffmpeg.transcoding.webm_copy_video(
+            source_passport.source_file, proxy_file
+        )
+    elif source_passport.file_format is FormatEnum.MPEG_4:
+        ffmpeg.transcoding.mp4_copy_video(
+            source_passport.source_file, proxy_file
+        )
+    else:
+        raise NotImplementedError(
+            f"Unsupported format: {source_passport.file_format}"
+        )
+
+    return VideoPassport(proxy_file, source_passport.mime)

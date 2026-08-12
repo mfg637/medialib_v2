@@ -93,6 +93,12 @@ class VideoPassport(BaseMediaPassport):
         self.pixel_format = parser.get_video_pixel_format(
             self.current_video_stream
         )
+        raw_duration: Optional[str] = self.ffprobe_raw_data["format"].get(
+            "duration", None
+        )
+        self.duration: Optional[float] = (
+            float(raw_duration) if raw_duration is not None else None
+        )
         self.has_alpha_channel = parser.has_alpha_channel(self.pixel_format)
         self.bit_depth = (
             specification.video.PIXEL_FORMAT_TO_BITS_PER_CHANNEL.get(
@@ -129,7 +135,14 @@ class VideoPassport(BaseMediaPassport):
         self.codec_profile, self.codec_level = (
             parser.get_profile_and_level_if_exists(self.current_video_stream)
         )
+        self.is_unfinalized = False
+
         super().__init__(source_file, mime_type, content_type)
+
+        if self.duration is None and self.file_format is FormatEnum.WEBM:
+            self.is_unfinalized = specification.validation.is_webm_unfinalized(
+                self.source_file
+            )
 
     @property
     def codec_string(self) -> str:

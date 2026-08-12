@@ -14,10 +14,11 @@ from .video import (
     transcode_webm_source,
     transcode_mp4_source,
     transcode_source_default,
+    create_proxy_copy,
 )
 from image_processing.services import media_passport
 
-from typing import Callable
+from typing import Callable, Optional
 import pathlib
 
 default_strategy = DefaultRepresentationStrategy()
@@ -50,6 +51,10 @@ def make_representations(
         return representations_maker(passport.source_file)
     elif isinstance(passport, media_passport.VideoPassport):
         representations = []
+        proxy_file: Optional[pathlib.Path] = None
+        if passport.is_unfinalized and passport.estimated_duration is None:
+            passport = create_proxy_copy(passport)
+            proxy_file = passport.source_file
         try:
             thumbnail = video_thumbnail.decode(
                 passport.source_file,
@@ -82,6 +87,9 @@ def make_representations(
             )
         else:
             representations.extend(transcode_source_default(passport))
+        # No proxy removal because proxy may be turned into representation
+        # if proxy_file is not None:
+        #     proxy_file.unlink()
         return representations
     else:
         raise NotImplementedError(f"Unknown passport format: {type(passport)}")
