@@ -51,6 +51,7 @@ def encode(
                 tile_columns_log2,
                 tile_rows_log2,
             )
+        tile_rows_log2 = min(tile_rows_log2, 2)
         fps = parser.get_fps(video_stream)
         gop_size = round(fps * 10)
         vfilters = transcoding.build_vfilters(
