@@ -17,6 +17,7 @@ def mp4_copy_commandline(
 ) -> list[str]:
     return [
         "ffmpeg",
+        "-y",
         "-i",
         str(source_file),
         "-c",
@@ -29,6 +30,26 @@ def mp4_copy_commandline(
 
 def mp4_copy_video(source_file: Path | str, output_file: Path | str):
     commandline = mp4_copy_commandline(source_file, output_file)
+    proc = run_subprocess(commandline)
+    proc.check_returncode()
+
+
+def webm_copy_commandline(
+    source_file: Path | str, output_file: Path | str
+) -> list[str]:
+    return [
+        "ffmpeg",
+        "-y",
+        "-i",
+        str(source_file),
+        "-c",
+        "copy",
+        str(output_file),
+    ]
+
+
+def webm_copy_video(source_file: Path | str, output_file: Path | str):
+    commandline = webm_copy_commandline(source_file, output_file)
     proc = run_subprocess(commandline)
     proc.check_returncode()
 
