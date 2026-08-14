@@ -1,8 +1,9 @@
 from django.db.models import Sum, Avg, Count, F
 from django.contrib import admin
 from django.template.response import TemplateResponse
-from django.utils.html import format_html
+from django.utils.html import format_html, escape
 from django.urls import path
+from django.utils.safestring import mark_safe
 from base.view import format_file_size
 from .models import Task, AwaitingTaskMetadata, ExecutionError, TaskResult
 from .forms import TaskUploadForm
@@ -31,6 +32,19 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(ExecutionError)
 class ExecutionErrorAdmon(admin.ModelAdmin):
+    fields = (
+        "task",
+        "title",
+        "details_formatted",
+    )
+
+    def details_formatted(self, instance):
+        return mark_safe(
+            f'<div style="white-space: pre-wrap;">{escape(instance.details)}</div>'
+        )
+
+    details_formatted.short_description = "Details"
+
     def has_add_permission(self, request):
         return False
 
