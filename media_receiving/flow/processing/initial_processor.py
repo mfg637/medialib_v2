@@ -9,6 +9,7 @@ from .exceptions import DiscardedProcessing
 if TYPE_CHECKING:
     from medialib.models import (
         Content,
+        ContentRedirect,
         ContentOrigin,
     )
 
@@ -18,6 +19,9 @@ logger = logging.getLogger(__name__)
 class InitialTaskProcessor(BaseTaskProcessor):
     def get_or_create_content(self, task, passport, t_meta, task_file):
         ContentModel: Type[Content] = apps.get_model("medialib", "Content")
+        ContentRedirectModel: Type[ContentRedirect] = apps.get_model(
+            "medialib", "ContentRedirect"
+        )
 
         title = t_meta.title if t_meta and t_meta.title else task_file.stem
         description = t_meta.description if t_meta else ""
@@ -27,7 +31,10 @@ class InitialTaskProcessor(BaseTaskProcessor):
         existing_content = ContentModel.objects.filter(
             source_hash=task.source_hash
         )
-        if existing_content.exists():
+        existing_redirect = ContentRedirectModel.objects.filter(
+            source_hash=task.source_hash
+        )
+        if existing_content.exists() or existing_redirect.exists():
             task_file.unlink(missing_ok=True)
             task.uploaded_file = None
             task.save()
